@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Create Blood Demand - BDCN{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white py-3">
+                <h4 class="mb-0">Create Urgent Blood Demand</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="/hospital/create-demand" enctype="multipart/form-data">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="blood_type" class="form-label">Required Blood Type</label>
+                            <select class="form-select" id="blood_type" name="blood_type" required>
+                                <option value="" disabled selected>Select blood type...</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="units" class="form-label">Units Needed</label>
+                            <input type="number" class="form-control" id="units" name="units" min="1" max="100" required placeholder="e.g. 5">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="document" class="form-label">Upload Compliance Document (PDF/Image)</label>
+                        <input class="form-control" type="file" id="document" name="document" required>
+                        <div class="form-text">All compliance files are automatically virus-scanned and verified using OCR.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Urgency Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Describe clinical urgency or instructions for the district admin..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="/hospital/dashboard" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-danger px-4">Submit Demand Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

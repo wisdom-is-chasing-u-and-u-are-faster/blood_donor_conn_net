@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Hospital Portal Login - BDCN{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white text-center py-3">
+                <h4 class="mb-0">Hospital Staff Portal</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="/login/hospital">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username / Hospital ID</label>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="e.g. general_hospital">
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100 py-2">Sign In to Hospital Portal</button>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <a href="/login/admin" class="text-muted small">Switch to District Administrator Portal</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

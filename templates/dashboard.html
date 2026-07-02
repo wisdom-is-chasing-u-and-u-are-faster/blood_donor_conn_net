@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Hospital Dashboard - BDCN{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Welcome, {{ session.get('username') }}!</h2>
+        <p class="text-muted">Manage active blood demands, upload compliance files, and track donor schedules.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="/hospital/create-demand" class="btn btn-danger py-2 px-4">+ Create Urgent Demand</a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Demands -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-dark">Your Blood Demand Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if demands %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Blood Type</th>
+                                    <th>Units Needed</th>
+                                    <th>Document</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in demands %}
+                                    <tr>
+                                        <td><strong>#{{ d.id }}</strong></td>
+                                        <td><span class="badge bg-danger fs-6">{{ d.blood_type }}</span></td>
+                                        <td>{{ d.units }} units</td>
+                                        <td>
+                                            {% if d.filename %}
+                                                <span class="text-success">📄 {{ d.filename }}</span>
+                                            {% else %}
+                                                <span class="text-muted">None</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if d.status == 'Approved' %}
+                                                <span class="badge bg-success">Approved / Emitted</span>
+                                            {% elif d.status == 'Rejected' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">Pending Admin Review</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No blood demands requested yet. Create one above to get started.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Scheduled Donors -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-dark">Scheduled Donors</h5>
+            </div>
+            <div class="card-body">
+                {% if scheduled_donors %}
+                    <div class="list-group list-group-flush">
+                        {% for donor in scheduled_donors %}
+                            <div class="list-group-item px-0 py-3">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ donor.name }}</h6>
+                                    <span class="badge bg-danger">{{ donor.blood_type }}</span>
+                                </div>
+                                <p class="mb-1 text-muted small">Appointment: {{ donor.time }}</p>
+                                <small class="text-success">✓ Verified & Registered</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No donor appointments scheduled for today.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Verification Queue - BDCN{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Hospital Request Verification Queue</h2>
+        <p class="text-muted">Review, verify, and validate hospital-submitted compliance documents to authorize emergency blood demands.</p>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-dark text-white py-3">
+        <h5 class="mb-0">Pending Requests Queue</h5>
+    </div>
+    <div class="card-body">
+        {% if pending_demands %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Hospital</th>
+                            <th>Required Blood Type</th>
+                            <th>Units Needed</th>
+                            <th>Document Uploaded</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in pending_demands %}
+                            <tr>
+                                <td><strong>{{ d.hospital }}</strong></td>
+                                <td><span class="badge bg-danger fs-6">{{ d.blood_type }}</span></td>
+                                <td>{{ d.units }} units</td>
+                                <td>
+                                    <span class="text-success">📄 {{ d.filename }}</span>
+                                    <span class="badge bg-light text-dark border ms-1">OCR Match Verified</span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="/admin/verify/{{ d.id }}" class="d-inline">
+                                        <button type="submit" name="action" value="approve" class="btn btn-success btn-sm me-2 px-3">
+                                            ✓ Approve & Emit Alert
+                                        </button>
+                                        <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm px-3">
+                                            ✗ Reject
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <h6 class="text-success">✓ Everything clear! No pending hospital requests to verify.</h6>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
