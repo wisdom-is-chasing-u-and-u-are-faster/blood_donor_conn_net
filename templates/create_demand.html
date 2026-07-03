@@ -30,6 +30,27 @@
                         </div>
                     </div>
 
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="urgency" class="form-label">Urgency Level</label>
+                            <select class="form-select" id="urgency" name="urgency" required>
+                                <option value="Routine">Routine</option>
+                                <option value="Urgent">Urgent</option>
+                                <option value="Emergency" selected>Emergency (Immediate Attention)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="district" class="form-label">District Cluster</label>
+                            <select class="form-select" id="district" name="district" required>
+                                <option value="Downtown">Downtown</option>
+                                <option value="North District">North District</option>
+                                <option value="East Valley">East Valley</option>
+                                <option value="South Coast">South Coast</option>
+                                <option value="West Hills">West Hills</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="mb-4">
                         <label for="document" class="form-label">Upload Compliance Document (PDF/Image)</label>
                         <input class="form-control" type="file" id="document" name="document" required>
