@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Privacy-First Hotspot Map - BDCN{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-danger text-white py-3">
+                <h5 class="mb-0">📍 Proximity Filtering</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="/map/hotspots">
+                    <div class="mb-4">
+                        <label for="radius" class="form-label">Search Radius: <span class="fw-bold text-danger" id="radiusVal">{{ radius }}</span> km</label>
+                        <input type="range" class="form-control-range w-100" id="radius" name="radius" min="5" max="100" step="5" value="{{ radius }}" oninput="document.getElementById('radiusVal').innerText = this.value">
+                        <div class="form-text mt-1">Adjust search radius to filter nearby voluntary donor clusters.</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="blood_type" class="form-label">Filter by Blood Type</label>
+                        <select class="form-select" id="blood_type" name="blood_type">
+                            <option value="All" {% if blood_type == 'All' %}selected{% endif %}>All Types</option>
+                            <option value="A+" {% if blood_type == 'A+' %}selected{% endif %}>A+</option>
+                            <option value="A-" {% if blood_type == 'A-' %}selected{% endif %}>A-</option>
+                            <option value="B+" {% if blood_type == 'B+' %}selected{% endif %}>B+</option>
+                            <option value="B-" {% if blood_type == 'B-' %}selected{% endif %}>B-</option>
+                            <option value="O+" {% if blood_type == 'O+' %}selected{% endif %}>O+</option>
+                            <option value="O-" {% if blood_type == 'O-' %}selected{% endif %}>O-</option>
+                            <option value="AB+" {% if blood_type == 'AB+' %}selected{% endif %}>AB+</option>
+                            <option value="AB-" {% if blood_type == 'AB-' %}selected{% endif %}>AB-</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100">Update Filtered Hotspots</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6>🔒 Privacy Guard Active</h6>
+                <p class="small text-muted mb-0">Precise residential addresses of voluntary donors are never displayed publicly or shared. Secure communication is facilitated strictly through anonymous system notifications once requests are verified and authorized by regional district administrators.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0">🗺️ Privacy-First Donor Density Clusters</h5>
+            </div>
+            <div class="card-body">
+                <div class="border rounded bg-light text-center py-5 mb-4 position-relative" style="height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; background: radial-gradient(circle, #ffffff 60%, #e9ecef 100%);">
+                    <div class="text-muted mb-3"><span class="fs-1">🛰️</span><br><strong>Google Maps API Simulation Active</strong></div>
+                    
+                    <!-- Simulated Google Maps Clustering effect -->
+                    {% for h in hotspots %}
+                        <div class="badge bg-danger rounded-pill p-3 position-absolute shadow" style="top: {{ h.top }}%; left: {{ h.left }}%; transform: translate(-50%, -50%); cursor: pointer;" title="Cluster: {{ h.district }}">
+                            🔥 Cluster: {{ h.count }} Donors ({{ h.blood_type }})
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="position-absolute bottom-0 end-0 bg-dark text-white p-2 small rounded-start">
+                        Google Maps SDK v3 - Clustering Enabled
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Regional Cluster</th>
+                                <th>Distance</th>
+                                <th>Donor Density ({{ blood_type }})</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for h in hotspots %}
+                                <tr>
+                                    <td><strong>{{ h.district }}</strong></td>
+                                    <td>{{ h.distance }} km</td>
+                                    <td><span class="badge bg-danger">{{ h.count }} Active Donors</span></td>
+                                    <td><span class="text-success">● High Density</span></td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3 text-muted">No donor density clusters found in the selected range of {{ radius }} km.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

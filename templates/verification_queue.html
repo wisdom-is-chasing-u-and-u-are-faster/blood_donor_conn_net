@@ -8,6 +8,27 @@
     </div>
 </div>
 
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="/admin/queue" class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <label for="filter_district" class="form-label fw-bold">Regional District Admin Filter</label>
+                <select class="form-select" id="filter_district" name="filter_district">
+                    <option value="All" {% if filter_district == 'All' %}selected{% endif %}>All Districts</option>
+                    <option value="Downtown" {% if filter_district == 'Downtown' %}selected{% endif %}>Downtown</option>
+                    <option value="North District" {% if filter_district == 'North District' %}selected{% endif %}>North District</option>
+                    <option value="East Valley" {% if filter_district == 'East Valley' %}selected{% endif %}>East Valley</option>
+                    <option value="South Coast" {% if filter_district == 'South Coast' %}selected{% endif %}>South Coast</option>
+                    <option value="West Hills" {% if filter_district == 'West Hills' %}selected{% endif %}>West Hills</option>
+                </select>
+            </div>
+            <div class="col-md-2 mt-4 pt-2">
+                <button type="submit" class="btn btn-dark w-100">Filter Queue</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-header bg-dark text-white py-3">
         <h5 class="mb-0">Pending Requests Queue</h5>
@@ -19,6 +40,8 @@
                     <thead>
                         <tr>
                             <th>Hospital</th>
+                            <th>District</th>
+                            <th>Urgency</th>
                             <th>Required Blood Type</th>
                             <th>Units Needed</th>
                             <th>Document Uploaded</th>
@@ -29,6 +52,12 @@
                         {% for d in pending_demands %}
                             <tr>
                                 <td><strong>{{ d.hospital }}</strong></td>
+                                <td><span class="badge bg-secondary">{{ d.district or "Downtown" }}</span></td>
+                                <td>
+                                    <span class="badge {% if d.urgency == 'Emergency' %}bg-danger{% elif d.urgency == 'Urgent' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
+                                        {{ d.urgency or "Emergency" }}
+                                    </span>
+                                </td>
                                 <td><span class="badge bg-danger fs-6">{{ d.blood_type }}</span></td>
                                 <td>{{ d.units }} units</td>
                                 <td>

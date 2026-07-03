@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Donor Login - BDCN{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white text-center py-3">
+                <h4 class="mb-0">Donor Login Portal</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="/login/donor">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="e.g. janesmith">
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100 py-2 mb-3">Sign In to Donor Portal</button>
+                </form>
+
+                <hr>
+                <h6 class="text-center text-muted mb-3">Or Login using Social Media</h6>
+                <div class="d-grid gap-2">
+                    <a href="/login/social/google" class="btn btn-outline-danger"><span class="fw-bold">G</span> Sign In with Google</a>
+                    <a href="/login/social/apple" class="btn btn-outline-dark"> Sign In with Apple</a>
+                    <a href="/login/social/facebook" class="btn btn-outline-primary">f Sign In with Facebook</a>
+                </div>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <p class="mb-0 small text-muted">Don't have a donor profile? <a href="/donor/register" class="text-danger fw-bold">Register here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
