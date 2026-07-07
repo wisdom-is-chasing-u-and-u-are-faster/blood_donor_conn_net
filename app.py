@@ -1,6 +1,27 @@
 # This is a Flask web application for a Blood Donor Connection Network.
-# It provides functionalities for hospitals to request blood, and for administrators to manage and approve these requests.
-# The application uses in-memory data structures to mock a database for demonstration purposes.
+#
+# It provides the following functionalities:
+# - Hospital Portal:
+#   - Login for hospital staff.
+#   - Dashboard to view current blood demands and scheduled donors.
+#   - Form to create new blood demand requests.
+# - Administrator Portal:
+#   - Login for administrators.
+#   - Verification queue to approve or reject pending blood demands.
+#   - Alert management to view active alerts dispatched to donors.
+#   - Audit log to track all system and user actions.
+#
+# The application uses in-memory data structures (lists of dictionaries) to mock a database
+# for demonstration purposes. This includes mock data for blood demands, scheduled donors,
+# alerts, and audit logs.
+#
+# Key Libraries:
+# - Flask: A lightweight WSGI web application framework.
+# - os: To access environment variables (e.g., for the Flask secret key).
+# - datetime: To generate timestamps for audit logs.
+#
+# The application is structured with separate routes for each functionality and uses
+# Flask's session management to handle user authentication and roles (hospital vs. admin).
 import os
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, session, flash, url_for
@@ -89,7 +110,7 @@ def login_hospital():
 
 
 @app.route("/login/admin", methods=["GET", "POST"])
-def login_admin():
+def login_.admin():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
