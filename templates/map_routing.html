@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Travel Route Map - BDCN{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white py-3">
+                <h5 class="mb-0">🗺️ Real-Time Navigation Route</h5>
+            </div>
+            <div class="card-body p-4">
+                <h4 class="mb-3">Active Routing navigation</h4>
+                <p class="text-muted small">Optimized travel instructions generated automatically. Mobile optimized 3G payload size: {{ route.payload_size }}.</p>
+                
+                <!-- Google Maps API Simulation Block -->
+                <div class="border rounded bg-light d-flex flex-column align-items-center justify-content-center p-5 text-center mb-4" style="height: 350px; background: radial-gradient(circle, #e9ecef 60%, #dee2e6 100%);">
+                    <div class="fs-1 mb-2">📍</div>
+                    <h5 class="fw-bold text-success">Google Maps API Simulation Active</h5>
+                    <p class="text-muted max-width-500 small">Simulating driving route map coordinates and travel path tracking from **{{ route.start }}** to **{{ route.destination }}**.</p>
+                    <div class="d-flex gap-3 mt-3">
+                        <span class="badge bg-secondary p-2">Distance: {{ route.distance }}</span>
+                        <span class="badge bg-success p-2">EST Time: {{ route.duration }}</span>
+                    </div>
+                </div>
+
+                <div class="row text-center mb-3">
+                    <div class="col border-end">
+                        <small class="text-muted d-block">Origin</small>
+                        <span class="fw-bold text-dark">{{ route.start }}</span>
+                    </div>
+                    <div class="col">
+                        <small class="text-muted d-block">Destination Center</small>
+                        <span class="fw-bold text-success">{{ route.destination }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center mt-4">
+                    <a href="/donor/profile" class="btn btn-outline-dark px-4">Back to Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

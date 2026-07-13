@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}OCR Verification Detail - BDCN{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0">OCR Document Verification Detail</h5>
+            </div>
+            <div class="card-body p-4 text-center">
+                <h4>OCR Bounding Box Scan Error Report</h4>
+                <p class="text-muted">Direct detail actions are managed directly from the queue dashboard.</p>
+                <a href="/admin/ocr-queue" class="btn btn-primary px-4 mt-3">Back to OCR Verification Queue</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Admin OCR Verification Queue - BDCN{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-warning text-dark py-3">
+                <h5 class="mb-0">⚙️ National Emergency Override Controller</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="fw-bold mb-1">Global Emergency Override Mode (REQ-F-013)</h6>
+                        <p class="text-muted small mb-0">Toggle emergency status to bypass standard compliance verification timelines and daily matching restriction rules.</p>
+                    </div>
+                    <div>
+                        <form method="POST" action="/admin/toggle-override">
+                            {% if override.national_override_active %}
+                                <input type="hidden" name="override" value="false">
+                                <button type="submit" class="btn btn-danger px-4">Deauthorize Emergency Mode</button>
+                            {% else %}
+                                <input type="hidden" name="override" value="true">
+                                <button type="submit" class="btn btn-outline-danger px-4">Authorize National Emergency</button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">📋 OCR Document Verification & Escalation Queue</h5>
+                <span class="badge bg-warning text-dark">{{ documents|length }} Outstanding Docs</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Failed OCR parse runs flagged automatically for administrative manual compliance review (REQ-F-012/15).</p>
+                
+                {% if documents %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Donor Name</th>
+                                    <th>Document Filename</th>
+                                    <th>Flagged OCR Bounding Box Reason</th>
+                                    <th>Timestamp</th>
+                                    <th>Escalation State</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in documents %}
+                                    <tr>
+                                        <td><strong>#{{ doc.id }}</strong></td>
+                                        <td>{{ doc.donor_name }}</td>
+                                        <td><code>{{ doc.filename }}</code></td>
+                                        <td><span class="text-danger small">{{ doc.reason }}</span></td>
+                                        <td><small class="text-muted">{{ doc.timestamp }}</small></td>
+                                        <td>
+                                            {% if doc.escalated %}
+                                                <span class="badge bg-danger">Escalated to Regional Supervisor</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Standard (District Admin Queue)</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if doc.status == 'Pending' %}
+                                                <span class="badge bg-warning text-dark">Pending Review</span>
+                                            {% elif doc.status == 'Verified' %}
+                                                <span class="badge bg-success">Verified</span>
+                                            {% elif doc.status == 'Rejected' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            {% if doc.status == 'Pending' %}
+                                                <div class="d-flex justify-content-end gap-1">
+                                                    <form method="POST" action="/admin/ocr-verify/{{ doc.id }}">
+                                                        <input type="hidden" name="action" value="approve">
+                                                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                                    </form>
+                                                    <form method="POST" action="/admin/ocr-verify/{{ doc.id }}">
+                                                        <input type="hidden" name="action" value="reject">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
+                                                    </form>
+                                                    {% if not doc.escalated %}
+                                                        <form method="POST" action="/admin/ocr-verify/{{ doc.id }}">
+                                                            <input type="hidden" name="action" value="escalate">
+                                                            <button type="submit" class="btn btn-outline-warning btn-sm">Escalate</button>
+                                                        </form>
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted small">No action required</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-4 mb-0">OCR verification queue empty. All scanned medical documents fully resolved.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

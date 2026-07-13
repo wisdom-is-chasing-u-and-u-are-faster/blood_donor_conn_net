@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Emergency Blood Alerts - BDCN{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="hero-section text-center mb-4">
+            <h1 class="display-5">⚠️ Emergency Dispatch Center</h1>
+            <p class="lead mb-0">Urgent requests dispatched near your district. Your blood type contribution saves lives.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <h3 class="mb-4">Active Notifications ({{ alerts|length }})</h3>
+        
+        {% if alerts %}
+            <div class="list-group shadow-sm">
+                {% for alert in alerts %}
+                    <div class="list-group-item list-group-item-action p-4 mb-3 border rounded {% if alert.status == 'Accepted' %}border-success bg-light{% elif alert.status == 'Declined' %}opacity-50{% endif %}">
+                        <div class="d-flex w-100 justify-content-between align-items-center mb-2">
+                            <h5 class="mb-1 text-danger fw-bold">🚨 Urgent Blood Request</h5>
+                            <span class="badge bg-danger">{{ alert.urgency }}</span>
+                        </div>
+                        <div class="mb-3 text-muted">
+                            <strong>Hospital:</strong> {{ alert.hospital }}<br>
+                            <strong>Blood Type Needed:</strong> <span class="badge bg-dark fs-6">{{ alert.blood_type }}</span><br>
+                            <strong>Location/District:</strong> {{ alert.district }}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if alert.status == 'Active' %}
+                                    <span class="text-danger small"><i class="bi bi-broadcast"></i> Broadcast Active</span>
+                                {% elif alert.status == 'Accepted' %}
+                                    <span class="text-success small fw-bold"><i class="bi bi-check-circle-fill"></i> Accepted</span>
+                                {% elif alert.status == 'Declined' %}
+                                    <span class="text-secondary small"><i class="bi bi-x-circle"></i> Declined</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if alert.status == 'Active' %}
+                                    <a href="/donor/alert/{{ alert.id }}" class="btn btn-primary btn-sm px-3">View Notification Details</a>
+                                {% elif alert.status == 'Accepted' %}
+                                    <a href="/donor/route/{{ alert.id }}" class="btn btn-outline-success btn-sm px-3">View Active Route Map</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card p-5 text-center shadow-sm">
+                <div class="fs-1 mb-3">✅</div>
+                <h4>No Active Emergency Dispatches</h4>
+                <p class="text-muted">There are no outstanding urgent requests matching your blood profile in your vicinity at this time.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
