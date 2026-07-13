@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Blood Request Details - BDCN{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white py-3">
+                <h5 class="mb-0">🚨 Emergency Dispatch Notification</h5>
+            </div>
+            <div class="card-body p-4">
+                <h3 class="card-title text-danger mb-4 text-center">Urgent Request Details</h3>
+                
+                <div class="mb-3 pb-2 border-bottom">
+                    <span class="text-muted small">Requesting Institution:</span>
+                    <h5 class="fw-bold">{{ alert.hospital }}</h5>
+                </div>
+                
+                <div class="mb-3 pb-2 border-bottom">
+                    <span class="text-muted small">Target Blood Group Needed:</span>
+                    <div>
+                        <span class="badge bg-dark fs-5">{{ alert.blood_type }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-3 pb-2 border-bottom">
+                    <span class="text-muted small">District Location:</span>
+                    <h5 class="fw-bold text-secondary">{{ alert.district }}</h5>
+                </div>
+
+                <div class="mb-3 pb-2 border-bottom">
+                    <span class="text-muted small">Urgency Level:</span>
+                    <div>
+                        <span class="badge bg-danger">{{ alert.urgency }}</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning py-3 text-start small mb-4">
+                    <strong>Note:</strong> By accepting, you consent to coordinate with our dispatch centers. Standard driving travel route details will be provided instantly to guide you securely.
+                </div>
+
+                <div class="d-flex justify-content-between gap-3">
+                    <form method="POST" action="/donor/alert/{{ alert.id }}/decline" class="w-50">
+                        <button type="submit" class="btn btn-outline-secondary w-100 py-2">Decline Alert</button>
+                    </form>
+                    <form method="POST" action="/donor/alert/{{ alert.id }}/accept" class="w-50">
+                        <button type="submit" class="btn btn-danger w-100 py-2">Accept Request</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

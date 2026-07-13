@@ -44,9 +44,12 @@ scheduled_donors = [
 alerts = [
     {
         "id": 1,
+        "demand_id": 1,
         "hospital": "General Hospital",
         "blood_type": "A+",
-        "status": "Active"
+        "status": "Active",
+        "urgency": "Emergency",
+        "district": "Downtown"
     }
 ]
 
@@ -120,6 +123,33 @@ raw_hotspots = [
      "top": 20,
      "left": 80}
 ]
+
+# Failed OCR Documents Queue (REQ-F-012/REQ-F-015/REQ-F-016)
+ocr_documents = [
+    {
+        "id": 1,
+        "donor_name": "Alice Johnson",
+        "filename": "medical_clearance_alice.jpg",
+        "reason": "OCR error parsing handwritten physical clearance date.",
+        "status": "Pending",
+        "escalated": False,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    },
+    {
+        "id": 2,
+        "donor_name": "Bob Miller",
+        "filename": "bob_eligibility_report.pdf",
+        "reason": "Missing physician signature block in OCR bounding box check.",
+        "status": "Pending",
+        "escalated": False,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+]
+
+# Emergency Override settings (REQ-F-013)
+emergency_settings = {
+    "national_override_active": False
+}
 
 
 @app.route("/")
@@ -208,8 +238,7 @@ def social_login(provider):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
     flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
+        f"Successfully authenticated via {provider.capitalize()}!",
         "success")
     return redirect(url_for("donor_profile"))
 
@@ -306,8 +335,11 @@ def donor_profile():
             "units": 1
         })
 
+    # Secure anonymized token (REQ-F-009/12)
+    donor_token = "f81d4fae-7dec-11d0-a765-00a0c91e" + str(abs(hash(username)) % 10000)
+
     return render_template("donor_profile.html",
-                           donor=target_donor, badges=badges, history=history)
+                           donor=target_donor, badges=badges, history=history, donor_token=donor_token)
 
 
 @app.route("/donor/share/<badge_name>", methods=["POST"])
@@ -464,9 +496,12 @@ def verify_demand(demand_id):
             new_alert_id = len(alerts) + 1
             alerts.append({
                 "id": new_alert_id,
+                "demand_id": target_demand["id"],
                 "hospital": target_demand["hospital"],
                 "blood_type": target_demand["blood_type"],
-                "status": "Active"
+                "status": "Active",
+                "urgency": target_demand.get("urgency", "Emergency"),
+                "district": target_demand.get("district", "Downtown")
             })
 
             audit_logs.append({
@@ -529,6 +564,210 @@ def map_hotspots():
 
     return render_template(
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
+
+
+# --- NEW BDCN FRONTEND WORKFLOW ROUTES (ARCH-5227) ---
+
+# 1 · Donor Alerts (REQ-F-007)
+@app.route("/donor/alerts")
+def donor_alerts():
+    if session.get("role") != "donor":
+        flash("Unauthorized. Please log in as a donor.", "danger")
+        return redirect(url_for("login_donor"))
+
+    username = session.get("username")
+    target_donor = next((d for d in donors if d["username"] == username), None)
+    if not target_donor:
+        flash("Donor profile not found.", "danger")
+        return redirect(url_for("login_donor"))
+
+    # Active alert notifications matching the donor's blood type (unless override is active, which might bypass)
+    donor_blood = target_donor["blood_group"]
+    matching_alerts = []
+    for a in alerts:
+        # Compatibility matching (e.g. O- is universal donor, compatible blood group, or literal match)
+        if a["blood_type"] == donor_blood or donor_blood == "O-":
+            matching_alerts.append(a)
+
+    return render_template("donor_alerts.html", alerts=matching_alerts, donor=target_donor)
+
+
+# 2 · Donor Alert Detail (REQ-F-007)
+@app.route("/donor/alert/<int:alert_id>")
+def donor_alert_detail(alert_id):
+    if session.get("role") != "donor":
+        flash("Unauthorized.", "danger")
+        return redirect(url_for("login_donor"))
+
+    target_alert = next((a for a in alerts if a["id"] == alert_id), None)
+    if not target_alert:
+        flash("Alert not found.", "danger")
+        return redirect(url_for("donor_alerts"))
+
+    return render_template("donor_alert_detail.html", alert=target_alert)
+
+
+# 3 · Donor Alert Actions: Accept & Decline (REQ-F-007)
+@app.route("/donor/alert/<int:alert_id>/accept", methods=["POST"])
+def donor_accept_alert(alert_id):
+    if session.get("role") != "donor":
+        flash("Unauthorized.", "danger")
+        return redirect(url_for("login_donor"))
+
+    target_alert = next((a for a in alerts if a["id"] == alert_id), None)
+    username = session.get("username")
+
+    if target_alert:
+        target_alert["status"] = "Accepted"
+
+        # Add to audit logs
+        audit_logs.append({
+            "action": "DONOR ACCEPTED ALERT",
+            "details": (
+                f"Donor '{username}' accepted alert #{alert_id} "
+                f"for {target_alert['blood_type']} at {target_alert['hospital']}."
+            ),
+            "user": username,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        flash("Thank you! You have accepted the request. Please follow the travel route below.", "success")
+        return redirect(url_for("donor_route", alert_id=alert_id))
+
+    flash("Alert not found.", "danger")
+    return redirect(url_for("donor_alerts"))
+
+
+@app.route("/donor/alert/<int:alert_id>/decline", methods=["POST"])
+def donor_decline_alert(alert_id):
+    if session.get("role") != "donor":
+        flash("Unauthorized.", "danger")
+        return redirect(url_for("login_donor"))
+
+    target_alert = next((a for a in alerts if a["id"] == alert_id), None)
+    username = session.get("username")
+
+    if target_alert:
+        target_alert["status"] = "Declined"
+
+        audit_logs.append({
+            "action": "DONOR DECLINED ALERT",
+            "details": f"Donor '{username}' declined alert #{alert_id} for {target_alert['blood_type']}.",
+            "user": username,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        flash("You have declined the request alert.", "info")
+        return redirect(url_for("donor_alerts"))
+
+    flash("Alert not found.", "danger")
+    return redirect(url_for("donor_alerts"))
+
+
+# 4 · Travel Route Map (REQ-F-008 / REQ-F-011)
+@app.route("/donor/route/<int:alert_id>")
+def donor_route(alert_id):
+    if session.get("role") != "donor":
+        flash("Unauthorized.", "danger")
+        return redirect(url_for("login_donor"))
+
+    target_alert = next((a for a in alerts if a["id"] == alert_id), None)
+    if not target_alert:
+        flash("Alert not found.", "danger")
+        return redirect(url_for("donor_alerts"))
+
+    # Map routing coordinates or details matching design layout
+    route_details = {
+        "start": "Donor Location (Your District)",
+        "destination": f"{target_alert['hospital']} ({target_alert['district']})",
+        "distance": "5.4 km",
+        "duration": "12 mins",
+        "payload_size": "1.2 KB (optimized for 3G connection)"
+    }
+
+    return render_template("map_routing.html", alert=target_alert, route=route_details)
+
+
+# 5 · Admin OCR Manual Review Queue (REQ-F-012/15)
+@app.route("/admin/ocr-queue")
+def admin_ocr_queue():
+    if session.get("role") != "admin":
+        flash("Unauthorized.", "danger")
+        return redirect(url_for("login_admin"))
+
+    return render_template("ocr_queue.html", documents=ocr_documents, override=emergency_settings)
+
+
+# 6 · Admin OCR Document Action & Manual Escalation (REQ-F-012/16)
+@app.route("/admin/ocr-verify/<int:doc_id>", methods=["POST"])
+def admin_ocr_verify(doc_id):
+    if session.get("role") != "admin":
+        flash("Unauthorized.", "danger")
+        return redirect(url_for("login_admin"))
+
+    action = request.form.get("action")
+    target_doc = next((d for d in ocr_documents if d["id"] == doc_id), None)
+    username = session.get("username")
+
+    if target_doc:
+        if action == "approve":
+            target_doc["status"] = "Verified"
+            audit_logs.append({
+                "action": "OCR DOC APPROVED",
+                "details": f"OCR Document #{doc_id} for '{target_doc['donor_name']}' approved manually.",
+                "user": username,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            flash(f"Successfully verified document for {target_doc['donor_name']}.", "success")
+        elif action == "reject":
+            target_doc["status"] = "Rejected"
+            audit_logs.append({
+                "action": "OCR DOC REJECTED",
+                "details": f"OCR Document #{doc_id} for '{target_doc['donor_name']}' rejected manually.",
+                "user": username,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            flash(f"Rejected document for {target_doc['donor_name']}.", "warning")
+        elif action == "escalate":
+            target_doc["escalated"] = True
+            audit_logs.append({
+                "action": "OCR DOC ESCALATED",
+                "details": (
+                    f"OCR Document #{doc_id} manually escalated to "
+                    f"regional supervisor (escalation threshold exceeded)."
+                ),
+                "user": username,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            flash(f"Document #{doc_id} has been escalated to regional supervisor.", "danger")
+        return redirect(url_for("admin_ocr_queue"))
+
+    flash("Document not found.", "danger")
+    return redirect(url_for("admin_ocr_queue"))
+
+
+# 7 · Toggle National Emergency Override (REQ-F-013)
+@app.route("/admin/toggle-override", methods=["POST"])
+def toggle_emergency_override():
+    if session.get("role") != "admin":
+        flash("Unauthorized.", "danger")
+        return redirect(url_for("login_admin"))
+
+    username = session.get("username")
+    active = request.form.get("override") == "true"
+    emergency_settings["national_override_active"] = active
+
+    audit_logs.append({
+        "action": "EMERGENCY OVERRIDE TOGGLED",
+        "details": f"National Emergency Override setting changed to: {active}.",
+        "user": username,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    if active:
+        flash("National Emergency Override AUTHORIZED. All frequency matching rules bypassed.", "danger")
+    else:
+        flash("Emergency override disabled. Standard compliance rules restored.", "info")
+
+    return redirect(url_for("admin_ocr_queue"))
 
 
 if __name__ == "__main__":

@@ -26,6 +26,25 @@
                 </div>
             </div>
         </div>
+
+        <!-- Secure scannable QR Code block (REQ-F-009/12) -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white py-2">
+                <h6 class="mb-0 text-center">📱 Anonymized Secure QR Code</h6>
+            </div>
+            <div class="card-body text-center py-3">
+                <div class="p-2 bg-white border d-inline-block rounded mb-2 shadow-sm">
+                    <!-- Simulate a pixel QR Code visually using HTML/CSS grid -->
+                    <div class="d-flex flex-wrap align-content-start" style="width: 144px; height: 144px;">
+                        {% for i in range(144) %}
+                            <div class="{% if (i + i*3 // 5 + i % 3 + i % 7) % 2 == 0 %}bg-dark{% else %}bg-white{% endif %}" style="width: 12px; height: 12px;"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="small text-muted mb-1 fw-bold">Scan at Donation Center</div>
+                <code class="text-danger small d-block">{{ donor_token }}</code>
+            </div>
+        </div>
     </div>
 
     <div class="col-md-8">
