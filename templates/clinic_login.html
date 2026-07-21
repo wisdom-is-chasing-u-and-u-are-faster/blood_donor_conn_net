@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Login - BDCN Platform</title>
+    <style>
+/*
+* BDCN Platform Core Design System
+* =================================
+*
+* Art Direction:
+* - PERSONALITY: Trustworthy, modern, precise, and efficient. Inspires confidence for a critical healthcare platform.
+* - COLOR: A primary palette of deep blue and clinical neutrals, with a vibrant, life-affirming red accent for CTAs and critical alerts.
+* - TYPOGRAPHY: Clean, legible sans-serif (`Inter`) for clarity across devices.
+* - SPACING/RADIUS/ELEVATION: A consistent 8pt grid system, soft radii, and a subtle shadow system for a layered, organized interface.
+*/
+
+/* -------------------- */
+/*   1. Root & Themes   */
+/* -------------------- */
+
+:root {
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+  /* Light Theme */
+  --bg-primary-light: #FFFFFF;
+  --bg-secondary-light: #F7F9FC;
+  --bg-tertiary-light: #EFF3F8;
+  --text-primary-light: #181C2A;
+  --text-secondary-light: #5A6475;
+  --text-on-accent-light: #FFFFFF;
+  --border-primary-light: #E1E8F2;
+  --border-secondary-light: #CED7E5;
+  --primary-main-light: #0A3A6B; /* Trustworthy Blue */
+  --primary-hover-light: #082E55;
+  --accent-main-light: #D94141; /* Life-Affirming Red */
+  --accent-hover-light: #B73636;
+  --accent-gradient-light: linear-gradient(90deg, #D94141 0%, #FF5757 100%);
+  --success-light: #238551;
+  --warning-light: #E38600;
+  --danger-light: #D1293D;
+  --shadow-sm-light: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg-light: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] {
+  --bg-primary-dark: #121821;
+  --bg-secondary-dark: #1A222F;
+  --bg-tertiary-dark: #253040;
+  --text-primary-dark: #F7F9FC;
+  --text-secondary-dark: #A8B4C5;
+  --text-on-accent-dark: #FFFFFF;
+  --border-primary-dark: #2F3B4F;
+  --border-secondary-dark: #495870;
+  --primary-main-dark: #1E88E5;
+  --primary-hover-dark: #1976D2;
+  --accent-main-dark: #EF5350;
+  --accent-hover-dark: #E53935;
+  --accent-gradient-dark: linear-gradient(90deg, #EF5350 0%, #FF7A78 100%);
+  --success-dark: #4CAF50;
+  --warning-dark: #FFC107;
+  --danger-dark: #F44336;
+  --shadow-sm-dark: 0 1px 2px 0 rgba(0, 0, 0, 0.15);
+  --shadow-md-dark: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
+  --shadow-lg-dark: 0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Assign variables */
+html {
+  --bg-primary: var(--bg-primary-light);
+  --bg-secondary: var(--bg-secondary-light);
+  --bg-tertiary: var(--bg-tertiary-light);
+  --text-primary: var(--text-primary-light);
+  --text-secondary: var(--text-secondary-light);
+  --text-on-accent: var(--text-on-accent-light);
+  --border-primary: var(--border-primary-light);
+  --border-secondary: var(--border-secondary-light);
+  --primary-main: var(--primary-main-light);
+  --primary-hover: var(--primary-hover-light);
+  --accent-main: var(--accent-main-light);
+  --accent-hover: var(--accent-hover-light);
+  --accent-gradient: var(--accent-gradient-light);
+  --success: var(--success-light);
+  --warning: var(--warning-light);
+  --danger: var(--danger-light);
+  --shadow-sm: var(--shadow-sm-light);
+  --shadow-md: var(--shadow-md-light);
+  --shadow-lg: var(--shadow-lg-light);
+}
+
+html[data-theme="dark"] {
+  --bg-primary: var(--bg-primary-dark);
+  --bg-secondary: var(--bg-secondary-dark);
+  --bg-tertiary: var(--bg-tertiary-dark);
+  --text-primary: var(--text-primary-dark);
+  --text-secondary: var(--text-secondary-dark);
+  --text-on-accent: var(--text-on-accent-dark);
+  --border-primary: var(--border-primary-dark);
+  --border-secondary: var(--border-secondary-dark);
+  --primary-main: var(--primary-main-dark);
+  --primary-hover: var(--primary-hover-dark);
+  --accent-main: var(--accent-main-dark);
+  --accent-hover: var(--accent-hover-dark);
+  --accent-gradient: var(--accent-gradient-dark);
+  --success: var(--success-dark);
+  --warning: var(--warning-dark);
+  --danger: var(--danger-dark);
+  --shadow-sm: var(--shadow-sm-dark);
+  --shadow-md: var(--shadow-md-dark);
+  --shadow-lg: var(--shadow-lg-dark);
+}
+
+/* -------------------- */
+/*   2. Base & Reset    */
+/* -------------------- */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+a {
+  color: var(--accent-main);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+img, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* -------------------- */
+/*  3. Typography Scale */
+/* -------------------- */
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.display {
+  font-size: 4rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+h1, .h1 { font-size: 3rem; line-height: 1.2; }
+h2, .h2 { font-size: 2rem; line-height: 1.3; font-weight: 600; }
+h3, .h3 { font-size: 1.5rem; line-height: 1.4; }
+h4, .h4 { font-size: 1.25rem; line-height: 1.5; }
+p, .p { font-size: 1rem; margin-bottom: 1rem; max-width: 70ch; }
+.caption { font-size: 0.875rem; color: var(--text-secondary); }
+.eyebrow {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-main);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+.gradient-text {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+/* -------------------- */
+/*   4. Layout System   */
+/* -------------------- */
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.main-content {
+    display: none; /* Hidden by default for SPA-like behavior */
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.main-content.active {
+    display: block;
+}
+
+.section {
+    padding: 6rem 0;
+}
+
+.section-sm {
+    padding: 4rem 0;
+}
+
+.grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-gap-1 { display: flex; gap: 0.5rem; }
+.flex-gap-2 { display: flex; gap: 1rem; }
+.flex-gap-3 { display: flex; gap: 1.5rem; }
+
+.text-center { text-align: center; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-4 { margin-top: 2rem; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-4 { margin-bottom: 2rem; }
+
+/* -------------------- */
+/*    5. Components     */
+/* -------------------- */
+
+/* --- Buttons --- */
+.btn {
+  display: inline-block;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent-gradient);
+  color: var(--text-on-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+  color: var(--text-on-accent);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-secondary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-tertiary);
+  border-color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: none;
+  padding: 0.75rem 1rem;
+}
+.btn-ghost:hover {
+    background-color: var(--bg-tertiary);
+    text-decoration: none;
+}
+
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+}
+
+/* --- Cards --- */
+.card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  border-bottom: 1px solid var(--border-primary);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.card-footer {
+    border-top: 1px solid var(--border-primary);
+    padding-top: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* --- Forms & Inputs --- */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.form-input, .form-select {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-family: var(--font-primary);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--accent-main);
+  box-shadow: 0 0 0 3px rgba(217, 65, 65, 0.2);
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.form-check-input {
+  height: 1.25rem;
+  width: 1.25rem;
+  accent-color: var(--accent-main);
+}
+
+.form-help-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+/* --- Badges/Pills --- */
+.badge {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  font-size: .75em;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-on-accent);
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 10rem;
+}
+.badge-primary { background-color: var(--primary-main); }
+.badge-accent { background-color: var(--accent-main); }
+.badge-success { background-color: var(--success); }
+.badge-warning { background-color: var(--warning); color: var(--text-primary); }
+.badge-danger { background-color: var(--danger); }
+.badge-neutral { background-color: var(--bg-tertiary); color: var(--text-secondary); }
+
+/* --- Tables --- */
+.table-wrapper {
+    overflow-x: auto;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+.table th, .table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-primary);
+    vertical-align: middle;
+}
+.table th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+.table tbody tr:hover {
+    background-color: var(--bg-tertiary);
+}
+
+/* --- Alerts --- */
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.alert-icon {
+    font-size: 1.5rem;
+}
+.alert-success {
+    background-color: rgba(35, 133, 81, 0.1);
+    border-color: var(--success);
+    color: var(--success);
+}
+.alert-warning {
+    background-color: rgba(227, 134, 0, 0.1);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+.alert-danger {
+    background-color: rgba(209, 41, 61, 0.1);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+.alert-info {
+    background-color: rgba(10, 58, 107, 0.1);
+    border-color: var(--primary-main);
+    color: var(--primary-main);
+}
+
+/* -------------------- */
+/*  6. Header & Footer  */
+/* -------------------- */
+
+.main-header {
+  background-color: var(--bg-primary);
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-primary);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.8);
+}
+html[data-theme='dark'] .main-header {
+    background-color: rgba(18, 24, 33, 0.8);
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 48px;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.logo-icon {
+    color: var(--accent-main);
+}
+.logo:hover {
+    text-decoration: none;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-links a {
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.nav-links a:hover, .nav-links a.active {
+  color: var(--text-primary);
+  background-color: var(--bg-tertiary);
+  text-decoration: none;
+}
+
+.main-footer {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 4rem 0 2rem;
+  border-top: 1px solid var(--border-primary);
+}
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+.footer-bottom {
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+/* -------------------- */
+/*   7. Utility Classes */
+/* -------------------- */
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--accent-main);
+    color: white;
+    padding: 8px;
+    z-index: 1001;
+    transition: top 0.3s;
+}
+.skip-link:focus {
+    top: 0;
+}
+
+.theme-toggle {
+    cursor: pointer;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 50px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+}
+.theme-toggle-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* -------------------- */
+/*   8. Responsiveness  */
+/* -------------------- */
+@media (max-width: 1024px) {
+  .grid-cols-3, .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+    .container { padding: 0 1.5rem; }
+    .section { padding: 4rem 0; }
+    .display { font-size: 3rem; }
+    h1, .h1 { font-size: 2.25rem; }
+    .grid-cols-2, .grid-cols-3, .grid-cols-4 {
+        grid-template-columns: 1fr;
+    }
+    .flex-between { flex-direction: column; gap: 1rem; align-items: flex-start; }
+    .nav-links { display: none; /* Simplification for this example; a real app would use a mobile menu */ }
+}
+
+@media (max-width: 480px) {
+    .container { padding: 0 1rem; }
+    .display { font-size: 2.5rem; }
+    h1, .h1 { font-size: 2rem; }
+    h2, .h2 { font-size: 1.75rem; }
+    .btn { padding: 0.75rem 1rem; width: 100%; }
+    .btn-lg { padding: 1rem 1.5rem; }
+    .card { padding: 1.5rem; }
+}
+
+
+</style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <header class="main-header">
+        <div class="container">
+            <nav class="navbar" aria-label="Main navigation">
+                <a href="landing.html" class="logo">
+                    <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    <span>BDCN</span>
+                </a>
+                 <a href="landing.html" class="btn btn-secondary">&larr; Back to Home</a>
+            </nav>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container" style="max-width: 1024px; margin-top: 1rem; margin-bottom: 1rem;">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="padding: 1rem; margin-bottom: 1rem; border-radius: 0.25rem; border: 1px solid transparent; {{ 'background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;' if category == 'danger' or category == 'error' else 'background-color: #d4edda; color: #155724; border-color: #c3e6cb;' if category == 'success' else 'background-color: #fff3cd; color: #856404; border-color: #ffeeba;' if category == 'warning' else 'background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb;' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+
+    <main id="main">
+        <section id="clinic_login" class="main-content active">
+            <div class="section-sm">
+                <div class="container" style="max-width: 500px;">
+                    <div class="card">
+                        <h1 class="h2 text-center">Clinic Portal Login</h1>
+                        <p class="text-center text-secondary mb-4">Access for authorized donation center staff.</p>
+                        <form action="inventory_management.html">
+                            <div class="form-group"><label for="clinic-login-email" class="form-label">Staff ID / Email</label><input type="email" id="clinic-login-email" name="email" class="form-input" required value="clinic.staff@bdcn.com"></div>
+                            <div class="form-group"><label for="clinic-login-password" class="form-label">Password</label><input type="password" id="clinic-login-password" name="password" class="form-input" required value="password"></div>
+                            <button type="submit" class="btn btn-primary btn-block btn-lg mt-4">Secure Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+             <div class="footer-bottom">
+                 <p>&copy; 2024 BDCN Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
