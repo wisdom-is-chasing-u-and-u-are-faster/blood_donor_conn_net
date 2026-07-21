@@ -213,3 +213,90 @@ def test_privacy_first_geolocation_filtering(client):
     assert b"Google Maps API Simulation Active" in response.data
     assert b"Downtown" in response.data  # Distance 8
     assert b"West Hills" not in response.data  # Distance 35
+
+
+def test_donor_registration_age_under_16(client):
+    """Test that registering as donor with age under 16 is rejected (REQ-F-021)."""
+    response = client.post("/donor/register", data={
+        "name": ".Too Young",
+        "username": "tooyoung",
+        "dob": "2018-05-15"  # age ~8 years old
+    }, follow_redirects=True)
+    assert b"Registration rejected: Donors must be at least 16 years old." in response.data
+
+
+def test_donor_registration_age_16_17_no_consent(client):
+    """Test that registering as donor with age 16-17 without parental consent is rejected (REQ-F-021)."""
+    response = client.post("/donor/register", data={
+        "name": "Teen Donor",
+        "username": "teendonor",
+        "dob": "2009-08-10"  # age ~17 years old
+    }, follow_redirects=True)
+    assert b"Parental consent is required for donors under 18." in response.data
+
+
+def test_donor_registration_age_16_17_with_consent(client):
+    """Test that registering as donor with age 16-17 with parental consent succeeds (REQ-F-021)."""
+    response = client.post("/donor/register", data={
+        "name": "Teen Consent",
+        "username": "teenconsent",
+        "dob": "2009-08-10",
+        "consent": "on"
+    }, follow_redirects=True)
+    assert b"Registration successful!" in response.data
+
+
+def test_hospital_demand_over_50_units_flagged(client):
+    """Test that orders above 50 units require medical director approval (REQ-F-024)."""
+    client.post(
+        "/login/hospital",
+        data={
+            "username": "Mercy Hospital",
+            "password": "123"})
+    response = client.post("/hospital/create-demand", data={
+        "blood_type": "O-",
+        "units": "55",  # > 50 units
+        "order_type": "Emergency"
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Awaiting Medical Director Approval" in response.data
+
+
+def test_donor_dhq_and_signature(client):
+    """Test completing the DHQ questionnaire and electronic signature (REQ-F-004, REQ-F-005)."""
+    # Login as donor
+    client.post(
+        "/login/donor",
+        data={
+            "username": "janesmith",
+            "password": "password"})
+
+    # Complete DHQ
+    dhq_resp = client.post(
+        "/donor/dhq",
+        data={
+            "meds": "no",
+            "travel": "no"},
+        follow_redirects=True)
+    assert b"Digital Health History Questionnaire saved." in dhq_resp.data
+
+    # Electronic signature
+    sig_resp = client.post(
+        "/donor/dhq-signature",
+        data={
+            "signature": "Jane Smith"},
+        follow_redirects=True)
+    assert b"Intake completed." in sig_resp.data
+
+
+def test_clinic_login_and_inventory(client):
+    """Test clinic staff login and inventory portal visibility (REQ-F-009)."""
+    # Login as clinic staff
+    login_resp = client.post(
+        "/login/clinic",
+        data={
+            "username": "clinic.staff@bdcn.com",
+            "password": "password"},
+        follow_redirects=True)
+    assert b"Logged in to Clinic Portal successfully!" in login_resp.data
+    assert b"Cold Chain Inventory Management" in login_resp.data
