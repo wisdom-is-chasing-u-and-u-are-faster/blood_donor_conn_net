@@ -208,8 +208,7 @@ def social_login(provider):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
     flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
+        f"Successfully authenticated via {provider.capitalize()}!",
         "success")
     return redirect(url_for("donor_profile"))
 
@@ -259,7 +258,7 @@ def donor_register():
     return render_template("register_donor.html")
 
 
-@app.route("/donor/profile")
+@app.route("/donor/profile", methods=["GET", "POST"])
 def donor_profile():
     if session.get("role") != "donor":
         flash("Unauthorized. Please log in first.", "danger")
@@ -270,6 +269,18 @@ def donor_profile():
     if not target_donor:
         flash("Donor profile not found.", "danger")
         return redirect(url_for("logout"))
+
+    if request.method == "POST":
+        target_donor["name"] = request.form.get("name", target_donor.get("name"))
+        if request.form.get("age"):
+            try:
+                target_donor["age"] = int(request.form["age"])
+            except ValueError:
+                pass
+        target_donor["gender"] = request.form.get("gender", target_donor.get("gender"))
+        target_donor["blood_group"] = request.form.get("blood_group", target_donor.get("blood_group"))
+        target_donor["last_donation"] = request.form.get("last_donation", target_donor.get("last_donation"))
+        flash("Profile updated successfully.", "success")
 
     # Generate badges based on donation count
     count = target_donor.get("donation_count", 0)
@@ -426,6 +437,29 @@ def create_demand():
         return redirect(url_for("hospital_dashboard"))
 
     return render_template("create_demand.html")
+
+
+@app.route("/admin/dashboard")
+def admin_dashboard():
+    if session.get("role") != "admin":
+        flash("Unauthorized. Admin access required.", "danger")
+        return redirect(url_for("login_admin"))
+
+    total_donors = len(donors)
+    total_demands = len(demands)
+    pending_demands = len([d for d in demands if d.get("status") == "Pending"])
+    approved_demands = len([d for d in demands if d.get("status") == "Approved"])
+    total_alerts = len(alerts)
+
+    stats = {
+        "total_donors": total_donors,
+        "total_demands": total_demands,
+        "pending_demands": pending_demands,
+        "approved_demands": approved_demands,
+        "total_alerts": total_alerts
+    }
+
+    return render_template("admin_dashboard.html", stats=stats, demands=demands, alerts=alerts)
 
 
 @app.route("/admin/queue")
