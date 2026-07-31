@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - BDCN System Statistics{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4">📊 System Statistics Dashboard</h2>
+    
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Total Registered Donors</h5>
+                    <p class="card-text display-6 font-weight-bold">{{ stats.total_donors }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Total Blood Demands</h5>
+                    <p class="card-text display-6 font-weight-bold">{{ stats.total_demands }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Fulfilled Demands</h5>
+                    <p class="card-text display-6 font-weight-bold">{{ stats.fulfilled_demands }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Verification Queue</h5>
+                    <p class="card-text display-6 font-weight-bold">{{ stats.verification_queue_length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Overview Summary</h5>
+        </div>
+        <div class="card-body">
+            <p>Active System Metrics for Blood Donor Connection Network.</p>
+            <ul>
+                <li><strong>Registered Donors:</strong> {{ stats.total_donors }}</li>
+                <li><strong>Active Blood Requests:</strong> {{ stats.active_demands }}</li>
+                <li><strong>Fulfilled Blood Requests:</strong> {{ stats.fulfilled_demands }}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

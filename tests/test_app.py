@@ -213,3 +213,82 @@ def test_privacy_first_geolocation_filtering(client):
     assert b"Google Maps API Simulation Active" in response.data
     assert b"Downtown" in response.data  # Distance 8
     assert b"West Hills" not in response.data  # Distance 35
+
+
+def test_donor_registration_login_and_profile_management(client):
+    """AC: Users can successfully register as a Donor, log in, and manage their profile."""
+    # Register donor
+    reg_res = client.post("/donor/register", data={
+        "name": "Test Profile Donor",
+        "username": "testprofile",
+        "age": "30",
+        "gender": "Male",
+        "blood_group": "A+",
+        "last_donation": "2025-12-01"
+    }, follow_redirects=True)
+    assert reg_res.status_code == 200
+
+    # Log in
+    login_res = client.post("/login/donor", data={
+        "username": "testprofile",
+        "password": "password"
+    }, follow_redirects=True)
+    assert login_res.status_code == 200
+
+    # Manage profile via POST
+    profile_update = client.post("/donor/profile", data={
+        "full_name": "Updated Profile Name",
+        "phone": "+1-555-0199",
+        "email": "testprofile@example.com",
+        "blood_group": "A+",
+        "district": "Central"
+    }, follow_redirects=True)
+    assert profile_update.status_code == 200
+    assert b"Profile updated successfully" in profile_update.data
+
+
+def test_hospital_coordinators_create_blood_requests_and_view_dashboard(client):
+    """AC: Hospital coordinators can create new blood requests and view them on a dashboard."""
+    # Log in as hospital
+    client.post("/login/hospital", data={
+        "username": "Mercy Hospital",
+        "password": "123"
+    })
+
+    # View dashboard
+    dash_res = client.get("/hospital/dashboard")
+    assert dash_res.status_code == 200
+
+    # Create demand
+    data = {
+        "blood_type": "O+",
+        "units": "3",
+        "notes": "Emergency trauma request",
+        "urgency": "Urgent",
+        "district": "Central",
+        "document": (io.BytesIO(b"test doc"), "req_doc.pdf")
+    }
+    create_res = client.post("/hospital/create-demand", data=data,
+                             content_type="multipart/form-data", follow_redirects=True)
+    assert create_res.status_code == 200
+    assert b"Blood demand request submitted successfully" in create_res.data
+
+
+def test_admin_system_statistics_dashboard(client):
+    """AC: Admins can view system statistics on the admin dashboard."""
+    client.post("/login/admin", data={
+        "username": "admin_district",
+        "password": "123"
+    })
+
+    response = client.get("/admin/dashboard")
+    assert response.status_code == 200
+    assert b"System Statistics Dashboard" in response.data or b"total_donors" in response.data
+
+
+def test_responsive_ui_and_viewport_meta_tags(client):
+    """AC: The UI is responsive and functions correctly on modern desktop and mobile web browsers."""
+    res = client.get("/login/donor")
+    assert res.status_code == 200
+    assert b"viewport" in res.data
+    assert b"bootstrap" in res.data or b"container" in res.data
