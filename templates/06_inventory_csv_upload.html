@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>CSV Inventory Ingestion Portal</h2>
+    <p>Upload a CSV file containing columns: <code>facility, blood_type, units, component, expiration_date</code></p>
+    <form method="POST" action="/inventory/csv-upload" enctype="multipart/form-bytes">
+        <div class="mb-3">
+            <label>Select CSV File</label>
+            <input type="file" name="csv_file" accept=".csv" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-success">Upload & Ingest CSV Data</button>
+        <a href="/inventory/manual-entry" class="btn btn-outline-primary ms-2">Manual Entry Form</a>
+    </form>
+</div>
+{% endblock %}

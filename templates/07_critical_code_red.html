@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="alert alert-danger">
+        <h2>🚨 CRITICAL CODE RED Emergency Request Portal</h2>
+        <p>This request triggers high-priority emergency matchmaking and immediate alerts.</p>
+    </div>
+    <form method="POST" action="/critical-code-red">
+        <div class="mb-3"><label>Hospital Name</label><input type="text" name="hospital_name" class="form-control" value="City Emergency Hospital" required></div>
+        <div class="mb-3"><label>Blood Type Needed</label><select name="blood_type" class="form-control"><option>O-</option><option>A+</option><option>B+</option><option>AB-</option></select></div>
+        <div class="mb-3"><label>Emergency Units Required</label><input type="number" name="units" value="10" min="1" class="form-control" required></div>
+        <div class="mb-3"><label>District / Region</label><input type="text" name="district" value="Downtown Central" class="form-control" required></div>
+        <div class="mb-3"><label>Clinical Details / Emergency Notes</label><textarea name="notes" class="form-control">CRITICAL CODE RED - Immediate trauma unit requirement</textarea></div>
+        <button type="submit" class="btn btn-danger btn-lg">Dispatch CRITICAL CODE RED Alert</button>
+    </form>
+</div>
+{% endblock %}

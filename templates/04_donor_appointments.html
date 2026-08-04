@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Schedule Donation Appointment</h2>
+    <form method="POST" action="/donor/appointments">
+        <div class="mb-3">
+            <label>Donation Center Location</label>
+            <select name="center" class="form-control" required>
+                <option value="Central Regional Donation Center">Central Regional Donation Center</option>
+                <option value="North District Clinic">North District Clinic</option>
+                <option value="East Valley Medical Hub">East Valley Medical Hub</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Preferred Date</label>
+            <input type="date" name="date" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Preferred Time Slot</label>
+            <input type="time" name="time" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Blood Type</label>
+            <input type="text" name="blood_type" value="{{ donor.blood_group if donor else 'A+' }}" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-danger">Confirm Appointment Slot</button>
+    </form>
+</div>
+{% endblock %}
