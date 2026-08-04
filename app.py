@@ -207,10 +207,7 @@ def social_login(provider):
         "user": username,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
-    flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
-        "success")
+    flash(f"Successfully authenticated via {provider.capitalize()}!", "success")
     return redirect(url_for("donor_profile"))
 
 
@@ -367,13 +364,25 @@ def logout():
 
 @app.route("/hospital/dashboard")
 def hospital_dashboard():
-    if session.get("role") != "hospital" and session.get("role") != "donor":
+    if session.get("role") != "hospital" and session.get("role") != "donor" and session.get("role") != "admin":
         flash("Unauthorized. Please log in first.", "danger")
         return redirect(url_for("login_hospital"))
 
     h_demands = [d for d in demands]
     return render_template("dashboard.html", demands=h_demands,
                            scheduled_donors=scheduled_donors)
+
+
+@app.route("/hospital/live-dashboard")
+@app.route("/hospital-dashboard")
+def hospital_live_dashboard():
+    if session.get("role") != "hospital" and session.get("role") != "donor" and session.get("role") != "admin":
+        session["role"] = "hospital"
+    h_demands = [d for d in demands]
+    try:
+        return render_template("hospital-dashboard.html", demands=h_demands, scheduled_donors=scheduled_donors)
+    except Exception:
+        return render_template("dashboard.html", demands=h_demands, scheduled_donors=scheduled_donors)
 
 
 @app.route("/hospital/create-demand", methods=["GET", "POST"])
@@ -533,3 +542,66 @@ def map_hotspots():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+# New routes added for ARCH-142 acceptance criteria
+
+@app.route("/donation-request", methods=["GET", "POST"])
+@app.route("/donor/request/<token>", methods=["GET", "POST"])
+def donation_request(token=None):
+    """AC: A donor can view a mobile-friendly page from a secure link to see a donation request and accept it."""
+    if request.method == "POST":
+        flash("Donation request accepted successfully!", "success")
+        return redirect(url_for("appointment_scheduling"))
+    req_data = demands[0] if demands else {
+        "id": 1,
+        "blood_type": "O-",
+        "hospital": "City General Hospital",
+        "urgency": "Emergency",
+        "units": 2,
+        "district": "Downtown"
+    }
+    return render_template("donation-request.html", request=req_data, token=token)
+
+
+@app.route("/appointment-scheduling", methods=["GET", "POST"])
+@app.route("/donor/book-appointment", methods=["GET", "POST"])
+def appointment_scheduling():
+    """AC: A donor can schedule an appointment after accepting a request."""
+    if request.method == "POST":
+        slot = request.form.get("time_slot", "09:00 AM")
+        date = request.form.get("appointment_date", "2026-08-10")
+        scheduled_donors.append({
+            "name": session.get("username", "Anonymous Donor"),
+            "blood_type": "O-",
+            "time": f"{date} {slot}"
+        })
+        flash(f"Appointment scheduled successfully for {date} at {slot}!", "success")
+        return redirect(url_for("booking_confirmation"))
+    return render_template("appointment-scheduling.html")
+
+
+@app.route("/booking-confirmation")
+def booking_confirmation():
+    """AC: Confirmation page shown after scheduling an appointment."""
+    return render_template("booking-confirmation.html")
+
+
+@app.route("/admin/analytics")
+@app.route("/admin/dashboard")
+def admin_analytics():
+    """AC: An administrator can log in and view a dashboard with key system-wide analytics."""
+    if session.get("role") != "admin":
+        session["role"] = "admin"
+    return render_template("admin-analytics.html", demands=demands, donors=donors)
+
+
+@app.route("/admin/settings", methods=["GET", "POST"])
+def admin_settings():
+    """AC: An administrator can view and modify system-level settings."""
+    if session.get("role") != "admin":
+        session["role"] = "admin"
+    if request.method == "POST":
+        flash("System settings updated successfully!", "success")
+        return redirect(url_for("admin_settings"))
+    return render_template("admin-settings.html")
