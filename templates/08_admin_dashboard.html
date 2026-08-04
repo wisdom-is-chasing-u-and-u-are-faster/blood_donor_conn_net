@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Blood Bank Administrator Inventory Dashboard</h2>
+    <div class="row mt-3 mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Inventory Units</h5>
+                    <h2>{{ total_units }} units</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Expiring Soon Units</h5>
+                    <h2>{{ near_expiration_units | length }} batches</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Demands</h5>
+                    <h2>{{ pending_demands | length }} requests</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mb-3">
+        <h3>Inventory Ledger & Expiration Tracking</h3>
+        <div>
+            <a href="/inventory/manual-entry" class="btn btn-sm btn-primary">Manual Entry</a>
+            <a href="/inventory/csv-upload" class="btn btn-sm btn-success">CSV Upload</a>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Facility</th>
+                <th>Blood Type</th>
+                <th>Units</th>
+                <th>Component</th>
+                <th>Expiration Date</th>
+                <th>Status / Alert</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in inventory %}
+            <tr class="{% if item.is_near_expiration %}table-warning text-danger fw-bold near-expiration{% endif %}">
+                <td>#{{ item.id }}</td>
+                <td>{{ item.facility }}</td>
+                <td><span class="badge bg-danger">{{ item.blood_type }}</span></td>
+                <td>{{ item.units }}</td>
+                <td>{{ item.component }}</td>
+                <td>{{ item.expiration_date }}</td>
+                <td>
+                    {% if item.is_near_expiration %}
+                    <span class="badge bg-warning text-dark">⚠️ NEAR EXPIRATION ({{ item.days_to_expiration }} days)</span>
+                    {% else %}
+                    <span class="badge bg-success">AVAILABLE</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

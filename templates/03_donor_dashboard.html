@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Welcome, {{ donor.name if donor else 'Donor' }}!</h2>
+    <div class="alert alert-info mt-3">
+        <h4>Eligibility Status</h4>
+        <p><strong>{{ eligibility_status }}</strong></p>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>My Scheduled Appointments</h3>
+            <a href="/donor/appointments" class="btn btn-primary">Book New Appointment</a>
+        </div>
+        <div class="card-body">
+            {% if appointments %}
+            <table class="table table-striped">
+                <thead>
+                    <tr><th>Location</th><th>Date</th><th>Time</th><th>Blood Type</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for appt in appointments %}
+                    <tr>
+                        <td>{{ appt.center }}</td>
+                        <td>{{ appt.date }}</td>
+                        <td>{{ appt.time }}</td>
+                        <td><span class="badge bg-danger">{{ appt.blood_type }}</span></td>
+                        <td><span class="badge bg-success">{{ appt.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No appointments booked yet. Click above to schedule your donation.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

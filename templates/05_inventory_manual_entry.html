@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Manual Inventory Entry Portal</h2>
+    <form method="POST" action="/inventory/manual-entry">
+        <div class="mb-3"><label>Facility / Center Name</label><input type="text" name="facility" value="Central Blood Bank" class="form-control" required></div>
+        <div class="mb-3"><label>Blood Type</label><select name="blood_type" class="form-control"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div>
+        <div class="mb-3"><label>Units Count</label><input type="number" name="units" min="1" value="10" class="form-control" required></div>
+        <div class="mb-3"><label>Component</label><select name="component" class="form-control"><option>Whole Blood</option><option>Red Blood Cells</option><option>Platelets</option><option>Plasma</option></select></div>
+        <div class="mb-3"><label>Expiration Date</label><input type="date" name="expiration_date" class="form-control" required></div>
+        <button type="submit" class="btn btn-primary">Add Inventory Record</button>
+        <a href="/inventory/csv-upload" class="btn btn-outline-secondary ms-2">Switch to CSV Upload</a>
+    </form>
+</div>
+{% endblock %}

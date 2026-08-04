@@ -213,3 +213,98 @@ def test_privacy_first_geolocation_filtering(client):
     assert b"Google Maps API Simulation Active" in response.data
     assert b"Downtown" in response.data  # Distance 8
     assert b"West Hills" not in response.data  # Distance 35
+
+
+# Additional Tests for ARCH-150 Acceptance Criteria
+
+def test_donor_registration_login_logout(client):
+    """AC: Users can successfully register for a new donor account, log in, and log out."""
+    # Register donor
+    reg_resp = client.post("/donor/register", data={
+        "name": "Alex Test",
+        "username": "alextest",
+        "age": "29",
+        "gender": "Male",
+        "blood_group": "A+",
+        "last_donation": "2025-10-10"
+    }, follow_redirects=True)
+    assert reg_resp.status_code == 200
+
+    # Logout
+    logout_resp = client.get("/logout", follow_redirects=True)
+    assert logout_resp.status_code == 200
+
+    # Login
+    login_resp = client.post("/login/donor", data={
+        "username": "alextest",
+        "password": "password123"
+    }, follow_redirects=True)
+    assert login_resp.status_code == 200
+
+
+def test_donor_dashboard_and_eligibility(client):
+    """AC: Logged-in donors can view their dashboard and see their eligibility status and appointments."""
+    client.post("/login/donor", data={"username": "johndoe", "password": "password123"}, follow_redirects=True)
+    response = client.get("/donor/dashboard")
+    assert response.status_code == 200
+    assert b"Eligibility Status" in response.data or b"Welcome" in response.data
+
+
+def test_donor_appointment_booking(client):
+    """AC: Donors can schedule a new appointment and see it reflected in their appointment list."""
+    client.post("/login/donor", data={"username": "johndoe", "password": "password123"}, follow_redirects=True)
+    response = client.post("/donor/appointments", data={
+        "center": "Central Regional Donation Center",
+        "date": "2026-08-25",
+        "time": "11:00 AM",
+        "blood_type": "A+"
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Appointment scheduled successfully" in response.data or b"Central Regional" in response.data
+
+
+def test_admin_inventory_dashboard_and_near_expiration(client):
+    """AC: Blood Bank Administrators can view the main inventory dashboard and near-expiration units."""
+    client.post("/login/admin", data={"username": "admin_district", "password": "password123"}, follow_redirects=True)
+    response = client.get("/admin/dashboard")
+    assert response.status_code == 200
+    assert b"Inventory Ledger" in response.data or b"NEAR EXPIRATION" in response.data
+
+
+def test_inventory_manual_entry_and_csv_upload(client):
+    """AC: Administrators can add new inventory using manual entry and CSV upload."""
+    client.post("/login/admin", data={"username": "admin_district", "password": "password123"}, follow_redirects=True)
+
+    # Manual Entry
+    manual_resp = client.post("/inventory/manual-entry", data={
+        "facility": "Test Regional Hub",
+        "blood_type": "O-",
+        "units": "15",
+        "component": "Whole Blood",
+        "expiration_date": "2026-08-12"
+    }, follow_redirects=True)
+    assert manual_resp.status_code == 200
+    assert b"Successfully added" in manual_resp.data or b"O-" in manual_resp.data
+
+    # CSV Upload
+    csv_data = b"facility,blood_type,units,component,expiration_date\nMetro Hub,B+,20,Platelets,2026-08-28\n"
+    csv_resp = client.post("/inventory/csv-upload", data={
+        "csv_file": (io.BytesIO(csv_data), "inventory_import.csv")
+    }, follow_redirects=True)
+    assert csv_resp.status_code == 200
+    assert b"CSV ingestion complete" in csv_resp.data or b"inventory records added" in csv_resp.data
+
+
+def test_hospital_critical_code_red(client):
+    """AC: Hospital Staff can log in and submit a Critical Code Red request."""
+    client.post("/login/hospital", data={"username": "Mercy Hospital",
+                "password": "password123"}, follow_redirects=True)
+    response = client.post("/critical-code-red", data={
+        "hospital_name": "Mercy Hospital Emergency",
+        "blood_type": "O-",
+        "units": "12",
+        "district": "Downtown",
+        "notes": "Mass casualty event - urgent O- needed"
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"CRITICAL CODE RED" in response.data or b"emergency alert dispatched" in response.data

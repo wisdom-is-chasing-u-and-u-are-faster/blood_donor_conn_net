@@ -208,8 +208,7 @@ def social_login(provider):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
     flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
+        f"Successfully authenticated via {provider.capitalize()}!",
         "success")
     return redirect(url_for("donor_profile"))
 
@@ -533,3 +532,344 @@ def map_hotspots():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+# Added Inventory Data Structure & Appointments for ARCH-150
+inventory = [
+    {
+        "id": 1,
+        "facility": "Central Regional Blood Bank",
+        "blood_type": "A+",
+        "units": 25,
+        "component": "Whole Blood",
+        "expiration_date": "2026-08-08",
+        "days_to_expiration": 4,
+        "is_near_expiration": True,
+        "status": "EXPIRING_SOON"
+    },
+    {
+        "id": 2,
+        "facility": "North District Facility",
+        "blood_type": "O-",
+        "units": 8,
+        "component": "Red Blood Cells",
+        "expiration_date": "2026-08-05",
+        "days_to_expiration": 1,
+        "is_near_expiration": True,
+        "status": "EXPIRING_SOON"
+    },
+    {
+        "id": 3,
+        "facility": "East Valley Hub",
+        "blood_type": "B+",
+        "units": 40,
+        "component": "Platelets",
+        "expiration_date": "2026-08-30",
+        "days_to_expiration": 26,
+        "is_near_expiration": False,
+        "status": "AVAILABLE"
+    },
+    {
+        "id": 4,
+        "facility": "South Coast Center",
+        "blood_type": "AB-",
+        "units": 12,
+        "component": "Plasma",
+        "expiration_date": "2026-08-07",
+        "days_to_expiration": 3,
+        "is_near_expiration": True,
+        "status": "EXPIRING_SOON"
+    }
+]
+
+donor_appointments = [
+    {
+        "id": 1,
+        "donor_username": "johndoe",
+        "center": "Downtown Donation Center",
+        "date": "2026-08-15",
+        "time": "10:30 AM",
+        "blood_type": "A+",
+        "status": "CONFIRMED"
+    },
+    {
+        "id": 2,
+        "donor_username": "janesmith",
+        "center": "North District Clinic",
+        "date": "2026-08-18",
+        "time": "02:15 PM",
+        "blood_type": "O-",
+        "status": "CONFIRMED"
+    }
+]
+
+
+@app.route("/login")
+def login_redirect():
+    return redirect(url_for("login_donor"))
+
+
+@app.route("/register")
+def register_redirect():
+    return redirect(url_for("donor_register"))
+
+
+@app.route("/donor/dashboard")
+def donor_dashboard():
+    if session.get("role") != "donor":
+        flash("Unauthorized. Please log in as a donor.", "danger")
+        return redirect(url_for("login_donor"))
+
+    username = session.get("username")
+    target_donor = next((d for d in donors if d["username"] == username), None)
+    if not target_donor:
+        flash("Donor profile not found.", "danger")
+        return redirect(url_for("logout"))
+
+    my_appointments = [a for a in donor_appointments if a.get("donor_username") == username]
+
+    # Eligibility calculation
+    eligibility_status = "Eligible to donate now!"
+    days_until_eligible = 0
+    if target_donor.get("last_donation"):
+        try:
+            last_date = datetime.strptime(target_donor["last_donation"], "%Y-%m-%d")
+            delta = (datetime.now() - last_date).days
+            if delta < 56:
+                days_until_eligible = 56 - delta
+                eligibility_status = f"You are eligible to donate in {days_until_eligible} days."
+        except Exception:
+            pass
+
+    return render_template("03_donor_dashboard.html",
+                           donor=target_donor,
+                           eligibility_status=eligibility_status,
+                           days_until_eligible=days_until_eligible,
+                           appointments=my_appointments)
+
+
+@app.route("/donor/appointments", methods=["GET", "POST"])
+@app.route("/donor/book-appointment", methods=["GET", "POST"])
+def donor_appointments_route():
+    if session.get("role") != "donor":
+        flash("Unauthorized. Please log in as a donor.", "danger")
+        return redirect(url_for("login_donor"))
+
+    username = session.get("username")
+    target_donor = next((d for d in donors if d["username"] == username), None)
+
+    if request.method == "POST":
+        center = request.form.get("center") or request.form.get("facility") or "Central Donation Clinic"
+        date = request.form.get("date") or "2026-08-20"
+        time = request.form.get("time") or "10:00 AM"
+        blood_type = request.form.get("blood_type") or (target_donor["blood_group"] if target_donor else "O+")
+
+        new_appt = {
+            "id": len(donor_appointments) + 1,
+            "donor_username": username,
+            "center": center,
+            "date": date,
+            "time": time,
+            "blood_type": blood_type,
+            "status": "CONFIRMED"
+        }
+        donor_appointments.append(new_appt)
+        scheduled_donors.append(
+            {
+                "name": target_donor["name"] if target_donor else username,
+                "blood_type": blood_type,
+                "time": f"{date} {time}"
+            })
+
+        audit_logs.append({
+            "action": "APPOINTMENT BOOKED",
+            "details": f"Booked appointment at {center} on {date} at {time}.",
+            "user": username,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        flash("Appointment scheduled successfully!", "success")
+        return redirect(url_for("donor_dashboard"))
+
+    my_appointments = [a for a in donor_appointments if a.get("donor_username") == username]
+    return render_template("04_donor_appointments.html", donor=target_donor, appointments=my_appointments)
+
+
+@app.route("/admin/dashboard")
+@app.route("/inventory/dashboard")
+def admin_inventory_dashboard():
+    if session.get("role") != "admin":
+        flash("Unauthorized. Please log in as administrator.", "danger")
+        return redirect(url_for("login_admin"))
+
+    near_expiration_units = [item for item in inventory if item.get(
+        "is_near_expiration") or item.get("days_to_expiration", 99) <= 7]
+    total_units = sum(item["units"] for item in inventory)
+
+    return render_template("08_admin_dashboard.html",
+                           inventory=inventory,
+                           near_expiration_units=near_expiration_units,
+                           total_units=total_units,
+                           pending_demands=[d for d in demands if d.get("status") == "Pending"])
+
+
+@app.route("/inventory/manual-entry", methods=["GET", "POST"])
+@app.route("/admin/inventory/manual-entry", methods=["GET", "POST"])
+def inventory_manual_entry():
+    if session.get("role") != "admin":
+        flash("Unauthorized. Please log in as administrator.", "danger")
+        return redirect(url_for("login_admin"))
+
+    if request.method == "POST":
+        facility = request.form.get("facility") or "Central Blood Bank"
+        blood_type = request.form.get("blood_type")
+        units = request.form.get("units")
+        component = request.form.get("component") or "Whole Blood"
+        expiration_date = request.form.get("expiration_date") or "2026-09-01"
+
+        if not blood_type or not units:
+            flash("Blood type and units are required.", "danger")
+            return redirect(url_for("inventory_manual_entry"))
+
+        units_int = int(units)
+        days_exp = 30
+        try:
+            exp_dt = datetime.strptime(expiration_date, "%Y-%m-%d")
+            days_exp = (exp_dt - datetime.now()).days
+        except Exception:
+            pass
+
+        is_near = days_exp <= 7
+        new_item = {
+            "id": len(inventory) + 1,
+            "facility": facility,
+            "blood_type": blood_type,
+            "units": units_int,
+            "component": component,
+            "expiration_date": expiration_date,
+            "days_to_expiration": days_exp,
+            "is_near_expiration": is_near,
+            "status": "EXPIRING_SOON" if is_near else "AVAILABLE"
+        }
+        inventory.append(new_item)
+
+        audit_logs.append({
+            "action": "INVENTORY MANUAL ENTRY",
+            "details": f"Added {units_int} units of {blood_type} ({component}) at {facility}.",
+            "user": session.get("username"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        flash(f"Successfully added {units_int} units of {blood_type} to inventory!", "success")
+        return redirect(url_for("admin_inventory_dashboard"))
+
+    return render_template("05_inventory_manual_entry.html")
+
+
+@app.route("/inventory/csv-upload", methods=["GET", "POST"])
+@app.route("/admin/inventory/csv-upload", methods=["GET", "POST"])
+def inventory_csv_upload():
+    if session.get("role") != "admin":
+        flash("Unauthorized. Please log in as administrator.", "danger")
+        return redirect(url_for("login_admin"))
+
+    if request.method == "POST":
+        file = request.files.get("csv_file") or request.files.get("file")
+        if not file:
+            flash("Please select a CSV file to upload.", "danger")
+            return redirect(url_for("inventory_csv_upload"))
+
+        content = file.stream.read().decode("utf-8")
+        lines = [line.strip() for line in content.splitlines() if line.strip()]
+        added_count = 0
+
+        for line in lines[1:]:
+            parts = line.split(",")
+            if len(parts) >= 3:
+                facility = parts[0].strip() if len(parts) > 0 else "Main Facility"
+                blood_type = parts[1].strip() if len(parts) > 1 else "O+"
+                units = int(parts[2].strip()) if parts[2].strip().isdigit() else 5
+                component = parts[3].strip() if len(parts) > 3 else "Whole Blood"
+                exp_date = parts[4].strip() if len(parts) > 4 else "2026-08-30"
+
+                days_exp = 20
+                try:
+                    exp_dt = datetime.strptime(exp_date, "%Y-%m-%d")
+                    days_exp = (exp_dt - datetime.now()).days
+                except Exception:
+                    pass
+
+                is_near = days_exp <= 7
+                inventory.append({
+                    "id": len(inventory) + 1,
+                    "facility": facility,
+                    "blood_type": blood_type,
+                    "units": units,
+                    "component": component,
+                    "expiration_date": exp_date,
+                    "days_to_expiration": days_exp,
+                    "is_near_expiration": is_near,
+                    "status": "EXPIRING_SOON" if is_near else "AVAILABLE"
+                })
+                added_count += 1
+
+        audit_logs.append({
+            "action": "INVENTORY CSV UPLOAD",
+            "details": f"Uploaded CSV '{file.filename}' - ingested {added_count} inventory items.",
+            "user": session.get("username"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        flash(f"CSV ingestion complete: {added_count} inventory records added successfully!", "success")
+        return redirect(url_for("admin_inventory_dashboard"))
+
+    return render_template("06_inventory_csv_upload.html")
+
+
+@app.route("/critical-code-red", methods=["GET", "POST"])
+@app.route("/hospital/critical-code-red", methods=["GET", "POST"])
+def critical_code_red():
+    if session.get("role") != "hospital" and session.get("role") != "admin":
+        flash("Unauthorized. Hospital staff login required.", "danger")
+        return redirect(url_for("login_hospital"))
+
+    if request.method == "POST":
+        hospital = request.form.get("hospital_name") or session.get("username") or "City Emergency Hospital"
+        blood_type = request.form.get("blood_type") or "O-"
+        units = request.form.get("units") or "10"
+        district = request.form.get("district") or "Central District"
+
+        units_int = int(units)
+        new_id = len(demands) + 1
+        new_demand = {
+            "id": new_id,
+            "hospital": hospital,
+            "blood_type": blood_type,
+            "units": units_int,
+            "filename": "code_red_emergency.pdf",
+            "status": "Approved",
+            "urgency": "CRITICAL_CODE_RED",
+            "district": district
+        }
+        demands.append(new_demand)
+
+        alert_id = len(alerts) + 1
+        alerts.append({
+            "id": alert_id,
+            "hospital": hospital,
+            "blood_type": blood_type,
+            "status": "CRITICAL_CODE_RED_ACTIVE"
+        })
+
+        audit_logs.append({
+            "action": "CRITICAL CODE RED SUBMITTED",
+            "details": f"CODE RED #{new_id} ({blood_type}) submitted by {hospital} in {district}.",
+            "user": session.get("username"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        flash(
+            f"CRITICAL CODE RED alert dispatched! {units_int} units requested.", "danger")
+        return redirect(url_for("hospital_dashboard"))
+
+    return render_template("07_critical_code_red.html")
