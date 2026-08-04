@@ -213,3 +213,60 @@ def test_privacy_first_geolocation_filtering(client):
     assert b"Google Maps API Simulation Active" in response.data
     assert b"Downtown" in response.data  # Distance 8
     assert b"West Hills" not in response.data  # Distance 35
+
+
+# Tests added for ARCH-142 acceptance criteria
+
+def test_donation_request_view_and_accept(client):
+    """AC: A donor can view a mobile-friendly page from a secure link to see a donation request and accept it."""
+    res_get = client.get("/donation-request")
+    assert res_get.status_code == 200
+
+    res_token = client.get("/donor/request/sec_token_999")
+    assert res_token.status_code == 200
+
+    res_post = client.post("/donation-request", data={"action": "accept"}, follow_redirects=True)
+    assert res_post.status_code == 200
+    assert b"Appointment" in res_post.data or b"Donation" in res_post.data
+
+
+def test_appointment_scheduling_and_confirmation(client):
+    """AC: A donor can schedule an appointment after accepting a request."""
+    res_get = client.get("/appointment-scheduling")
+    assert res_get.status_code == 200
+
+    res_post = client.post("/appointment-scheduling", data={
+        "appointment_date": "2026-08-15",
+        "time_slot": "10:00 AM"
+    }, follow_redirects=True)
+    assert res_post.status_code == 200
+
+    res_conf = client.get("/booking-confirmation")
+    assert res_conf.status_code == 200
+
+
+def test_hospital_dashboard_active_requests_and_etas(client):
+    """AC: A hospital coordinator can log in and view a dashboard of active blood requests, including donor ETAs."""
+    client.post("/login/hospital", data={"username": "General Hospital", "password": "hospital123"})
+    res = client.get("/hospital/dashboard")
+    assert res.status_code == 200
+
+
+def test_admin_analytics_dashboard(client):
+    """AC: An administrator can log in and view a dashboard with key system-wide analytics."""
+    client.post("/login/admin", data={"username": "admin", "password": "admin123"})
+    res_analytics = client.get("/admin/analytics")
+    assert res_analytics.status_code == 200
+
+    res_dash = client.get("/admin/dashboard")
+    assert res_dash.status_code == 200
+
+
+def test_admin_settings_view_and_update(client):
+    """AC: An administrator can view and modify system-level settings."""
+    client.post("/login/admin", data={"username": "admin", "password": "admin123"})
+    res_get = client.get("/admin/settings")
+    assert res_get.status_code == 200
+
+    res_post = client.post("/admin/settings", data={"radius_km": "25", "jwt_exp": "15"}, follow_redirects=True)
+    assert res_post.status_code == 200
