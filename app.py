@@ -208,8 +208,7 @@ def social_login(provider):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
     flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
+        f"Successfully authenticated via {provider.capitalize()}!",
         "success")
     return redirect(url_for("donor_profile"))
 
@@ -308,6 +307,62 @@ def donor_profile():
 
     return render_template("donor_profile.html",
                            donor=target_donor, badges=badges, history=history)
+
+
+@app.route("/donor/book-appointment", methods=["GET", "POST"])
+def donor_book_appointment():
+    if session.get("role") != "donor":
+        flash("Unauthorized. Please log in first.", "danger")
+        return redirect(url_for("login_donor"))
+
+    if request.method == "POST":
+        center_name = request.form.get("center_name", "Central Blood Bank")
+        appointment_time = request.form.get("appointment_time", "10:00 AM")
+        username = session.get("username")
+
+        target_donor = next((d for d in donors if d["username"] == username), None)
+        donor_name = target_donor["name"] if target_donor else username
+        blood_type = target_donor["blood_group"] if target_donor else "O+"
+
+        new_booking = {
+            "name": donor_name,
+            "blood_type": blood_type,
+            "time": appointment_time,
+            "center": center_name
+        }
+        scheduled_donors.append(new_booking)
+
+        audit_logs.append({
+            "action": "APPOINTMENT BOOKED",
+            "details": f"Donor '{username}' booked appointment at {center_name} for {appointment_time}.",
+            "user": username,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        flash(f"Appointment booked successfully at {center_name} for {appointment_time}!", "success")
+        return redirect(url_for("donor_profile"))
+
+    centers = [
+        {
+            "id": 1,
+            "name": "Downtown Blood Center",
+            "distance": "8 km",
+            "available_slots": ["09:00 AM", "11:00 AM", "02:00 PM"]
+        },
+        {
+            "id": 2,
+            "name": "North District Clinic",
+            "distance": "12 km",
+            "available_slots": ["10:00 AM", "01:00 PM", "04:00 PM"]
+        },
+        {
+            "id": 3,
+            "name": "South Coast Center",
+            "distance": "15 km",
+            "available_slots": ["08:30 AM", "12:30 PM", "03:30 PM"]
+        }
+    ]
+    return render_template("donor_booking.html", centers=centers)
 
 
 @app.route("/donor/share/<badge_name>", methods=["POST"])
@@ -426,6 +481,24 @@ def create_demand():
         return redirect(url_for("hospital_dashboard"))
 
     return render_template("create_demand.html")
+
+
+@app.route("/admin/dashboard")
+def admin_dashboard():
+    if session.get("role") != "admin":
+        flash("Unauthorized. Please log in first.", "danger")
+        return redirect(url_for("login_admin"))
+
+    clinic_capacity = {
+        "total_beds": 50,
+        "occupied_beds": 32,
+        "available_slots": 18,
+        "daily_capacity_pct": 64
+    }
+    return render_template("admin_dashboard.html",
+                           clinic_capacity=clinic_capacity,
+                           scheduled_donors=scheduled_donors,
+                           demands=demands)
 
 
 @app.route("/admin/queue")

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Book Appointment - BDCN{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Book Blood Donation Appointment</h2>
+    <p class="text-muted">Find nearby blood donation centers and reserve your appointment slot.</p>
+    
+    <div class="row mt-4">
+        {% for center in centers %}
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">{{ center.name }}</h5>
+                    <p class="card-text"><strong>Distance:</strong> {{ center.distance }}</p>
+                    <form method="POST" action="{{ url_for('donor_book_appointment') }}">
+                        <input type="hidden" name="center_name" value="{{ center.name }}">
+                        <div class="mb-3">
+                            <label class="form-label">Available Slots</label>
+                            <select name="appointment_time" class="form-select" required>
+                                {% for slot in center.available_slots %}
+                                <option value="{{ slot }}">{{ slot }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">Book Slot</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 import pytest
 import io
-from app import app, demands, alerts, donors
+from app import app, demands, alerts, donors, scheduled_donors
 
 
 @pytest.fixture
@@ -213,3 +213,35 @@ def test_privacy_first_geolocation_filtering(client):
     assert b"Google Maps API Simulation Active" in response.data
     assert b"Downtown" in response.data  # Distance 8
     assert b"West Hills" not in response.data  # Distance 35
+
+
+def test_donor_appointment_booking(client):
+    """Test registered donor booking appointment slot."""
+    client.post("/login/donor", data={
+        "username": "janesmith",
+        "password": "password"
+    })
+
+    response = client.post("/donor/book-appointment", data={
+        "center_name": "Downtown Blood Center",
+        "appointment_time": "11:00 AM"
+    }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Appointment booked successfully" in response.data
+    assert scheduled_donors[-1]["name"] == "Jane Smith"
+    assert scheduled_donors[-1]["time"] == "11:00 AM"
+
+
+def test_admin_capacity_dashboard(client):
+    """Test admin capacity metrics and scheduled donors view."""
+    client.post("/login/admin", data={
+        "username": "admin_district",
+        "password": "password"
+    })
+
+    response = client.get("/admin/dashboard")
+    assert response.status_code == 200
+    assert b"Administrator Capacity & Schedule Dashboard" in response.data
+    assert b"Total Beds" in response.data
+    assert b"Scheduled Donors" in response.data
