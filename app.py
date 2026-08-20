@@ -7,12 +7,17 @@ import os
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
 
+# Create a Flask application instance
 app = Flask(__name__)
+# Set a secret key for the session. It's read from an environment variable for security.
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
 
-# In-memory mock databases
+# In-memory mock databases to store application data.
+# In a real-world application, this would be replaced by a proper database.
+
+# A list of blood demands from hospitals.
 demands = [
     {
         "id": 1,
@@ -36,11 +41,13 @@ demands = [
     }
 ]
 
+# A list of scheduled donors.
 scheduled_donors = [
     {"name": "John Doe", "blood_type": "A+", "time": "10:30 AM"},
     {"name": "Jane Smith", "blood_type": "O-", "time": "02:15 PM"}
 ]
 
+# A list of active alerts for blood demands.
 alerts = [
     {
         "id": 1,
@@ -50,6 +57,7 @@ alerts = [
     }
 ]
 
+# A list of audit logs to track system and user actions.
 audit_logs = [
     {
         "action": "SYSTEM STARTUP",
@@ -65,7 +73,7 @@ audit_logs = [
     }
 ]
 
-# Registered donors
+# A list of registered donors.
 donors = [
     {
         "name": "Jane Smith",
@@ -87,7 +95,7 @@ donors = [
     }
 ]
 
-# Mock donor density hotspots
+# Mock data for donor density hotspots.
 raw_hotspots = [
     {"district": "Downtown",
      "count": 24,
@@ -121,7 +129,8 @@ raw_hotspots = [
      "left": 80}
 ]
 
-
+# Main route of the application.
+# It redirects the user to the appropriate dashboard based on their role.
 @app.route("/")
 def home():
     if "username" in session:
@@ -133,7 +142,8 @@ def home():
             return redirect(url_for("donor_profile"))
     return redirect(url_for("login_hospital"))
 
-
+# Route for hospital login.
+# It handles both GET and POST requests.
 @app.route("/login/hospital", methods=["GET", "POST"])
 def login_hospital():
     if request.method == "POST":
@@ -153,7 +163,8 @@ def login_hospital():
         flash("Invalid credentials.", "danger")
     return render_template("login_hospital.html")
 
-
+# Route for donor login.
+# It handles both GET and POST requests.
 @app.route("/login/donor", methods=["GET", "POST"])
 def login_donor():
     if request.method == "POST":
@@ -177,7 +188,8 @@ def login_donor():
         flash("Invalid credentials.", "danger")
     return render_template("login_donor.html")
 
-
+# Route for social media login.
+# It mocks social media authentication.
 @app.route("/login/social/<provider>")
 def social_login(provider):
     # Mock social media authentication
@@ -210,7 +222,8 @@ def social_login(provider):
     flash(f"Successfully authenticated via {provider.capitalize()}!", "success")
     return redirect(url_for("donor_profile"))
 
-
+# Route for donor registration.
+# It handles both GET and POST requests.
 @app.route("/donor/register", methods=["GET", "POST"])
 def donor_register():
     if request.method == "POST":
@@ -225,7 +238,7 @@ def donor_register():
             flash("All required fields must be filled.", "danger")
             return redirect(url_for("donor_register"))
 
-        # Check duplicate
+        # Check for duplicate usernames
         if any(d["username"] == username for d in donors):
             flash("Username already exists.", "danger")
             return redirect(url_for("donor_register"))
@@ -255,7 +268,8 @@ def donor_register():
 
     return render_template("register_donor.html")
 
-
+# Route for donor profile.
+# It handles both GET and POST requests for viewing and updating the profile.
 @app.route("/donor/profile", methods=["GET", "POST"])
 def donor_profile():
     if session.get("role") != "donor":
@@ -335,7 +349,7 @@ def donor_profile():
     return render_template("donor_profile.html",
                            donor=target_donor, badges=badges, history=history)
 
-
+# Route for sharing a badge on social media.
 @app.route("/donor/share/<badge_name>", methods=["POST"])
 def share_badge(badge_name):
     if session.get("role") != "donor":
@@ -356,7 +370,7 @@ def share_badge(badge_name):
         "success")
     return redirect(url_for("donor_profile"))
 
-
+# Route for admin login.
 @app.route("/login/admin", methods=["GET", "POST"])
 def login_admin():
     if request.method == "POST":
@@ -376,7 +390,7 @@ def login_admin():
         flash("Invalid credentials.", "danger")
     return render_template("login_admin.html")
 
-
+# Route for user logout.
 @app.route("/logout")
 def logout():
     username = session.get("username", "Unknown")
@@ -390,7 +404,7 @@ def logout():
     flash("Logged out successfully.", "info")
     return redirect(url_for("login_hospital"))
 
-
+# Route for hospital dashboard.
 @app.route("/hospital/dashboard")
 def hospital_dashboard():
     if session.get("role") != "hospital" and session.get("role") != "donor":
@@ -401,7 +415,7 @@ def hospital_dashboard():
     return render_template("dashboard.html", demands=h_demands,
                            scheduled_donors=scheduled_donors)
 
-
+# Route for creating a new blood demand.
 @app.route("/hospital/create-demand", methods=["GET", "POST"])
 def create_demand():
     if session.get("role") != "hospital":
@@ -453,7 +467,7 @@ def create_demand():
 
     return render_template("create_demand.html")
 
-
+# Route for admin dashboard.
 @app.route("/admin/dashboard")
 def admin_dashboard():
     if session.get("role") != "admin":
@@ -478,7 +492,7 @@ def admin_dashboard():
     except Exception:
         return jsonify({"status": "SUCCESS", "stats": stats})
 
-
+# Route for admin verification queue.
 @app.route("/admin/queue")
 def admin_queue():
     if session.get("role") != "admin":
@@ -494,7 +508,7 @@ def admin_queue():
     return render_template("verification_queue.html",
                            pending_demands=pending_demands, filter_district=filter_district)
 
-
+# Route to verify or reject a blood demand.
 @app.route("/admin/verify/<int:demand_id>", methods=["POST"])
 def verify_demand(demand_id):
     if session.get("role") != "admin":
@@ -546,7 +560,7 @@ def verify_demand(demand_id):
 
     return redirect(url_for("admin_queue"))
 
-
+# Route for admin alerts management.
 @app.route("/admin/alerts")
 def admin_alerts():
     if session.get("role") != "admin":
@@ -554,7 +568,7 @@ def admin_alerts():
         return redirect(url_for("login_admin"))
     return render_template("alert_management.html", alerts=alerts)
 
-
+# Route for admin audit log.
 @app.route("/admin/audit-log")
 def admin_audit_log():
     if session.get("role") != "admin":
@@ -567,7 +581,7 @@ def admin_audit_log():
         reverse=True)
     return render_template("audit_log.html", logs=sorted_logs)
 
-
+# Route for displaying donor density hotspots on a map.
 @app.route("/map/hotspots")
 def map_hotspots():
     radius = int(request.args.get("radius", 50))
@@ -581,6 +595,6 @@ def map_hotspots():
     return render_template(
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
 
-
+# Main entry point of the application.
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
