@@ -3,6 +3,27 @@
 ## [Unreleased]
 
 ### Added
+- **[ARCH-578]** UI Pages + Requirements: Blood Donor Connection Network (BDCN)
+  - *Key modifications:*
+    - `app.py`
+    - `tests/test_app.py`
+    - `templates/admin_dashboard.html`
+    - `templates/donor_dashboard.html`
+    - `templates/alert_view.html`
+    - `templates/landing.html`
+    - `templates/login.html`
+    - `templates/request_form.html`
+### Fixed
+- **[ARCH-406]** ARCH-BUG1: Fix Geolocation Clustering Precision Leak on Mobile Client Map View
+  - *Key modifications:*
+    - `app.py`
+    - `tests/test_app.py`
+### Added
+- **[ARCH-405]** ARCH-S1: Recipient Request Submission & Validation Engine
+  - *Key modifications:*
+    - `app.py`
+    - `tests/test_app.py`
+### Added
 
 - **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
 
