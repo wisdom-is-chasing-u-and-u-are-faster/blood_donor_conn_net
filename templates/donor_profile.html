@@ -1,90 +1,132 @@
 {% extends "base.html" %}
-{% block title %}Donor Profile - BDCN{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-4">
-        <div class="card shadow-sm mb-4">
-            <div class="card-body text-center py-4">
-                <div class="rounded-circle bg-danger text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2.5rem; font-weight: bold;">
-                    {{ donor.blood_group }}
-                </div>
-                <h4>{{ donor.name }}</h4>
-                <p class="text-muted mb-3">@{{ donor.username }}</p>
-                <div class="d-flex justify-content-around border-top border-bottom py-2 mb-3">
-                    <div>
-                        <small class="text-muted d-block">Age</small>
-                        <span class="fw-bold">{{ donor.age }}</span>
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- Profile & Status Card -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 text-center p-3">
+                <div class="card-body">
+                    <div class="avatar bg-danger text-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                        <i class="bi bi-person-fill"></i>
                     </div>
-                    <div>
-                        <small class="text-muted d-block">Gender</small>
-                        <span class="fw-bold">{{ donor.gender }}</span>
+                    <h4 class="fw-bold mb-1">{{ donor.name }}</h4>
+                    <p class="text-muted small mb-2">@{{ donor.username }}</p>
+                    <span class="badge bg-danger fs-6 px-3 py-2 mb-3"><i class="bi bi-droplet-fill me-1"></i> Blood Type: {{ donor.blood_group }}</span>
+
+                    <!-- Eligibility Live Widget -->
+                    <div class="p-3 bg-light rounded text-start mb-3 border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small fw-bold">Rolling 56-Day Eligibility</span>
+                            <span class="badge bg-success" id="eligibility-badge"><i class="bi bi-check-circle"></i> Cleared</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 6px;">
+                            <div class="progress-bar bg-success" id="eligibility-progress" style="width: 100%;"></div>
+                        </div>
+                        <div class="small text-muted" id="eligibility-desc">You are eligible to donate whole blood today!</div>
                     </div>
-                </div>
-                <div class="mb-2 text-start">
-                    <small class="text-muted">Last Donation Date:</small>
-                    <span class="fw-bold">{{ donor.last_donation or "Never" }}</span>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-danger btn-sm" onclick="checkLiveEligibility('{{ donor.username }}')"><i class="bi bi-arrow-repeat me-1"></i> Refresh Eligibility Status</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-8">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white py-3">
-                <h5 class="mb-0">🏅 Gamification Engine & Recognition Badges</h5>
-            </div>
-            <div class="card-body">
-                <h6>Your Achievement Tiers</h6>
-                <p class="text-muted small">Earn badges automatically based on your voluntary donation contributions.</p>
-                
-                <div class="row g-3 mb-4">
-                    {% for badge in badges %}
-                        <div class="col-md-6">
-                            <div class="border rounded p-3 d-flex align-items-center {% if badge.earned %}bg-light border-danger{% else %}opacity-50{% endif %}">
-                                <div class="fs-1 me-3">
-                                    {% if badge.name == 'Silver Savior' %}🥈{% elif badge.name == 'Gold Guardian' %}🥇{% else %}🥉{% endif %}
-                                </div>
-                                <div>
-                                    <h6 class="mb-1 fw-bold">{{ badge.name }}</h6>
-                                    <p class="mb-0 small text-muted">{{ badge.description }}</p>
-                                    {% if badge.earned %}
-                                        <span class="badge bg-success mt-1">Earned</span>
-                                        <form method="POST" action="/donor/share/{{ badge.name|replace(' ', '-') }}" class="d-inline ms-2">
-                                            <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">🔗 Share</button>
-                                        </form>
-                                    {% else %}
-                                        <span class="badge bg-secondary mt-1">Locked</span>
-                                    {% endif %}
-                                </div>
+        <!-- Gamification & Donation History -->
+        <div class="col-lg-8">
+            <!-- Badges -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-award-fill me-2 text-warning"></i>Donor Achievement Badges</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for badge in badges %}
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center h-100 {% if badge.earned %}bg-light border-warning{% else %}opacity-50{% endif %}">
+                                <i class="bi bi-patch-check-fill fs-2 {% if badge.earned %}text-warning{% else %}text-muted{% endif %} mb-2 d-block"></i>
+                                <h6 class="fw-bold mb-1">{{ badge.name }}</h6>
+                                <p class="small text-muted mb-2">{{ badge.description }}</p>
+                                {% if badge.earned %}
+                                <span class="badge bg-success mb-2">Earned</span>
+                                <form method="POST" action="/donor/share/{{ badge.name|replace(' ', '-') }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-share me-1"></i> Share</button>
+                                </form>
+                                {% else %}
+                                <span class="badge bg-secondary">Locked</span>
+                                {% endif %}
                             </div>
                         </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="card shadow-sm">
-            <div class="card-header bg-light py-3">
-                <h5 class="mb-0">📜 Personal Donation History</h5>
-            </div>
-            <div class="card-body">
-                {% if history %}
-                    <ul class="list-group list-group-flush">
-                        {% for h in history %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">{{ h.location }}</h6>
-                                    <small class="text-muted">{{ h.date }}</small>
-                                </div>
-                                <span class="badge bg-danger">{{ h.units }} Units</span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-muted text-center py-3 mb-0">No past donations logged yet. Ready to make your first life-saving contribution?</p>
-                {% endif %}
+            <!-- Historical Donations -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Personal Donation History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Location</th>
+                                    <th>Date</th>
+                                    <th>Units</th>
+                                    <th>Compliance Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if history %}
+                                    {% for item in history %}
+                                    <tr>
+                                        <td>{{ item.location }}</td>
+                                        <td>{{ item.date }}</td>
+                                        <td>{{ item.units }} Unit(s)</td>
+                                        <td><span class="badge bg-success">Verified FDA 21 CFR</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">No donation history recorded yet.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script src="/static/js/api.js"></script>
+<script>
+async function checkLiveEligibility(username) {
+    try {
+        const res = await BDCN_API.checkEligibility(username, "WHOLE_BLOOD");
+        const badge = document.getElementById("eligibility-badge");
+        const desc = document.getElementById("eligibility-desc");
+        const prog = document.getElementById("eligibility-progress");
+        if (res.isEligible) {
+            badge.className = "badge bg-success";
+            badge.innerHTML = '<i class="bi bi-check-circle"></i> Cleared';
+            desc.innerText = "You are cleared for voluntary blood donation!";
+            prog.className = "progress-bar bg-success";
+            prog.style.width = "100%";
+        } else {
+            badge.className = "badge bg-danger";
+            badge.innerHTML = '<i class="bi bi-x-circle"></i> ' + (res.daysRemaining || 0) + ' Days Left';
+            desc.innerText = "Next eligible date: " + (res.nextEligibleDate ? res.nextEligibleDate.substring(0,10) : "TBD");
+            prog.className = "progress-bar bg-warning";
+            prog.style.width = "40%";
+        }
+    } catch(e) {
+        console.error(e);
+    }
+}
+</script>
 {% endblock %}

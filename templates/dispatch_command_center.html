@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-danger"><i class="bi bi-broadcast me-2"></i>Clinician Active Dispatch Command Center</h2>
+            <p class="text-muted">Real-time Emergency Dispatch State Machine, Geospatial Proximity Matcher & WebSocket Alerts</p>
+        </div>
+        <div>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#newDispatchModal"><i class="bi bi-megaphone me-1"></i> Trigger Emergency Dispatch</button>
+        </div>
+    </div>
+
+    <!-- Active Emergency Alerts -->
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-activity me-2 text-danger"></i>Active Emergency Transfusion Encounters</h5>
+                    <span class="badge bg-danger animate-pulse">LIVE INCIDENTS</span>
+                </div>
+                <div class="card-body">
+                    <div class="border rounded p-3 mb-3 bg-light">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="fw-bold text-danger mb-1">INCIDENT #DISP-9901 — LEVEL 1 CATASTROPHIC TRAUMA</h6>
+                            <span class="badge bg-warning text-dark">MATCHING PROXIMITY</span>
+                        </div>
+                        <p class="small text-muted mb-2">Hospital: General Trauma Center | Required: <strong>4 Units O-Negative</strong></p>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" style="width: 45%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small text-muted">
+                            <span>Dispatched to 8 nearby voluntary donors within 15 km</span>
+                            <span>Target Notification Cycle: &lt; 180s (Current: 42s)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i>Nearby Donor Spatial Radar</h5>
+                </div>
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-radar display-4 text-primary"></i>
+                    <h6 class="fw-bold mt-3">Managed Spatial Cache Active</h6>
+                    <p class="small text-muted">Redis 7.x GEOSEARCH scanning active donors within 15km urban perimeter</p>
+                    <div class="list-group list-group-flush text-start small">
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>Marcus Vance (O-)</span>
+                            <span class="badge bg-success">1.2 km away</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>Elena Rostova (B+)</span>
+                            <span class="badge bg-secondary">3.8 km away</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trigger Modal -->
+<div class="modal fade" id="newDispatchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Trigger Emergency Blood Dispatch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="dispatch-form">
+                    <div class="mb-3">
+                        <label class="form-label">Hospital</label>
+                        <input type="text" class="form-control" value="Memorial Trauma Center" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Severity Level</label>
+                        <select class="form-select" id="disp-severity">
+                            <option value="LEVEL_1_CATASTROPHIC">Level 1 - Catastrophic Trauma Surge</option>
+                            <option value="LEVEL_2_URGENT">Level 2 - Urgent Surgical Demand</option>
+                            <option value="LEVEL_3_ANTICIPATED">Level 3 - Anticipated Shortage</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">ABO Type</label>
+                            <select class="form-select" id="disp-abo">
+                                <option value="O">O</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="AB">AB</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Rh Factor</label>
+                            <select class="form-select" id="disp-rh">
+                                <option value="NEGATIVE">Negative (-)</option>
+                                <option value="POSITIVE">Positive (+)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Units Requested</label>
+                        <input type="number" class="form-control" id="disp-units" value="4" min="1" max="20">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitDispatch()">Fan-Out Notifications</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/api.js"></script>
+<script>
+async function submitDispatch() {
+    const payload = {
+        hospital_id: 'hosp-1',
+        severity: document.getElementById('disp-severity').value,
+        required_abo: document.getElementById('disp-abo').value,
+        required_rh: document.getElementById('disp-rh').value,
+        units_requested: parseInt(document.getElementById('disp-units').value),
+        initiated_by: 'ER Clinician'
+    };
+    try {
+        const res = await BDCN_API.createEmergencyDispatch(payload);
+        alert('Emergency dispatch ' + res.dispatch_id + ' broadcasted to nearby matching donors via Push & SMS!');
+        window.location.reload();
+    } catch(e) {
+        console.error(e);
+    }
+}
+</script>
+{% endblock %}
