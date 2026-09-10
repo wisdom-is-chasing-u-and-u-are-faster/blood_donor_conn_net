@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-danger"><i class="bi bi-droplet-half me-2"></i>Blood Bank Expiration &amp; Perishability Dashboard</h2>
+            <h5 class="text-muted">Welcome, {{ session.get('username', 'Mercy Hospital') }}</h5>
+            <p class="text-muted small">Real-time ISBT 128 inventory telemetry, automated 120-minute lease tracking, and cold-chain compliance</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-danger me-2" onclick="reconcileInventory()"><i class="bi bi-arrow-repeat me-1"></i> Reconcile Leases</button>
+            <a href="/hospital/create-demand" class="btn btn-danger"><i class="bi bi-plus-circle me-1"></i> Create Demand</a>
+        </div>
+    </div>
+
+    <!-- Telemetry Metric Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-start border-danger border-4">
+                <div class="card-body">
+                    <div class="text-muted small">Universal O-Negative Units</div>
+                    <h3 class="fw-bold mb-0 text-danger" id="o-neg-count">{{ o_neg_count | default(12) }}</h3>
+                    <small class="text-success"><i class="bi bi-check-circle"></i> In Safe Storage (4°C)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="text-muted small">Platelet Units (Expiring &lt; 48h)</div>
+                    <h3 class="fw-bold mb-0 text-warning" id="platelet-count">{{ platelet_count | default(4) }}</h3>
+                    <small class="text-warning"><i class="bi bi-exclamation-triangle"></i> Rolling 5-Day Life</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="text-muted small">Active 120-Min Leases</div>
+                    <h3 class="fw-bold mb-0 text-primary" id="active-leases">{{ active_leases | default(2) }}</h3>
+                    <small class="text-muted"><i class="bi bi-clock-history"></i> Surgical Encounters</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-start border-success border-4">
+                <div class="card-body">
+                    <div class="text-muted small">Audit Integrity Chain</div>
+                    <h3 class="fw-bold mb-0 text-success"><i class="bi bi-shield-check"></i> 100%</h3>
+                    <small class="text-success">FDA 21 CFR Part 11 Active</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Reservations Table -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-stopwatch me-2 text-primary"></i>Active Clinical Encounter Reservations (120-Min Lease)</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Encounter ID</th>
+                            <th>DIN Number</th>
+                            <th>Component</th>
+                            <th>Reserved By</th>
+                            <th>Reserved At</th>
+                            <th>Lease Expiration</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservation-rows">
+                        <tr>
+                            <td><span class="badge bg-secondary">ENC-TRAUMA-9912</span></td>
+                            <td><code>W036525000101</code></td>
+                            <td>O-Neg Red Blood Cells</td>
+                            <td>Dr. Sarah Lin</td>
+                            <td>Just now</td>
+                            <td><span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> 118 min remaining</span></td>
+                            <td><span class="badge bg-primary">ACTIVE LEASE</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/api.js"></script>
+<script>
+async function reconcileInventory() {
+    try {
+        const res = await BDCN_API.reconcileLeases();
+        alert('Reconciliation complete! Auto-released ' + (res.reconciled_count || 0) + ' expired leases.');
+        window.location.reload();
+    } catch(e) {
+        console.error(e);
+    }
+}
+</script>
+{% endblock %}

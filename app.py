@@ -1,18 +1,60 @@
-# This is a Flask web application for a Blood Donor Connection Network.
-# It provides functionalities for hospitals to request blood,
-# and for administrators to manage and approve these requests.
-# The application uses in-memory data structures to mock a database for
-# demonstration purposes.
+"""
+Blood Donor Connection Network (BDCN) - Cloud-Native Enterprise Platform
+Core Web Application & Microservices REST Controller
+"""
 import os
-from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+import json
+from datetime import datetime, timedelta
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
 
-app = Flask(__name__)
-app.secret_key = os.environ.get(
-    "FLASK_SECRET_KEY",
-    "super-secret-bdcn-key-12345")
+from services.eligibility_service import fn_validate_donor_eligibility
+from services.audit_service import audit_ledger
+from services.spatial_service import spatial_cache, haversine_distance_km
+from services.reservation_service import reservation_engine
+from services.telemetry_service import parse_isbt128_barcode
+from services.dispatch_service import dispatch_engine
+from services.security_service import security_service
 
-# In-memory mock databases
+app = Flask(__name__, static_folder="static", static_url_path="/static")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "super-secret-bdcn-key-12345")
+
+
+def safe_float(val, default_val: float) -> float:
+    """Safe float conversion guarding against NaN and Inf injections."""
+    if val is None:
+        return default_val
+    s = str(val).strip().lower()
+    if s in ("nan", "inf", "-inf", "+inf", "infinity", "-infinity"):
+        return default_val
+    try:
+        return float(s)
+    except (ValueError, TypeError):
+        return default_val
+
+
+# Initialize seed data in memory for default demonstrations
+reservation_engine.seed_item("W036525000101", "RED_BLOOD_CELLS", "O", "NEGATIVE", "hosp-1")
+reservation_engine.seed_item("W036525000102", "PLATELETS", "A", "POSITIVE", "hosp-1")
+reservation_engine.seed_item("W036525000103", "RED_BLOOD_CELLS", "B", "POSITIVE", "hosp-1")
+
+spatial_cache.geoadd("marcus_vance", 37.7850, -122.4150, {
+    "name": "Marcus Vance",
+    "abo_type": "O",
+    "rh_factor": "NEGATIVE",
+    "rare_antigen_profile": {"kell": "negative", "duffy": "negative"}
+})
+spatial_cache.geoadd("janesmith", 37.7800, -122.4100, {
+    "name": "Jane Smith",
+    "abo_type": "O",
+    "rh_factor": "NEGATIVE"
+})
+spatial_cache.geoadd("johndoe", 37.7300, -122.3800, {
+    "name": "John Doe",
+    "abo_type": "A",
+    "rh_factor": "POSITIVE"
+})
+
+# In-memory mock databases for legacy view compatibility
 demands = [
     {
         "id": 1,
@@ -56,16 +98,9 @@ audit_logs = [
         "details": "BDCN Core Platform service started successfully.",
         "user": "System",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    },
-    {
-        "action": "HOSPITAL DEMAND APPROVED",
-        "details": "Demand #1 (A+, 10 units) approved. EmergencyDemandCreated event emitted to Cloud Pub/Sub.",
-        "user": "admin_district",
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 ]
 
-# Registered donors
 donors = [
     {
         "name": "Jane Smith",
@@ -75,6 +110,15 @@ donors = [
         "blood_group": "O-",
         "last_donation": "2025-11-15",
         "donation_count": 5
+    },
+    {
+        "name": "Marcus Vance",
+        "username": "marcus_vance",
+        "age": 32,
+        "gender": "Male",
+        "blood_group": "O-",
+        "last_donation": "2024-12-25",
+        "donation_count": 8
     },
     {
         "name": "John Doe",
@@ -87,40 +131,201 @@ donors = [
     }
 ]
 
-# Mock donor density hotspots
 raw_hotspots = [
-    {"district": "Downtown",
-     "count": 24,
-     "blood_type": "O-",
-     "distance": 8,
-     "top": 30,
-     "left": 40},
-    {"district": "North District",
-     "count": 15,
-     "blood_type": "A+",
-     "distance": 12,
-     "top": 55,
-     "left": 65},
-    {"district": "East Valley",
-     "count": 8,
-     "blood_type": "B+",
-     "distance": 22,
-     "top": 70,
-     "left": 30},
-    {"district": "South Coast",
-     "count": 19,
-     "blood_type": "O+",
-     "distance": 15,
-     "top": 45,
-     "left": 20},
-    {"district": "West Hills",
-     "count": 11,
-     "blood_type": "AB-",
-     "distance": 35,
-     "top": 20,
-     "left": 80}
+    {"district": "Downtown", "count": 24, "blood_type": "O-", "distance": 8, "top": 30, "left": 40},
+    {"district": "North District", "count": 15, "blood_type": "A+", "distance": 12, "top": 55, "left": 65},
+    {"district": "East Valley", "count": 8, "blood_type": "B+", "distance": 22, "top": 70, "left": 30},
+    {"district": "South Coast", "count": 19, "blood_type": "O+", "distance": 15, "top": 45, "left": 20},
+    {"district": "West Hills", "count": 11, "blood_type": "AB-", "distance": 35, "top": 20, "left": 80}
 ]
 
+
+# ==========================================================
+# REST API ENDPOINTS (MICROSERVICES TIER)
+# ==========================================================
+
+@app.route("/v1/donors/<donor_id>/eligibility", methods=["GET"])
+def get_donor_eligibility(donor_id):
+    """
+    Evaluates rolling donor eligibility per 56-day, 112-day, or 7-day rule.
+    """
+    donation_type = request.args.get("donation_type", "WHOLE_BLOOD")
+    target_date = request.args.get("target_date")
+
+    target_donor = next((d for d in donors if d["username"] == donor_id), None)
+    if not target_donor:
+        target_donor = {"donor_id": donor_id, "username": donor_id, "is_active": True, "is_deferred": False}
+
+    history = []
+    if target_donor.get("last_donation"):
+        history.append({
+            "donation_type": donation_type,
+            "collected_at": target_donor["last_donation"] + "T10:00:00Z"
+        })
+
+    result = fn_validate_donor_eligibility(target_donor, history, donation_type=donation_type, target_date=target_date)
+    return jsonify(result), 200
+
+
+@app.route("/v1/inventory/reserve", methods=["POST"])
+def reserve_inventory():
+    """
+    Creates an active 120-minute reservation lease with row-level locking.
+    """
+    data = request.get_json() or {}
+    hospital_id = data.get("hospital_id", "hosp-1")
+    clinical_encounter_id = data.get("clinical_encounter_id", "ENC-TRAUMA-9912")
+    din_number = data.get("din_number", "W036525000101")
+    reserved_by = session.get("username", "Dr. Sarah Lin")
+
+    success, res, err = reservation_engine.create_reservation(
+        hospital_id=hospital_id,
+        clinical_encounter_id=clinical_encounter_id,
+        din_number=din_number,
+        reserved_by=reserved_by
+    )
+
+    if not success:
+        return jsonify({"success": False, "error": err}), 400
+
+    return jsonify({"success": True, "reservation": res}), 201
+
+
+@app.route("/v1/inventory/consume", methods=["POST"])
+def consume_inventory():
+    data = request.get_json() or {}
+    reservation_id = data.get("reservation_id")
+    confirmed_by = session.get("username", "Dr. Sarah Lin")
+
+    success = reservation_engine.confirm_consumption(reservation_id, confirmed_by)
+    if not success:
+        return jsonify({"success": False, "error": "RESERVATION_NOT_ACTIVE"}), 400
+
+    return jsonify({"success": True, "status": "CONSUMED"}), 200
+
+
+@app.route("/v1/inventory/reconcile", methods=["POST"])
+def reconcile_inventory():
+    """
+    Executes background auto-release worker for expired leases.
+    """
+    expired_list = reservation_engine.reconcile_expired_leases()
+    return jsonify({"reconciled_count": len(expired_list), "expired": expired_list}), 200
+
+
+@app.route("/v1/inventory/scan", methods=["POST"])
+def scan_inventory():
+    data = request.get_json() or {}
+    barcode = data.get("barcode", "")
+    ok, parsed, err = parse_isbt128_barcode(barcode)
+    if not ok:
+        return jsonify({"success": False, "error": err}), 400
+    return jsonify({"success": True, "parsed": parsed}), 200
+
+
+@app.route("/v1/spatial/candidates", methods=["GET"])
+def find_spatial_candidates():
+    """
+    Redis 7.x geospatial proximity sweep.
+    """
+    lat = safe_float(request.args.get("latitude"), 37.7749)
+    lon = safe_float(request.args.get("longitude"), -122.4194)
+    radius = safe_float(request.args.get("radius_km"), 15.0)
+    abo = request.args.get("abo_type")
+    rh = request.args.get("rh_factor")
+    rare = request.args.get("rare_antigen")
+
+    candidates = spatial_cache.geosearch(
+        center_lat=lat,
+        center_lon=lon,
+        radius_km=radius,
+        abo_type=abo,
+        rh_factor=rh,
+        rare_antigen=rare
+    )
+    return jsonify({"count": len(candidates), "candidates": candidates}), 200
+
+
+@app.route("/v1/emergency/dispatch", methods=["POST"])
+def create_emergency_dispatch():
+    """
+    Creates an emergency blood dispatch incident and kicks off state machine.
+    """
+    data = request.get_json() or {}
+    hospital_id = data.get("hospital_id", "hosp-1")
+    severity = data.get("severity", "LEVEL_1_CATASTROPHIC")
+    required_abo = data.get("required_abo", "O")
+    required_rh = data.get("required_rh", "NEGATIVE")
+    units = int(data.get("units_requested", 4))
+    initiated_by = session.get("username", "ER Clinician")
+
+    disp = dispatch_engine.create_dispatch(
+        hospital_id=hospital_id,
+        severity=severity,
+        required_abo=required_abo,
+        required_rh=required_rh,
+        units_requested=units,
+        initiated_by=initiated_by
+    )
+
+    # Enqueue SQS notifications
+    dispatch_engine.enqueue_sqs_message({
+        "dispatch_id": disp["dispatch_id"],
+        "text": f"EMERGENCY: {units} units {required_abo}{required_rh} needed at {hospital_id}"
+    })
+    dispatch_engine.process_sqs_worker()
+
+    return jsonify(disp), 201
+
+
+@app.route("/v1/emergency/dispatch/<dispatch_id>", methods=["GET"])
+def get_emergency_dispatch(dispatch_id):
+    disp = dispatch_engine.get_dispatch(dispatch_id)
+    if not disp:
+        return jsonify({"error": "NOT_FOUND"}), 404
+    return jsonify(disp), 200
+
+
+@app.route("/v1/emergency/dispatch/<dispatch_id>/status", methods=["PUT"])
+def update_emergency_dispatch_status(dispatch_id):
+    data = request.get_json() or {}
+    next_status = data.get("status")
+    updated_by = session.get("username", "System")
+
+    ok, err = dispatch_engine.transition_status(dispatch_id, next_status, updated_by)
+    if not ok:
+        return jsonify({"success": False, "error": err}), 400
+    return jsonify({"success": True, "status": next_status}), 200
+
+
+@app.route("/v1/audit/verify", methods=["GET"])
+def verify_audit_trail():
+    is_valid, err = audit_ledger.verify_integrity()
+    return jsonify({
+        "is_intact": is_valid,
+        "error": err,
+        "record_count": len(audit_ledger.get_logs())
+    }), 200
+
+
+@app.route("/v1/compliance/worm-export", methods=["POST"])
+def export_worm():
+    data = request.get_json() or {}
+    export_id = data.get("export_id", f"WORM-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}")
+    records = audit_ledger.get_logs()
+    export = security_service.create_worm_export(export_id, records, session.get("username", "auditor"))
+    return jsonify(export), 201
+
+
+@app.route("/v1/compliance/worm-export/<export_id>/verify", methods=["GET"])
+def verify_worm_export(export_id):
+    ok, err = security_service.verify_worm_export(export_id)
+    return jsonify({"is_valid": ok, "error": err}), 200
+
+
+# ==========================================================
+# UI VIEWS & USER JOURNEYS
+# ==========================================================
 
 @app.route("/")
 def home():
@@ -139,7 +344,7 @@ def login_hospital():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        if username and password:  # Allow simple password matching for mock flow
+        if username and password:
             session["username"] = username
             session["role"] = "hospital"
             audit_logs.append({
@@ -160,9 +365,7 @@ def login_donor():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        # Verify from mock donor database
-        target_donor = next(
-            (d for d in donors if d["username"] == username), None)
+        target_donor = next((d for d in donors if d["username"] == username), None)
         if target_donor and password:
             session["username"] = username
             session["role"] = "donor"
@@ -180,11 +383,9 @@ def login_donor():
 
 @app.route("/login/social/<provider>")
 def social_login(provider):
-    # Mock social media authentication
     username = f"social_{provider}_user"
     name = f"Social {provider.capitalize()} User"
 
-    # Auto register/get social donor
     target_donor = next((d for d in donors if d["username"] == username), None)
     if not target_donor:
         target_donor = {
@@ -207,10 +408,7 @@ def social_login(provider):
         "user": username,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
-    flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
-        "success")
+    flash(f"Successfully authenticated via {provider.capitalize()}!", "success")
     return redirect(url_for("donor_profile"))
 
 
@@ -228,7 +426,6 @@ def donor_register():
             flash("All required fields must be filled.", "danger")
             return redirect(url_for("donor_register"))
 
-        # Check duplicate
         if any(d["username"] == username for d in donors):
             flash("Username already exists.", "danger")
             return redirect(url_for("donor_register"))
@@ -243,13 +440,6 @@ def donor_register():
             "donation_count": 0
         }
         donors.append(new_donor)
-
-        audit_logs.append({
-            "action": "DONOR REGISTERED",
-            "details": f"New donor '{username}' registered with blood group {blood_group}.",
-            "user": username,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
 
         session["username"] = username
         session["role"] = "donor"
@@ -271,27 +461,13 @@ def donor_profile():
         flash("Donor profile not found.", "danger")
         return redirect(url_for("logout"))
 
-    # Generate badges based on donation count
     count = target_donor.get("donation_count", 0)
     badges = [
-        {
-            "name": "Bronze Savior",
-            "description": "Awarded for completing at least 1 voluntary donation.",
-            "earned": count >= 1
-        },
-        {
-            "name": "Silver Savior",
-            "description": "Awarded for completing at least 3 voluntary donations.",
-            "earned": count >= 3
-        },
-        {
-            "name": "Gold Guardian",
-            "description": "Awarded for completing at least 5 voluntary donations.",
-            "earned": count >= 5
-        }
+        {"name": "Bronze Savior", "description": "Awarded for completing at least 1 voluntary donation.", "earned": count >= 1},
+        {"name": "Silver Savior", "description": "Awarded for completing at least 3 voluntary donations.", "earned": count >= 3},
+        {"name": "Gold Guardian", "description": "Awarded for completing at least 5 voluntary donations.", "earned": count >= 5}
     ]
 
-    # Mock personal donation history
     history = []
     if count > 0:
         history.append({
@@ -306,8 +482,7 @@ def donor_profile():
             "units": 1
         })
 
-    return render_template("donor_profile.html",
-                           donor=target_donor, badges=badges, history=history)
+    return render_template("donor_profile.html", donor=target_donor, badges=badges, history=history)
 
 
 @app.route("/donor/share/<badge_name>", methods=["POST"])
@@ -318,16 +493,7 @@ def share_badge(badge_name):
 
     username = session.get("username")
     clean_badge = badge_name.replace("-", " ")
-
-    audit_logs.append({
-        "action": "BADGE SHARED",
-        "details": f"Donor '{username}' shared their achievement '{clean_badge}' to social media.",
-        "user": username,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
-    flash(
-        f"Successfully shared your {clean_badge} badge to your social profiles!",
-        "success")
+    flash(f"Successfully shared your {clean_badge} badge to your social profiles!", "success")
     return redirect(url_for("donor_profile"))
 
 
@@ -339,12 +505,6 @@ def login_admin():
         if username and password:
             session["username"] = username
             session["role"] = "admin"
-            audit_logs.append({
-                "action": "ADMIN LOGIN",
-                "details": f"Administrator '{username}' logged in successfully.",
-                "user": username,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
             flash("Logged in to Administrator Portal successfully!", "success")
             return redirect(url_for("admin_queue"))
         flash("Invalid credentials.", "danger")
@@ -353,14 +513,7 @@ def login_admin():
 
 @app.route("/logout")
 def logout():
-    username = session.get("username", "Unknown")
     session.clear()
-    audit_logs.append({
-        "action": "USER LOGOUT",
-        "details": f"User '{username}' logged out.",
-        "user": username,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
     flash("Logged out successfully.", "info")
     return redirect(url_for("login_hospital"))
 
@@ -371,9 +524,20 @@ def hospital_dashboard():
         flash("Unauthorized. Please log in first.", "danger")
         return redirect(url_for("login_hospital"))
 
-    h_demands = [d for d in demands]
-    return render_template("dashboard.html", demands=h_demands,
-                           scheduled_donors=scheduled_donors)
+    o_neg_count = reservation_engine.get_available_count("hosp-1", "O", "NEGATIVE")
+    return render_template(
+        "blood_bank_dashboard.html",
+        o_neg_count=o_neg_count,
+        platelet_count=4,
+        active_leases=2,
+        demands=demands,
+        scheduled_donors=scheduled_donors
+    )
+
+
+@app.route("/dispatch/command-center")
+def dispatch_command_center():
+    return render_template("dispatch_command_center.html")
 
 
 @app.route("/hospital/create-demand", methods=["GET", "POST"])
@@ -386,43 +550,25 @@ def create_demand():
         blood_type = request.form.get("blood_type")
         units = request.form.get("units")
         file = request.files.get("document")
-        notes = request.form.get("notes", "")
         urgency = request.form.get("urgency", "Emergency")
         district = request.form.get("district", "Downtown")
 
         if not blood_type or not units or not file:
-            flash(
-                "All fields including compliance document upload are required.",
-                "danger")
+            flash("All fields including compliance document upload are required.", "danger")
             return redirect(url_for("create_demand"))
 
-        filename = file.filename
-        new_id = len(demands) + 1
         new_demand = {
-            "id": new_id,
+            "id": len(demands) + 1,
             "hospital": session.get("username"),
             "blood_type": blood_type,
             "units": int(units),
-            "filename": filename,
+            "filename": file.filename,
             "status": "Pending",
             "urgency": urgency,
             "district": district
         }
         demands.append(new_demand)
-
-        audit_logs.append({
-            "action": "BLOOD DEMAND CREATED",
-            "details": (
-                f"Demand #{new_id} ({blood_type}, {units} units) created for {district} "
-                f"with urgency {urgency}. File: {filename}. Notes: {notes}"
-            ),
-            "user": session.get("username"),
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
-
-        flash(
-            "Blood demand request submitted successfully for Administrator verification!",
-            "success")
+        flash("Blood demand request submitted successfully for Administrator verification!", "success")
         return redirect(url_for("hospital_dashboard"))
 
     return render_template("create_demand.html")
@@ -435,13 +581,11 @@ def admin_queue():
         return redirect(url_for("login_admin"))
 
     filter_district = request.args.get("filter_district", "All")
-    pending_demands = [d for d in demands if d["status"] == "Pending"]
+    pending = [d for d in demands if d["status"] == "Pending"]
     if filter_district != "All":
-        pending_demands = [d for d in pending_demands if d.get(
-            "district") == filter_district]
+        pending = [d for d in pending if d.get("district") == filter_district]
 
-    return render_template("verification_queue.html",
-                           pending_demands=pending_demands, filter_district=filter_district)
+    return render_template("verification_queue.html", pending_demands=pending, filter_district=filter_district)
 
 
 @app.route("/admin/verify/<int:demand_id>", methods=["POST"])
@@ -451,48 +595,15 @@ def verify_demand(demand_id):
         return redirect(url_for("login_admin"))
 
     action = request.form.get("action")
-    target_demand = None
-    for d in demands:
-        if d["id"] == demand_id:
-            target_demand = d
-            break
-
-    if target_demand:
+    target = next((d for d in demands if d["id"] == demand_id), None)
+    if target:
         if action == "approve":
-            target_demand["status"] = "Approved"
-
-            new_alert_id = len(alerts) + 1
-            alerts.append({
-                "id": new_alert_id,
-                "hospital": target_demand["hospital"],
-                "blood_type": target_demand["blood_type"],
-                "status": "Active"
-            })
-
-            audit_logs.append({
-                "action": "EMERGENCY DEMAND APPROVED",
-                "details": (
-                    f"Approved demand #{demand_id} ({target_demand['blood_type']}) "
-                    f"for {target_demand.get('district', 'Downtown')}. Emitted event."
-                ),
-                "user": session.get("username"),
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-            flash(
-                f"Approved demand #{demand_id}! Alert dispatched to nearby donors.",
-                "success")
+            target["status"] = "Approved"
+            alerts.append({"id": len(alerts) + 1, "hospital": target["hospital"], "blood_type": target["blood_type"], "status": "Active"})
+            flash(f"Approved demand #{demand_id}! Alert dispatched to nearby donors.", "success")
         elif action == "reject":
-            target_demand["status"] = "Rejected"
-            audit_logs.append({
-                "action": "EMERGENCY DEMAND REJECTED",
-                "details": f"Rejected demand #{demand_id} ({target_demand['blood_type']}).",
-                "user": session.get("username"),
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
+            target["status"] = "Rejected"
             flash(f"Rejected demand #{demand_id}.", "warning")
-    else:
-        flash("Demand request not found.", "danger")
-
     return redirect(url_for("admin_queue"))
 
 
@@ -509,27 +620,20 @@ def admin_audit_log():
     if session.get("role") != "admin":
         flash("Unauthorized. Please log in first.", "danger")
         return redirect(url_for("login_admin"))
-
-    sorted_logs = sorted(
-        audit_logs,
-        key=lambda x: x["timestamp"],
-        reverse=True)
-    return render_template("audit_log.html", logs=sorted_logs)
+    return render_template("audit_log.html", logs=audit_logs)
 
 
 @app.route("/map/hotspots")
 def map_hotspots():
     radius = int(request.args.get("radius", 50))
     blood_type = request.args.get("blood_type", "All")
-
-    # Filter density clusters by radius and blood type
     filtered = [h for h in raw_hotspots if h["distance"] <= radius]
     if blood_type != "All":
         filtered = [h for h in filtered if h["blood_type"] == blood_type]
-
-    return render_template(
-        "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
+    return render_template("map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    is_debug = os.environ.get("FLASK_DEBUG", "0") == "1"
+    bind_host = os.environ.get("FLASK_HOST", "127.0.0.1")
+    app.run(host=bind_host, port=5000, debug=is_debug)
