@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Trauma Emergency Dispatch Center — BDCN{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h2 class="mb-1 text-danger font-weight-bold">🚨 Trauma Emergency Dispatch Center</h2>
+        <p class="text-muted">Sub-45 second emergency trauma blood dispatch, pessimistic inventory allocation & donor broadcast.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-danger btn-lg shadow-sm" data-bs-toggle="modal" data-bs-target="#codeRedModal" id="btn-initiate-code-red">
+            + Initiate Code Red Dispatch
+        </button>
+    </div>
+</div>
+
+<!-- KPI Metrics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="bdcn-card text-center border-start border-danger border-4">
+            <span class="text-muted text-uppercase fw-bold" style="font-size: 0.8rem;">Active Dispatches</span>
+            <div class="kpi-metric text-danger" id="kpi-active-count">{{ active_requests|length }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="bdcn-card text-center border-start border-warning border-4">
+            <span class="text-muted text-uppercase fw-bold" style="font-size: 0.8rem;">Units Reserved (120s Lease)</span>
+            <div class="kpi-metric text-warning" id="kpi-reserved-units">{{ inventory_summary.summary.totalReserved }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="bdcn-card text-center border-start border-success border-4">
+            <span class="text-muted text-uppercase fw-bold" style="font-size: 0.8rem;">Available Inventory</span>
+            <div class="kpi-metric text-success" id="kpi-available-units">{{ inventory_summary.summary.totalAvailable }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="bdcn-card text-center border-start border-primary border-4">
+            <span class="text-muted text-uppercase fw-bold" style="font-size: 0.8rem;">Avg Dispatch SLA</span>
+            <div class="kpi-metric text-primary">&lt; 45s</div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Emergency Requests Table -->
+<div class="bdcn-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 fw-bold">Live Emergency Dispatch Pipeline</h5>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadDispatchGrid()">🔄 Refresh</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="dispatch-table">
+            <thead class="table-light">
+                <tr>
+                    <th>Request ID</th>
+                    <th>Hospital / Facility</th>
+                    <th>Blood / Component</th>
+                    <th>Units</th>
+                    <th>Urgency Tier</th>
+                    <th>Status</th>
+                    <th>Lease Timer</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody id="dispatch-tbody">
+                {% if active_requests %}
+                    {% for req in active_requests %}
+                        <tr>
+                            <td><code>{{ req.requestId }}</code></td>
+                            <td>{{ req.requestingHospitalId }}</td>
+                            <td><span class="badge bg-danger">{{ req.requiredBloodType }}</span> <small class="text-muted">{{ req.componentType }}</small></td>
+                            <td><strong>{{ req.unitsRequested }}</strong></td>
+                            <td>
+                                {% if req.urgencyTier == 'CODE_RED' %}
+                                    <span class="badge badge-code-red">CODE RED</span>
+                                {% elif req.urgencyTier == 'URGENT' %}
+                                    <span class="badge badge-urgent">URGENT</span>
+                                {% else %}
+                                    <span class="badge badge-routine">ROUTINE</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge bg-secondary status-badge">{{ req.status }}</span></td>
+                            <td><span class="timer-countdown">{{ req.leaseSecondsRemaining }}s</span></td>
+                            <td><small class="text-muted">{{ req.createdAt }}</small></td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            All trauma queues clear. Regional supply stabilized.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Code Red Modal Component -->
+<div class="modal fade" id="codeRedModal" tabindex="-1" aria-labelledby="codeRedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold" id="codeRedModalLabel">🚨 Emergency Trauma Dispatch Order (Code Red)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-toggle="modal" data-bs-target="#codeRedModal" aria-label="Close"></button>
+            </div>
+            <form id="codeRedForm" onsubmit="handleCodeRedSubmit(event)">
+                <div class="modal-body p-4">
+                    <div id="modal-alert-box" class="d-none alert alert-danger"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Requesting Facility ID</label>
+                            <input type="text" class="form-control" id="form-facility-id" value="fac-001" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Urgency Level</label>
+                            <select class="form-select" id="form-urgency-tier">
+                                <option value="CODE_RED" selected>CODE RED (Fast-Path &lt;45s)</option>
+                                <option value="URGENT">URGENT (&lt;2h)</option>
+                                <option value="ROUTINE">ROUTINE (Scheduled)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Required ABO/Rh Blood Type</label>
+                            <select class="form-select" id="form-blood-type" required>
+                                <option value="O_NEG" selected>O Negative (Universal Donor)</option>
+                                <option value="O_POS">O Positive</option>
+                                <option value="A_POS">A Positive</option>
+                                <option value="A_NEG">A Negative</option>
+                                <option value="B_POS">B Positive</option>
+                                <option value="B_NEG">B Negative</option>
+                                <option value="AB_POS">AB Positive</option>
+                                <option value="AB_NEG">AB Negative</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Component Type</label>
+                            <select class="form-select" id="form-component-type">
+                                <option value="RED_BLOOD_CELLS" selected>Red Blood Cells (PRBC)</option>
+                                <option value="WHOLE_BLOOD">Whole Blood</option>
+                                <option value="PLATELETS">Platelets</option>
+                                <option value="FRESH_FROZEN_PLASMA">Fresh Frozen Plasma (FFP)</option>
+                                <option value="CRYOPRECIPITATE">Cryoprecipitate</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Units Requested</label>
+                            <input type="number" class="form-control" id="form-units-requested" min="1" max="20" value="4" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Coordinates (Lat, Lon)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.0001" class="form-control" id="form-lat" value="40.7128">
+                                <input type="number" step="0.0001" class="form-control" id="form-lon" value="-74.0060">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Clinical Encounter Notes (Encrypted via AES-256-GCM)</label>
+                            <textarea class="form-control" id="form-clinical-notes" rows="2" placeholder="Trauma encounter details, patient phenotype antibodies..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger px-4" id="btn-submit-order">
+                        🚀 Dispatch Order & Reserve Units
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dispatch.js"></script>
+{% endblock %}
