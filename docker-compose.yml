@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: bdcn_postgis_db
+    environment:
+      POSTGRES_DB: bdcn_db
+      POSTGRES_USER: bdcn_user
+      POSTGRES_PASSWORD: bdcn_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bdcn_user -d bdcn_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: bdcn_redis
+    ports:
+      - "6379:6379"
+
+  app:
+    build: .
+    container_name: bdcn_api_app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://bdcn_user:bdcn_password@db:5432/bdcn_db
+      - REDIS_URL=redis://redis:6379/0
+      - USE_SQLITE_FALLBACK=0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  postgis_data:

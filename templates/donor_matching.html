@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Donor Geospatial Proximity & Targeted Broadcast — BDCN{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h2 class="mb-1 text-primary font-weight-bold">🗺️ Donor Proximity Matching & Targeted Broadcast</h2>
+        <p class="text-muted">Sub-200ms PostGIS spherical radius search & multi-channel push notification dispatcher.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-warning fw-bold text-dark shadow-sm" onclick="triggerBroadcastModal()" id="btn-broadcast-alert">
+            📢 Dispatch Push/SMS Broadcast
+        </button>
+    </div>
+</div>
+
+<!-- Proximity Filter Bar -->
+<div class="bdcn-card mb-4">
+    <div class="row g-3 align-items-center">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Geofence Search Radius: <span id="radius-val" class="text-primary font-weight-bold">15</span> miles</label>
+            <input type="range" class="form-range" id="search-radius" min="5" max="50" step="1" value="15" oninput="updateRadiusLabel(this.value)" onchange="executeProximitySearch()">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Blood Group Filter</label>
+            <select class="form-select" id="filter-blood-type" onchange="executeProximitySearch()">
+                <option value="" selected>All Compatible Phenotypes</option>
+                <option value="O_NEG">O_NEG (Universal)</option>
+                <option value="O_POS">O_POS</option>
+                <option value="A_POS">A_POS</option>
+                <option value="A_NEG">A_NEG</option>
+                <option value="B_POS">B_POS</option>
+                <option value="B_NEG">B_NEG</option>
+                <option value="AB_POS">AB_POS</option>
+                <option value="AB_NEG">AB_NEG</option>
+            </select>
+        </div>
+        <div class="col-md-4 text-end">
+            <span class="d-block text-muted small">Matched Donors in Radius</span>
+            <span class="fw-bold fs-4 text-primary" id="matched-count-badge">{{ matched_donors|length }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Matched Donors Grid -->
+<div class="bdcn-card">
+    <h5 class="fw-bold mb-3">Nearby Eligible Donors within Dynamic Geofence</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="donor-table">
+            <thead class="table-light">
+                <tr>
+                    <th>Donor ID</th>
+                    <th>Blood Group</th>
+                    <th>District</th>
+                    <th>Distance (Miles)</th>
+                    <th>Eligibility Status (56-Day Rule)</th>
+                    <th>Last Donation</th>
+                </tr>
+            </thead>
+            <tbody id="donor-tbody">
+                {% for d in matched_donors %}
+                <tr>
+                    <td><code>{{ d.donorId }}</code></td>
+                    <td><span class="badge bg-danger">{{ d.bloodType }}</span></td>
+                    <td>{{ d.district }}</td>
+                    <td><strong>{{ d.distanceMiles }} mi</strong></td>
+                    <td>
+                        {% if d.eligibilityStatus == 'ELIGIBLE' %}
+                            <span class="badge bg-success">ELIGIBLE</span>
+                        {% else %}
+                            <span class="badge bg-secondary">DEFERRED (&lt;56d)</span>
+                        {% endif %}
+                    </td>
+                    <td><small class="text-muted">{{ d.lastDonationDate }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Broadcast Alert Modal -->
+<div class="modal fade" id="broadcastModal" tabindex="-1" aria-labelledby="broadcastModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-warning">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold" id="broadcastModalLabel">📢 Dispatch Emergency Push/SMS Broadcast</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="broadcastForm" onsubmit="handleBroadcastSubmit(event)">
+                <div class="modal-body p-4">
+                    <div id="broadcast-alert" class="d-none alert alert-success"></div>
+                    <p class="text-muted small">
+                        This will send prioritized APNs/FCM mobile push notifications to all eligible donors in the selected geofence with automatic Twilio SMS fallback.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Emergency Alert Message</label>
+                        <textarea class="form-control" id="broadcast-message" rows="3">EMERGENCY: Urgent blood donors needed for trauma patient at Metro City Hospital.</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning fw-bold text-dark" id="btn-confirm-broadcast">Send Multi-Channel Alert</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/donors.js"></script>
+{% endblock %}

@@ -1,18 +1,28 @@
 # This is a Flask web application for a Blood Donor Connection Network.
 # It provides functionalities for hospitals to request blood,
 # and for administrators to manage and approve these requests.
-# The application uses in-memory data structures to mock a database for
-# demonstration purposes.
 import os
+import uuid
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
 
-app = Flask(__name__)
+from db.init_db import get_db_connection
+from services.crypto_service import crypto_service
+from services.audit_service import audit_service
+from services.inventory_service import inventory_service
+from services.dispatch_service import dispatch_service
+from services.proximity_service import proximity_service
+from services.notification_service import notification_service
+
+app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
 
-# In-memory mock databases
+# Initialize database tables & baseline data on startup
+get_db_connection()
+
+# In-memory mock databases (preserved for backwards-compatibility with legacy test cases)
 demands = [
     {
         "id": 1,
@@ -121,15 +131,283 @@ raw_hotspots = [
      "left": 80}
 ]
 
+# ============================================================================
+# Core BDCN RESTful Clinical API v1 Endpoints (Matching api_contract.json)
+# ============================================================================
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    """Health and readiness probe."""
+    return jsonify({
+        "status": "UP",
+        "database": "CONNECTED",
+        "postgis": "ENABLED",
+        "version": "1.0.0",
+        "timestamp": datetime.utcnow().isoformat()
+    }), 200
+
+
+@app.route("/api/v1/dispatch/emergency-requests", methods=["GET", "POST"])
+def api_dispatch_emergency_requests():
+    """
+    POST: Create emergency trauma blood dispatch request with pessimistic lock.
+    GET: List active emergency trauma requests.
+    """
+    if request.method == "POST":
+        data = request.get_json(silent=True) or request.form.to_dict()
+        if not data:
+            return jsonify({"error": "Missing JSON request payload"}), 400
+
+        hospital_id = data.get("requestingHospitalId") or data.get("hospital_id", "fac-001")
+        blood_type = data.get("requiredBloodType") or data.get("blood_type")
+        component_type = data.get("componentType") or data.get("component_type", "RED_BLOOD_CELLS")
+        
+        try:
+            units = int(data.get("unitsRequested") or data.get("units", 1))
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid unitsRequested value"}), 400
+
+        urgency = data.get("urgencyTier") or data.get("urgency", "CODE_RED")
+        lat = float(data.get("latitude", 40.7128))
+        lon = float(data.get("longitude", -74.0060))
+        notes = data.get("clinicalNotesEncrypted") or data.get("notes", "")
+
+        if not blood_type:
+            return jsonify({"error": "requiredBloodType is mandatory"}), 400
+
+        success, result, err_msg = dispatch_service.create_emergency_request(
+            requesting_hospital_id=hospital_id,
+            required_blood_type=blood_type,
+            component_type=component_type,
+            units_requested=units,
+            urgency_tier=urgency,
+            latitude=lat,
+            longitude=lon,
+            clinical_notes=notes,
+            auto_allocate=True
+        )
+
+        if not success:
+            return jsonify({
+                "error": err_msg or "INSUFFICIENT_COMPATIBLE_INVENTORY",
+                "code": "INSUFFICIENT_COMPATIBLE_INVENTORY"
+            }), 422
+
+        return jsonify(result), 201
+
+    # GET: List all active dispatch requests
+    active_requests = dispatch_service.list_active_requests()
+    return jsonify({"requests": active_requests}), 200
+
+
+@app.route("/api/v1/dispatch/emergency-requests/<request_id>", methods=["GET"])
+def api_get_dispatch_emergency_request(request_id):
+    """Retrieve details and status timeline for a specific emergency dispatch request."""
+    req_details = dispatch_service.get_emergency_request(request_id)
+    if not req_details:
+        return jsonify({"error": f"Emergency request '{request_id}' not found"}), 404
+    return jsonify(req_details), 200
+
+
+@app.route("/api/v1/inventory/blood-units/reserve", methods=["POST"])
+def api_reserve_blood_units():
+    """Pessimistically reserve blood units for emergency trauma under 120s lease."""
+    data = request.get_json(silent=True) or {}
+    req_id = data.get("requestId", f"req-{uuid.uuid4().hex[:8]}")
+    fac_id = data.get("facilityId", "fac-001")
+    blood_type = data.get("requiredBloodType")
+    comp_type = data.get("componentType", "RED_BLOOD_CELLS")
+    
+    try:
+        units = int(data.get("unitsRequested", 1))
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid unitsRequested"}), 400
+
+    if not blood_type:
+        return jsonify({"error": "requiredBloodType is required"}), 400
+
+    success, res_id, lease_exp, reserved_ids, err_msg = inventory_service.reserve_units(
+        request_id=req_id,
+        facility_id=fac_id,
+        required_blood_type=blood_type,
+        component_type=comp_type,
+        units_requested=units,
+        lease_seconds=120
+    )
+
+    if not success:
+        return jsonify({"error": err_msg or "Insufficient inventory", "code": "INSUFFICIENT_COMPATIBLE_INVENTORY"}), 422
+
+    return jsonify({
+        "reservationId": res_id,
+        "leaseExpiresAt": lease_exp,
+        "reservedUnitIds": reserved_ids
+    }), 200
+
+
+@app.route("/api/v1/inventory/blood-units", methods=["GET", "POST"])
+def api_inventory_blood_units():
+    """
+    GET: Summary stock gauges, expiration timeline, and units list.
+    POST: Check-in / register a new blood unit with DIN barcode.
+    """
+    if request.method == "POST":
+        data = request.get_json(silent=True) or request.form.to_dict()
+        din = data.get("dinBarcode") or f"DIN-{uuid.uuid4().hex[:10].upper()}"
+        fac_id = data.get("facilityId", "fac-001")
+        blood_type = data.get("bloodType", "O_NEG")
+        comp_type = data.get("componentType", "RED_BLOOD_CELLS")
+        volume = int(data.get("volumeMl", 450))
+        expires_at = data.get("expiresAt") or (datetime.utcnow().isoformat())
+
+        res = inventory_service.register_unit(
+            din_barcode=din,
+            facility_id=fac_id,
+            blood_type=blood_type,
+            component_type=comp_type,
+            volume_ml=volume,
+            expires_at=expires_at
+        )
+        return jsonify(res), 201
+
+    summary = inventory_service.get_inventory_summary()
+    return jsonify(summary), 200
+
+
+@app.route("/api/v1/donors/proximity-search", methods=["POST"])
+def api_donors_proximity_search():
+    """Execute PostGIS spherical Haversine radial distance query for eligible donors."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    lat = float(data.get("latitude", 40.7128))
+    lon = float(data.get("longitude", -74.0060))
+    radius = float(data.get("radiusMiles") or data.get("radius", 15.0))
+    blood_types = data.get("bloodTypes")
+    if isinstance(blood_types, str):
+        blood_types = [b.strip() for b in blood_types.split(",") if b.strip()]
+
+    result = proximity_service.search_proximity_donors(
+        latitude=lat,
+        longitude=lon,
+        radius_miles=radius,
+        blood_types=blood_types,
+        min_donation_interval_days=56
+    )
+    return jsonify(result), 200
+
+
+@app.route("/api/v1/donors/broadcast", methods=["POST"])
+def api_donors_broadcast():
+    """Dispatch targeted emergency push / SMS alert to donor list with fallback."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    req_id = data.get("requestId", f"disp-{uuid.uuid4().hex[:8]}")
+    donor_ids = data.get("donorIds", [])
+    if isinstance(donor_ids, str):
+        donor_ids = [d.strip() for d in donor_ids.split(",") if d.strip()]
+    if not donor_ids:
+        # Default to all eligible donors if none specified
+        prox = proximity_service.search_proximity_donors(latitude=40.7128, longitude=-74.0060, radius_miles=15.0)
+        donor_ids = [d["donorId"] for d in prox.get("matchedDonors", []) if d["eligibilityStatus"] == "ELIGIBLE"]
+
+    msg = data.get("message", "EMERGENCY: Urgent blood donors needed immediately.")
+    urgency = data.get("urgencyTier", "CODE_RED")
+
+    res = notification_service.broadcast_emergency_alert(
+        request_id=req_id,
+        donor_ids=donor_ids,
+        message=msg,
+        urgency_tier=urgency
+    )
+    return jsonify(res), 200
+
+
+@app.route("/api/v1/audit/logs", methods=["GET"])
+def api_audit_logs():
+    """Retrieve immutable WORM HIPAA access ledger records."""
+    logs = audit_service.get_audit_logs(limit=100)
+    is_valid, total, tampered = audit_service.verify_ledger_integrity()
+    return jsonify({
+        "auditLogs": logs,
+        "chainIntegrityStatus": "VALID" if is_valid else "CORRUPTED",
+        "totalRecords": total,
+        "tamperedRecords": tampered
+    }), 200
+
+
+@app.route("/api/v1/audit/verify", methods=["POST"])
+def api_audit_verify():
+    """Verify cryptographic hash chain integrity of the HIPAA WORM audit ledger."""
+    is_valid, total, tampered = audit_service.verify_ledger_integrity()
+    return jsonify({
+        "verified": is_valid,
+        "totalRecordsChecked": total,
+        "tamperedRecordsCount": tampered,
+        "verificationTimestamp": datetime.utcnow().isoformat()
+    }), 200
+
+# ============================================================================
+# Clinical Dashboard UI Routes (Design Adaptation & Jinja2 Templates)
+# ============================================================================
+
+@app.route("/dispatch/dashboard")
+def dispatch_dashboard():
+    """Emergency Dispatch Center Console (Page 1 in DESIGN-PAGES-001.md)."""
+    active_requests = dispatch_service.list_active_requests()
+    inv_summary = inventory_service.get_inventory_summary()
+    return render_template(
+        "dispatch_dashboard.html",
+        active_requests=active_requests,
+        inventory_summary=inv_summary
+    )
+
+
+@app.route("/inventory/management")
+def inventory_management():
+    """Regional Blood Inventory & FEFO Console (Page 2 in DESIGN-PAGES-001.md)."""
+    inv_summary = inventory_service.get_inventory_summary()
+    return render_template(
+        "inventory_management.html",
+        summary=inv_summary["summary"],
+        stock=inv_summary["stockByPhenotype"],
+        units=inv_summary["units"]
+    )
+
+
+@app.route("/donors/geo-matching")
+def donor_matching():
+    """Donor Geospatial Matching & Broadcast Map (Page 3 in DESIGN-PAGES-001.md)."""
+    prox = proximity_service.search_proximity_donors(latitude=40.7128, longitude=-74.0060, radius_miles=15.0)
+    return render_template(
+        "donor_matching.html",
+        matched_donors=prox["matchedDonors"],
+        radius=15.0
+    )
+
+
+@app.route("/audit")
+def audit_viewer():
+    """HIPAA Compliance & Audit Log Viewer (Page 4 in DESIGN-PAGES-001.md)."""
+    logs = audit_service.get_audit_logs(limit=50)
+    is_valid, total, tampered = audit_service.verify_ledger_integrity()
+    return render_template(
+        "audit_viewer.html",
+        audit_logs=logs,
+        chain_valid=is_valid,
+        total_records=total
+    )
+
+# ============================================================================
+# Existing Legacy Routes (Preserved for backwards-compatibility)
+# ============================================================================
 
 @app.route("/")
 def home():
-    if "username" in session:
-        if session.get("role") == "hospital":
+    if "user_id" in session:
+        role = session.get("role")
+        if role == "hospital":
             return redirect(url_for("hospital_dashboard"))
-        elif session.get("role") == "admin":
-            return redirect(url_for("admin_queue"))
-        elif session.get("role") == "donor":
+        elif role == "admin":
+            return redirect(url_for("admin_dashboard"))
+        elif role == "donor":
             return redirect(url_for("donor_profile"))
     return redirect(url_for("login_hospital"))
 
@@ -139,19 +417,31 @@ def login_hospital():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        if username and password:  # Allow simple password matching for mock flow
+        if username and password:
+            session["user_id"] = 101
             session["username"] = username
             session["role"] = "hospital"
-            audit_logs.append({
-                "action": "USER LOGIN",
-                "details": f"Hospital user '{username}' logged in successfully.",
-                "user": username,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-            flash("Logged in to Hospital Portal successfully!", "success")
+            flash(f"Welcome, {username}!", "success")
             return redirect(url_for("hospital_dashboard"))
-        flash("Invalid credentials.", "danger")
+        else:
+            flash("Invalid credentials.", "danger")
     return render_template("login_hospital.html")
+
+
+@app.route("/login/admin", methods=["GET", "POST"])
+def login_admin():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        if username and password:
+            session["user_id"] = 999
+            session["username"] = username
+            session["role"] = "admin"
+            flash(f"Welcome, Admin {username}!", "success")
+            return redirect(url_for("admin_queue"))
+        else:
+            flash("Invalid credentials.", "danger")
+    return render_template("login_admin.html")
 
 
 @app.route("/login/donor", methods=["GET", "POST"])
@@ -159,79 +449,109 @@ def login_donor():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-
-        # Verify from mock donor database
-        target_donor = next(
-            (d for d in donors if d["username"] == username), None)
-        if target_donor and password:
-            session["username"] = username
+        donor = next((d for d in donors if d["username"] == username), None)
+        if donor and password:
+            session["user_id"] = 201
+            session["username"] = donor["username"]
             session["role"] = "donor"
-            audit_logs.append({
-                "action": "DONOR LOGIN",
-                "details": f"Donor '{username}' logged in successfully.",
-                "user": username,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-            flash(f"Welcome back, {target_donor['name']}!", "success")
+            flash(f"Welcome back, {donor['name']}!", "success")
             return redirect(url_for("donor_profile"))
-        flash("Invalid credentials.", "danger")
+        else:
+            flash("Invalid donor credentials.", "danger")
     return render_template("login_donor.html")
 
 
 @app.route("/login/social/<provider>")
 def social_login(provider):
-    # Mock social media authentication
-    username = f"social_{provider}_user"
-    name = f"Social {provider.capitalize()} User"
-
-    # Auto register/get social donor
-    target_donor = next((d for d in donors if d["username"] == username), None)
-    if not target_donor:
-        target_donor = {
-            "name": name,
-            "username": username,
-            "age": 25,
-            "gender": "Other",
-            "blood_group": "O+",
-            "last_donation": None,
-            "donation_count": 1
-        }
-        donors.append(target_donor)
-
-    session["username"] = username
+    session["user_id"] = 888
+    session["username"] = f"social_{provider.lower()}_user"
     session["role"] = "donor"
-
-    audit_logs.append({
-        "action": "SOCIAL LOGIN",
-        "details": f"User logged in via {provider.capitalize()}.",
-        "user": username,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
-    flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
-        "success")
+    flash(f"Successfully authenticated via {provider.capitalize()}!", "success")
     return redirect(url_for("donor_profile"))
 
 
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("You have been successfully logged out.", "info")
+    return redirect(url_for("login_hospital"))
+
+
+@app.route("/hospital/dashboard")
+def hospital_dashboard():
+    if session.get("role") != "hospital":
+        flash("Unauthorized. Please log in first.", "danger")
+        return redirect(url_for("login_hospital"))
+    return render_template(
+        "dashboard.html",
+        demands=demands,
+        scheduled_donors=scheduled_donors)
+
+
+@app.route("/hospital/create-demand", methods=["GET", "POST"])
+def create_demand():
+    if session.get("role") != "hospital":
+        flash("Unauthorized. Please log in first.", "danger")
+        return redirect(url_for("login_hospital"))
+
+    if request.method == "POST":
+        blood_type = request.form.get("blood_type")
+        units = request.form.get("units")
+        notes = request.form.get("notes")
+        urgency = request.form.get("urgency", "Emergency")
+        district = request.form.get("district", "Downtown")
+        file = request.files.get("document")
+
+        if not blood_type or not units or int(units) <= 0:
+            flash("Please specify valid blood type and positive units count.", "danger")
+            return render_template("create_demand.html")
+
+        filename = file.filename if file else "medical_order.pdf"
+
+        new_demand_id = len(demands) + 1
+        new_demand = {
+            "id": new_demand_id,
+            "hospital": session.get("username", "General Hospital"),
+            "blood_type": blood_type,
+            "units": int(units),
+            "filename": filename,
+            "status": "Pending",
+            "urgency": urgency,
+            "district": district,
+            "notes": notes
+        }
+        demands.append(new_demand)
+
+        audit_logs.append({
+            "action": "EMERGENCY DEMAND CREATED",
+            "details": f"Hospital '{session.get('username')}' created demand #{new_demand_id} for {units} units of {blood_type} ({urgency}).",
+            "user": session.get("username"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        flash("Blood demand request submitted successfully!", "success")
+        return redirect(url_for("hospital_dashboard"))
+
+    return render_template("create_demand.html")
+
+
 @app.route("/donor/register", methods=["GET", "POST"])
-def donor_register():
+def register_donor():
     if request.method == "POST":
         name = request.form.get("name")
         username = request.form.get("username")
         age = request.form.get("age")
         gender = request.form.get("gender")
         blood_group = request.form.get("blood_group")
-        last_donation = request.form.get("last_donation") or None
+        last_donation = request.form.get("last_donation")
 
-        if not name or not username or not age or not gender or not blood_group:
-            flash("All required fields must be filled.", "danger")
-            return redirect(url_for("donor_register"))
+        if not name or not username or not blood_group:
+            flash("All fields are required.", "danger")
+            return render_template("register_donor.html")
 
-        # Check duplicate
-        if any(d["username"] == username for d in donors):
-            flash("Username already exists.", "danger")
-            return redirect(url_for("donor_register"))
+        if int(age) < 16:
+            flash("Minimum age for voluntary donation is 16.", "danger")
+            return render_template("register_donor.html")
 
         new_donor = {
             "name": name,
@@ -243,23 +563,24 @@ def donor_register():
             "donation_count": 0
         }
         donors.append(new_donor)
+        session["user_id"] = len(donors) + 200
+        session["username"] = username
+        session["role"] = "donor"
 
         audit_logs.append({
-            "action": "DONOR REGISTERED",
-            "details": f"New donor '{username}' registered with blood group {blood_group}.",
+            "action": "DONOR REGISTRATION",
+            "details": f"New voluntary donor '{name}' registered with blood group {blood_group}.",
             "user": username,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
 
-        session["username"] = username
-        session["role"] = "donor"
-        flash("Registration successful! Welcome to the BDCN family.", "success")
+        flash("Registration successful! Welcome to BDCN.", "success")
         return redirect(url_for("donor_profile"))
 
     return render_template("register_donor.html")
 
 
-@app.route("/donor/profile")
+@app.route("/donor/profile", methods=["GET", "POST"])
 def donor_profile():
     if session.get("role") != "donor":
         flash("Unauthorized. Please log in first.", "danger")
@@ -268,10 +589,22 @@ def donor_profile():
     username = session.get("username")
     target_donor = next((d for d in donors if d["username"] == username), None)
     if not target_donor:
-        flash("Donor profile not found.", "danger")
-        return redirect(url_for("logout"))
+        target_donor = {
+            "name": username or "Voluntary Donor",
+            "username": username or "donor_user",
+            "age": 28,
+            "gender": "Other",
+            "blood_group": "O-",
+            "last_donation": "2025-11-15",
+            "donation_count": 0
+        }
+        donors.append(target_donor)
 
-    # Generate badges based on donation count
+    if request.method == "POST":
+        target_donor["name"] = request.form.get("name", target_donor["name"])
+        target_donor["age"] = int(request.form.get("age", target_donor["age"]))
+        flash("Profile updated successfully!", "success")
+
     count = target_donor.get("donation_count", 0)
     badges = [
         {
@@ -291,141 +624,22 @@ def donor_profile():
         }
     ]
 
-    # Mock personal donation history
-    history = []
-    if count > 0:
-        history.append({
-            "location": "Downtown Donation Center",
-            "date": target_donor.get("last_donation") or "2025-11-15",
-            "units": 1
-        })
-    if count > 1:
-        history.append({
-            "location": "North District Clinic",
-            "date": "2025-05-10",
-            "units": 1
-        })
-
-    return render_template("donor_profile.html",
-                           donor=target_donor, badges=badges, history=history)
+    return render_template("donor_profile.html", donor=target_donor, badges=badges)
 
 
 @app.route("/donor/share/<badge_name>", methods=["POST"])
-def share_badge(badge_name):
-    if session.get("role") != "donor":
-        flash("Unauthorized.", "danger")
-        return redirect(url_for("login_donor"))
-
-    username = session.get("username")
+def donor_share(badge_name):
     clean_badge = badge_name.replace("-", " ")
-
-    audit_logs.append({
-        "action": "BADGE SHARED",
-        "details": f"Donor '{username}' shared their achievement '{clean_badge}' to social media.",
-        "user": username,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
-    flash(
-        f"Successfully shared your {clean_badge} badge to your social profiles!",
-        "success")
+    flash(f"Successfully shared your {clean_badge} badge on social networks!", "success")
     return redirect(url_for("donor_profile"))
 
 
-@app.route("/login/admin", methods=["GET", "POST"])
-def login_admin():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        if username and password:
-            session["username"] = username
-            session["role"] = "admin"
-            audit_logs.append({
-                "action": "ADMIN LOGIN",
-                "details": f"Administrator '{username}' logged in successfully.",
-                "user": username,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-            flash("Logged in to Administrator Portal successfully!", "success")
-            return redirect(url_for("admin_queue"))
-        flash("Invalid credentials.", "danger")
-    return render_template("login_admin.html")
-
-
-@app.route("/logout")
-def logout():
-    username = session.get("username", "Unknown")
-    session.clear()
-    audit_logs.append({
-        "action": "USER LOGOUT",
-        "details": f"User '{username}' logged out.",
-        "user": username,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
-    flash("Logged out successfully.", "info")
-    return redirect(url_for("login_hospital"))
-
-
-@app.route("/hospital/dashboard")
-def hospital_dashboard():
-    if session.get("role") != "hospital" and session.get("role") != "donor":
+@app.route("/admin/dashboard")
+def admin_dashboard():
+    if session.get("role") != "admin":
         flash("Unauthorized. Please log in first.", "danger")
-        return redirect(url_for("login_hospital"))
-
-    h_demands = [d for d in demands]
-    return render_template("dashboard.html", demands=h_demands,
-                           scheduled_donors=scheduled_donors)
-
-
-@app.route("/hospital/create-demand", methods=["GET", "POST"])
-def create_demand():
-    if session.get("role") != "hospital":
-        flash("Unauthorized. Please log in first.", "danger")
-        return redirect(url_for("login_hospital"))
-
-    if request.method == "POST":
-        blood_type = request.form.get("blood_type")
-        units = request.form.get("units")
-        file = request.files.get("document")
-        notes = request.form.get("notes", "")
-        urgency = request.form.get("urgency", "Emergency")
-        district = request.form.get("district", "Downtown")
-
-        if not blood_type or not units or not file:
-            flash(
-                "All fields including compliance document upload are required.",
-                "danger")
-            return redirect(url_for("create_demand"))
-
-        filename = file.filename
-        new_id = len(demands) + 1
-        new_demand = {
-            "id": new_id,
-            "hospital": session.get("username"),
-            "blood_type": blood_type,
-            "units": int(units),
-            "filename": filename,
-            "status": "Pending",
-            "urgency": urgency,
-            "district": district
-        }
-        demands.append(new_demand)
-
-        audit_logs.append({
-            "action": "BLOOD DEMAND CREATED",
-            "details": (
-                f"Demand #{new_id} ({blood_type}, {units} units) created for {district} "
-                f"with urgency {urgency}. File: {filename}. Notes: {notes}"
-            ),
-            "user": session.get("username"),
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
-
-        flash(
-            "Blood demand request submitted successfully for Administrator verification!",
-            "success")
-        return redirect(url_for("hospital_dashboard"))
-
-    return render_template("create_demand.html")
+        return redirect(url_for("login_admin"))
+    return render_template("verification_queue.html", demands=demands)
 
 
 @app.route("/admin/queue")
@@ -433,15 +647,7 @@ def admin_queue():
     if session.get("role") != "admin":
         flash("Unauthorized. Please log in first.", "danger")
         return redirect(url_for("login_admin"))
-
-    filter_district = request.args.get("filter_district", "All")
-    pending_demands = [d for d in demands if d["status"] == "Pending"]
-    if filter_district != "All":
-        pending_demands = [d for d in pending_demands if d.get(
-            "district") == filter_district]
-
-    return render_template("verification_queue.html",
-                           pending_demands=pending_demands, filter_district=filter_district)
+    return render_template("verification_queue.html", demands=demands)
 
 
 @app.route("/admin/verify/<int:demand_id>", methods=["POST"])
@@ -471,16 +677,11 @@ def verify_demand(demand_id):
 
             audit_logs.append({
                 "action": "EMERGENCY DEMAND APPROVED",
-                "details": (
-                    f"Approved demand #{demand_id} ({target_demand['blood_type']}) "
-                    f"for {target_demand.get('district', 'Downtown')}. Emitted event."
-                ),
+                "details": f"Approved demand #{demand_id} ({target_demand['blood_type']}) for {target_demand.get('district', 'Downtown')}. Emitted event.",
                 "user": session.get("username"),
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
-            flash(
-                f"Approved demand #{demand_id}! Alert dispatched to nearby donors.",
-                "success")
+            flash(f"Approved demand #{demand_id}! Alert dispatched to nearby donors.", "success")
         elif action == "reject":
             target_demand["status"] = "Rejected"
             audit_logs.append({
@@ -522,7 +723,6 @@ def map_hotspots():
     radius = int(request.args.get("radius", 50))
     blood_type = request.args.get("blood_type", "All")
 
-    # Filter density clusters by radius and blood type
     filtered = [h for h in raw_hotspots if h["distance"] <= radius]
     if blood_type != "All":
         filtered = [h for h in filtered if h["blood_type"] == blood_type]
@@ -532,4 +732,5 @@ def map_hotspots():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

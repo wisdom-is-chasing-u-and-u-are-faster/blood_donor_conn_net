@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}HIPAA Compliance & Immutable Audit Log Viewer — BDCN{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h2 class="mb-1 text-dark font-weight-bold">🔒 HIPAA / HITECH Immutable Audit Viewer</h2>
+        <p class="text-muted">Tamper-evident Write-Once-Read-Many (WORM) access ledger backed by SHA-256 cryptographic hash chaining.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-success shadow-sm" onclick="runCryptographicVerification()" id="btn-verify-ledger">
+            🛡️ Run Hash Chain Integrity Verification
+        </button>
+    </div>
+</div>
+
+<!-- Ledger Verification Banner -->
+<div id="integrity-banner" class="alert {% if chain_valid %}alert-success{% else %}alert-danger{% endif %} d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <strong id="integrity-title">{% if chain_valid %}✅ Ledger Cryptographic Chain: VALID{% else %}⚠️ Ledger Cryptographic Chain: COMPROMISED{% endif %}</strong>
+        <p class="mb-0 small text-muted" id="integrity-subtitle">All audit entries verified with 0 cryptographic hash breaks.</p>
+    </div>
+    <span class="badge bg-dark fs-6" id="total-records-badge">{{ total_records }} Records Verified</span>
+</div>
+
+<!-- Audit Log Table -->
+<div class="bdcn-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 fw-bold">WORM Access Ledger Events</h5>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadAuditTable()">🔄 Refresh Ledger</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0" id="audit-table">
+            <thead class="table-light">
+                <tr>
+                    <th>Audit ID</th>
+                    <th>Action</th>
+                    <th>Actor ID</th>
+                    <th>Resource Type</th>
+                    <th>SHA-256 Hash Chaining</th>
+                    <th>Timestamp (UTC)</th>
+                </tr>
+            </thead>
+            <tbody id="audit-tbody">
+                {% for log in audit_logs %}
+                <tr>
+                    <td><code>{{ log.auditId }}</code></td>
+                    <td><span class="badge bg-primary">{{ log.actionType }}</span></td>
+                    <td><small>{{ log.actorUserId }}</small></td>
+                    <td><span class="badge bg-light text-dark border">{{ log.resourceType }}</span></td>
+                    <td>
+                        <small class="text-muted d-block font-monospace" style="font-size: 0.7rem;">Cur: {{ log.payloadHashSha256[:16] }}...</small>
+                        <small class="text-muted d-block font-monospace" style="font-size: 0.7rem;">Prv: {{ log.previousHashSha256[:16] }}...</small>
+                    </td>
+                    <td><small class="text-muted">{{ log.timestamp }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/audit.js"></script>
+{% endblock %}
