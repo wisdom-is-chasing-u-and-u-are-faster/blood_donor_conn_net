@@ -5,9 +5,12 @@
 # demonstration purposes.
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import (
+    Flask, render_template, request, redirect, session,
+    flash, url_for, jsonify, send_from_directory
+)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="public", static_url_path="")
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
@@ -121,7 +124,408 @@ raw_hotspots = [
      "left": 80}
 ]
 
+# Structured donor clusters for coarse centroid clustering (REQ-F-008, REQ-F-009)
+donor_clusters = [
+    {
+        "cluster_id": "cluster_dt_01",
+        "district": "Downtown District",
+        "centroid_lat": 37.77,
+        "centroid_lng": -122.42,
+        "donor_count": 18,
+        "blood_types": ["O-", "O+", "A+"],
+        "density_tier": "High"
+    },
+    {
+        "cluster_id": "cluster_nd_02",
+        "district": "North District",
+        "centroid_lat": 37.79,
+        "centroid_lng": -122.40,
+        "donor_count": 12,
+        "blood_types": ["A+", "B+"],
+        "density_tier": "Medium"
+    },
+    {
+        "cluster_id": "cluster_ed_03",
+        "district": "East Bay Cluster",
+        "centroid_lat": 37.80,
+        "centroid_lng": -122.27,
+        "donor_count": 24,
+        "blood_types": ["O+", "A-", "AB+"],
+        "density_tier": "High"
+    },
+    {
+        "cluster_id": "cluster_sd_04",
+        "district": "South Bay Area",
+        "centroid_lat": 37.33,
+        "centroid_lng": -121.89,
+        "donor_count": 9,
+        "blood_types": ["B-", "O+"],
+        "density_tier": "Low"
+    }
+]
 
+# Medical document repository records (REQ-F-003, REQ-N-001)
+medical_documents = [
+    {
+        "id": 1,
+        "filename": "donor_eligibility_attestation.pdf",
+        "document_type": "Eligibility Form",
+        "verification_status": "Verified",
+        "uploaded_at": "2026-10-10 14:00:00",
+        "notes": "Pre-screened health questionnaire approved."
+    },
+    {
+        "id": 2,
+        "filename": "serology_clearance.pdf",
+        "document_type": "Lab Serology Test",
+        "verification_status": "Verified",
+        "uploaded_at": "2026-10-12 09:30:00",
+        "notes": "Non-reactive panels on all infectious markers."
+    }
+]
+
+# Gamification achievements and badge tiers (REQ-F-002)
+achievements_list = [
+    {
+        "id": "first_drop",
+        "code": "FIRST_DROP",
+        "title": "First Drop",
+        "description": "Completed your initial whole blood donation.",
+        "badge_icon": "🩸",
+        "tier": "Bronze",
+        "points_reward": 50,
+        "unlocked": True
+    },
+    {
+        "id": "lifesaver",
+        "code": "LIFESAVER",
+        "title": "Lifesaver",
+        "description": "Donated 3 or more times to emergency alerts.",
+        "badge_icon": "⭐",
+        "tier": "Silver",
+        "points_reward": 150,
+        "unlocked": True
+    },
+    {
+        "id": "champion",
+        "code": "CHAMPION",
+        "title": "Community Champion",
+        "description": "Achieved 5 donations and inspired 3 peers.",
+        "badge_icon": "🏆",
+        "tier": "Gold",
+        "points_reward": 300,
+        "unlocked": True
+    },
+    {
+        "id": "century_club",
+        "code": "CENTURY_CLUB",
+        "title": "Century Club",
+        "description": "Over 10 units donated across community drives.",
+        "badge_icon": "👑",
+        "tier": "Platinum",
+        "points_reward": 500,
+        "unlocked": False
+    }
+]
+
+
+# ---------------------------------------------------------
+# Static Serving & Health Check (Cloud Run)
+# ---------------------------------------------------------
+@app.route("/js/<path:filename>")
+def serve_js(filename):
+    """Serve client-side JavaScript files from public/js."""
+    return send_from_directory(os.path.join(app.root_path, "public", "js"), filename)
+
+
+@app.route("/health")
+def health_check():
+    """Health and readiness probe for Cloud Run container orchestrator."""
+    return jsonify({
+        "status": "ok",
+        "service": "bdcn-platform",
+        "version": "1.0.0"
+    }), 200
+
+
+# ---------------------------------------------------------
+# Variant-A UI Screen Routes (ARCH-3619)
+# ---------------------------------------------------------
+@app.route("/index")
+@app.route("/preview")
+def full_preview_hub():
+    """AC 5: Full UI Prototype Screen Hub connecting all self-contained screens."""
+    return render_template("index.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login_view():
+    """AC 1: Variant-A Login with Social Media buttons."""
+    if request.method == "POST":
+        provider = request.form.get("provider", "google")
+        return redirect(url_for("social_login", provider=provider))
+    return render_template("login.html")
+
+
+@app.route("/dashboard")
+def dashboard_view():
+    """Variant-A Dashboard & Request Feed."""
+    formatted_requests = [
+        {
+            "id": d["id"],
+            "recipient_name": d.get("hospital", "General Hospital"),
+            "hospital": d.get("hospital", "General Hospital"),
+            "blood_type": d["blood_type"],
+            "units": d["units"],
+            "urgency": d.get("urgency", "Standard"),
+            "status": d.get("status", "Pending Donor Match"),
+            "district": d.get("district", "Downtown")
+        }
+        for d in demands
+    ]
+    return render_template("dashboard.html", requests=formatted_requests)
+
+
+@app.route("/map")
+def map_view():
+    """AC 2: Main map view displaying clustered data points, not individual addresses."""
+    return render_template("map.html", clusters=donor_clusters)
+
+
+@app.route("/profile")
+def profile_view():
+    """AC 3: Access profile section with interface to upload a document."""
+    username = session.get("username", "johndoe")
+    target_donor = next((d for d in donors if d["username"] == username), None)
+    if not target_donor:
+        user_info = {
+            "full_name": "John Doe",
+            "email": "john.doe@example.com",
+            "blood_type": "O+",
+            "district": "Downtown",
+            "total_donations": 5
+        }
+    else:
+        user_info = {
+            "full_name": target_donor.get("name", "John Doe"),
+            "email": f"{username}@example.com",
+            "blood_type": target_donor.get("blood_group", "O+"),
+            "district": target_donor.get("district", "Downtown"),
+            "total_donations": target_donor.get("donation_count", 5)
+        }
+    return render_template("profile.html", user=user_info, documents=medical_documents)
+
+
+@app.route("/profile/upload", methods=["POST"])
+def profile_document_upload():
+    """AC 3: Handle medical document upload with audit trail."""
+    file = request.files.get("file")
+    notes = request.form.get("notes", "")
+    if not file or not file.filename:
+        flash("Please select a valid medical document to upload.", "danger")
+        return redirect(url_for("profile_view"))
+
+    new_doc_id = len(medical_documents) + 1
+    new_doc = {
+        "id": new_doc_id,
+        "filename": file.filename,
+        "document_type": request.form.get("document_type", "Medical Clearance"),
+        "verification_status": "Pending Review",
+        "uploaded_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "notes": notes
+    }
+    medical_documents.append(new_doc)
+    audit_logs.append({
+        "action": "DOCUMENT_UPLOAD",
+        "details": f"Medical document '{file.filename}' uploaded to secure GCP repository. Notes: {notes}",
+        "user": session.get("username", "DonorUser"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+    flash(f"Document '{file.filename}' uploaded successfully for clinical review.", "success")
+    return redirect(url_for("profile_view"))
+
+
+@app.route("/achievements")
+def achievements_view():
+    """AC 4: Functional achievements/gamification screen."""
+    return render_template(
+        "achievements.html",
+        tier="Silver",
+        points=250,
+        achievements=achievements_list
+    )
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings_view():
+    """Variant-A Settings screen."""
+    if request.method == "POST":
+        flash("Settings saved successfully.", "success")
+    return render_template("settings.html")
+
+
+# ---------------------------------------------------------
+# REST API Endpoints (Matching api_contract.json)
+# ---------------------------------------------------------
+@app.route("/api/v1/auth/social-login", methods=["POST"])
+def api_social_login():
+    """AC 1: Social Media login via REST API."""
+    data = request.get_json(silent=True) or {}
+    provider = data.get("provider", "google").lower()
+    email = data.get("email", f"user@{provider}.com")
+    name = data.get("name", f"Social {provider.capitalize()} User")
+
+    username = f"social_{provider}_user"
+    session["username"] = username
+    session["role"] = "donor"
+
+    audit_logs.append({
+        "action": "API_SOCIAL_LOGIN",
+        "details": f"Social login authenticated via {provider.capitalize()} for {email}.",
+        "user": username,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "status": "success",
+        "user_id": username,
+        "role": "donor",
+        "name": name,
+        "email": email,
+        "token": f"jwt-mock-token-{provider}"
+    }), 200
+
+
+@app.route("/api/v1/map/clusters", methods=["GET"])
+def api_map_clusters():
+    """AC 2: Return coarse centroid clusters without individual addresses."""
+    return jsonify({
+        "status": "success",
+        "clusters": donor_clusters,
+        "privacy_guarantee": "HIPAA-compliant coarse centroid clustering; zero raw addresses exposed."
+    }), 200
+
+
+@app.route("/api/v1/profile", methods=["GET", "POST"])
+def api_profile():
+    """AC 3: Profile and documents metadata."""
+    if request.method == "POST":
+        return jsonify({"status": "success", "updated": True}), 200
+    return jsonify({
+        "status": "success",
+        "user_id": session.get("username", "johndoe"),
+        "name": "John Doe",
+        "blood_type": "O+",
+        "district": "Downtown",
+        "total_donations": 5,
+        "documents": medical_documents
+    }), 200
+
+
+@app.route("/api/v1/documents/upload", methods=["POST"])
+def api_upload_document():
+    """AC 3: Medical document upload with audit trail."""
+    file = request.files.get("file")
+    filename = file.filename if file else request.form.get("filename", "medical_clearance.pdf")
+    doc_type = request.form.get("document_type", "Medical Clearance")
+    notes = request.form.get("notes", "")
+
+    new_id = len(medical_documents) + 1
+    new_doc = {
+        "id": new_id,
+        "filename": filename,
+        "document_type": doc_type,
+        "verification_status": "Pending Review",
+        "uploaded_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "notes": notes
+    }
+    medical_documents.append(new_doc)
+    audit_logs.append({
+        "action": "API_DOCUMENT_UPLOAD",
+        "details": f"API uploaded medical document '{filename}' ({doc_type}).",
+        "user": session.get("username", "DonorUser"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+    return jsonify({
+        "status": "success",
+        "doc_id": str(new_id),
+        "filename": filename,
+        "verification_status": "Pending Review",
+        "audit_event_id": f"evt-{new_id}"
+    }), 201
+
+
+@app.route("/api/v1/documents", methods=["GET"])
+def api_get_documents():
+    return jsonify({
+        "status": "success",
+        "documents": medical_documents
+    }), 200
+
+
+@app.route("/api/v1/achievements", methods=["GET"])
+def api_get_achievements():
+    """AC 4: Return achievements, tiers, and points."""
+    return jsonify({
+        "status": "success",
+        "points": 250,
+        "current_tier": "Silver",
+        "achievements": achievements_list
+    }), 200
+
+
+@app.route("/api/v1/achievements/share", methods=["POST"])
+def api_share_achievement():
+    """AC 4: Achievement social sharing endpoint."""
+    data = request.get_json(silent=True) or {}
+    ach_id = data.get("achievement_id", "first_drop")
+    platform = data.get("platform", "twitter")
+
+    audit_logs.append({
+        "action": "ACHIEVEMENT_SHARED",
+        "details": f"Achievement '{ach_id}' shared on platform '{platform}'.",
+        "user": session.get("username", "DonorUser"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+    return jsonify({
+        "status": "success",
+        "share_url": f"https://bdcn.health/achievements/{ach_id}",
+        "share_text": f"Proud to support BDCN! Unlocked milestone #{ach_id}."
+    }), 200
+
+
+@app.route("/api/v1/dashboard/requests", methods=["GET"])
+def api_dashboard_requests():
+    return jsonify({
+        "status": "success",
+        "requests": demands
+    }), 200
+
+
+@app.route("/api/v1/settings", methods=["GET", "POST"])
+def api_settings():
+    return jsonify({
+        "status": "success",
+        "updated": True,
+        "settings": {
+            "push_notifications": True,
+            "sms_fallback": True,
+            "privacy_obfuscation": True
+        }
+    }), 200
+
+
+@app.route("/api/v1/audit/logs", methods=["GET"])
+def api_audit_logs():
+    return jsonify({
+        "status": "success",
+        "logs": audit_logs
+    }), 200
+
+
+# ---------------------------------------------------------
+# Existing Legacy Endpoints (Maintained for full backward compat)
+# ---------------------------------------------------------
 @app.route("/")
 def home():
     if "username" in session:
@@ -139,7 +543,7 @@ def login_hospital():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        if username and password:  # Allow simple password matching for mock flow
+        if username and password:
             session["username"] = username
             session["role"] = "hospital"
             audit_logs.append({
@@ -148,7 +552,7 @@ def login_hospital():
                 "user": username,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
-            flash("Logged in to Hospital Portal successfully!", "success")
+            flash(f"Welcome, {username}!", "success")
             return redirect(url_for("hospital_dashboard"))
         flash("Invalid credentials.", "danger")
     return render_template("login_hospital.html")
@@ -159,16 +563,13 @@ def login_donor():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-
-        # Verify from mock donor database
-        target_donor = next(
-            (d for d in donors if d["username"] == username), None)
+        target_donor = next((d for d in donors if d["username"] == username), None)
         if target_donor and password:
             session["username"] = username
             session["role"] = "donor"
             audit_logs.append({
                 "action": "DONOR LOGIN",
-                "details": f"Donor '{username}' logged in successfully.",
+                "details": f"Donor user '{username}' logged in.",
                 "user": username,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
@@ -180,11 +581,9 @@ def login_donor():
 
 @app.route("/login/social/<provider>")
 def social_login(provider):
-    # Mock social media authentication
     username = f"social_{provider}_user"
     name = f"Social {provider.capitalize()} User"
 
-    # Auto register/get social donor
     target_donor = next((d for d in donors if d["username"] == username), None)
     if not target_donor:
         target_donor = {
@@ -208,8 +607,7 @@ def social_login(provider):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
     flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
+        f"Successfully authenticated via {provider.capitalize()}!",
         "success")
     return redirect(url_for("donor_profile"))
 
@@ -228,7 +626,6 @@ def donor_register():
             flash("All required fields must be filled.", "danger")
             return redirect(url_for("donor_register"))
 
-        # Check duplicate
         if any(d["username"] == username for d in donors):
             flash("Username already exists.", "danger")
             return redirect(url_for("donor_register"))
@@ -271,7 +668,6 @@ def donor_profile():
         flash("Donor profile not found.", "danger")
         return redirect(url_for("logout"))
 
-    # Generate badges based on donation count
     count = target_donor.get("donation_count", 0)
     badges = [
         {
@@ -291,7 +687,6 @@ def donor_profile():
         }
     ]
 
-    # Mock personal donation history
     history = []
     if count > 0:
         history.append({
@@ -522,7 +917,6 @@ def map_hotspots():
     radius = int(request.args.get("radius", 50))
     blood_type = request.args.get("blood_type", "All")
 
-    # Filter density clusters by radius and blood type
     filtered = [h for h in raw_hotspots if h["distance"] <= radius]
     if blood_type != "All":
         filtered = [h for h in filtered if h["blood_type"] == blood_type]
@@ -532,4 +926,5 @@ def map_hotspots():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

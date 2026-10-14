@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Map - BDCN</title>
+    <style>
+/*
+  Blood Donor Connection Network - Design System
+  Variant: variant-A
+  REQ-IDs: REQ-F-008, REQ-F-009
+*/
+:root {
+    --primary-color: #C8102E;
+    --primary-color-light: #E53935;
+    --accent-color: #007BFF;
+    --success-color: #28A745;
+    --warning-color: #FFC107;
+    --error-color: #DC3545;
+    --bg-color-light: #F8F9FA;
+    --surface-color-light: #FFFFFF;
+    --text-primary-light: #212529;
+    --text-secondary-light: #6C757D;
+    --border-color-light: #DEE2E6;
+    --radius-md: 8px;
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --space-3: 16px;
+    --space-4: 24px;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color-light);
+    color: var(--text-primary-light);
+    margin: 0;
+    padding: 0;
+}
+.app-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color-light);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.nav-links {
+    display: flex;
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-secondary-light);
+    font-weight: 500;
+}
+.nav-links a.active, .nav-links a:hover {
+    color: var(--primary-color);
+}
+.container {
+    max-width: 1100px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+.privacy-banner {
+    background-color: #e8f4fd;
+    border-left: 4px solid var(--accent-color);
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    margin-bottom: 24px;
+}
+.privacy-banner p {
+    margin: 0;
+    font-weight: 600;
+    color: #0b497b;
+}
+.map-view-container {
+    background: #ffffff;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
+}
+.map-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.map-canvas {
+    height: 420px;
+    background: #e5e9ec;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cluster-pin {
+    position: absolute;
+    background: var(--primary-color);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    box-shadow: 0 0 12px rgba(200, 16, 46, 0.6);
+    border: 3px solid #fff;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.cluster-pin:hover {
+    transform: scale(1.15);
+}
+.cluster-pin.high { width: 56px; height: 56px; font-size: 1.1rem; }
+.cluster-pin.medium { width: 44px; height: 44px; font-size: 0.95rem; }
+.cluster-pin.low { width: 36px; height: 36px; font-size: 0.85rem; }
+.clusters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+.cluster-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--radius-md);
+    padding: 16px;
+}
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.badge-danger { background: #f8d7da; color: #721c24; }
+.badge-warning { background: #fff3cd; color: #856404; }
+.badge-success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body class="light-theme">
+    <header class="app-header">
+        <a href="/dashboard" class="logo">
+            <span>🩸</span> BDCN
+        </a>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/map" class="active">Donor Map</a></li>
+                <li><a href="/profile">Profile & Docs</a></li>
+                <li><a href="/achievements">Achievements</a></li>
+                <li><a href="/settings">Settings</a></li>
+            </ul>
+        </nav>
+        <div>
+            <a href="/profile" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">My Account</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <h1>Donor Hotspot & Clustering Map</h1>
+        <p class="text-secondary" style="color: var(--text-secondary-light);">Visualise high-density donor availability clusters in real time.</p>
+
+        <!-- REQ-F-008 & AC 2: Privacy Preserving Banner -->
+        <div class="privacy-banner" id="privacy-guarantee">
+            <p>🛡️ Your privacy is protected. Donor hotspots are shown via server-side clustering. Precise residential addresses are never shared publicly.</p>
+        </div>
+
+        <div class="map-view-container">
+            <div class="map-header">
+                <h3 style="margin: 0;">Metropolitan Spatial Clusters</h3>
+                <span style="font-size: 0.9rem; color: var(--text-secondary-light);">Coarse Centroid Resolution: ~1.1 km</span>
+            </div>
+            <!-- Interactive Visual Map Canvas with Centroid Clusters -->
+            <div class="map-canvas" id="map-canvas">
+                {% for cluster in clusters %}
+                <div class="cluster-pin {{ cluster.density_tier|lower }}"
+                     style="top: {{ 20 + loop.index * 18 }}%; left: {{ 15 + loop.index * 20 }}%;"
+                     title="{{ cluster.district }}: {{ cluster.donor_count }} Active Donors (Centroid: {{ cluster.centroid_lat }}, {{ cluster.centroid_lng }})">
+                    {{ cluster.donor_count }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <h3>Active Spatial Clusters</h3>
+        <div class="clusters-grid" id="clusters-container">
+            {% for cluster in clusters %}
+            <div class="cluster-card" data-cluster-id="{{ cluster.cluster_id }}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h4 style="margin: 0;">{{ cluster.district }}</h4>
+                    <span class="badge badge-danger">{{ cluster.density_tier }} Density</span>
+                </div>
+                <p style="margin: 4px 0; color: var(--text-secondary-light); font-size: 0.9rem;">
+                    Active Donors: <strong>{{ cluster.donor_count }}</strong>
+                </p>
+                <p style="margin: 4px 0; color: var(--text-secondary-light); font-size: 0.85rem;">
+                    Obfuscated Centroid: ({{ cluster.centroid_lat }}, {{ cluster.centroid_lng }})
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const data = await BDCNApi.getMapClusters();
+                console.log('Fetched live server clusters:', data);
+            } catch (err) {
+                console.warn('Using server-rendered clusters:', err);
+            }
+        });
+    </script>
+</body>
+</html>

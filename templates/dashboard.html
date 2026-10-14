@@ -1,97 +1,187 @@
-{% extends "base.html" %}
-{% block title %}Hospital Dashboard - BDCN{% endblock %}
-{% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h2>Welcome, {{ session.get('username') }}!</h2>
-        <p class="text-muted">Manage active blood demands, upload compliance files, and track donor schedules.</p>
-    </div>
-    <div class="col-md-4 text-end">
-        <a href="/hospital/create-demand" class="btn btn-danger py-2 px-4">+ Create Urgent Demand</a>
-    </div>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - BDCN</title>
+    <style>
+/*
+  Blood Donor Connection Network - Design System
+  Variant: variant-A
+*/
+:root {
+    --primary-color: #C8102E;
+    --primary-color-light: #E53935;
+    --accent-color: #007BFF;
+    --success-color: #28A745;
+    --warning-color: #FFC107;
+    --error-color: #DC3545;
+    --bg-color-light: #F8F9FA;
+    --surface-color-light: #FFFFFF;
+    --text-primary-light: #212529;
+    --text-secondary-light: #6C757D;
+    --border-color-light: #DEE2E6;
+    --radius-md: 8px;
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color-light);
+    color: var(--text-primary-light);
+    margin: 0;
+    padding: 0;
+}
+.app-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color-light);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.nav-links {
+    display: flex;
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-secondary-light);
+    font-weight: 500;
+}
+.nav-links a.active, .nav-links a:hover {
+    color: var(--primary-color);
+}
+.container {
+    max-width: 1000px;
+    margin: 32px auto;
+    padding: 0 16px;
+}
+.card {
+    background: #ffffff;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 20px;
+}
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color-light);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.badge-warning { background: #fff3cd; color: #856404; }
+.badge-success { background: #d4edda; color: #155724; }
+.badge-danger { background: #f8d7da; color: #721c24; }
+.stats-row {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+}
+.btn-primary { background: var(--primary-color); color: #fff; border: none; }
+.btn-outline { border: 1px solid var(--accent-color); color: var(--accent-color); background: transparent; }
+    </style>
+</head>
+<body class="light-theme">
+    <header class="app-header">
+        <a href="/dashboard" class="logo">
+            <span>🩸</span> BDCN
+        </a>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/dashboard" class="active">Dashboard</a></li>
+                <li><a href="/map">Donor Map</a></li>
+                <li><a href="/profile">Profile & Docs</a></li>
+                <li><a href="/achievements">Achievements</a></li>
+                <li><a href="/settings">Settings</a></li>
+            </ul>
+        </nav>
+        <div>
+            <a href="/profile" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">My Account</a>
+        </div>
+    </header>
 
-<div class="row">
-    <!-- Active Demands -->
-    <div class="col-lg-8 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 text-dark">Your Blood Demand Requests</h5>
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}" style="padding: 12px; margin-bottom: 16px; border-radius: 6px; background: #d4edda; color: #155724;">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <h1>Dashboard / Request Feed</h1>
+        <p style="color: var(--text-secondary-light); margin-bottom: 24px;">Track active emergency blood demands and incoming donation opportunities in your district.</p>
+
+        <!-- Active Clinical Requests -->
+        {% for req in requests %}
+        <div class="card">
+            <div class="card-header">
+                <h3 style="margin: 0;">Request for {{ req.recipient_name }} &bull; {{ req.hospital }}</h3>
+                <span class="badge {% if req.urgency == 'Emergency' %}badge-danger{% elif req.urgency == 'Urgent' %}badge-warning{% else %}badge-success{% endif %}">
+                    {{ req.urgency }}
+                </span>
             </div>
-            <div class="card-body">
-                {% if demands %}
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Blood Type</th>
-                                    <th>Units Needed</th>
-                                    <th>Document</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for d in demands %}
-                                    <tr>
-                                        <td><strong>#{{ d.id }}</strong></td>
-                                        <td><span class="badge bg-danger fs-6">{{ d.blood_type }}</span></td>
-                                        <td>{{ d.units }} units</td>
-                                        <td>
-                                            {% if d.filename %}
-                                                <span class="text-success">📄 {{ d.filename }}</span>
-                                            {% else %}
-                                                <span class="text-muted">None</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if d.status == 'Approved' %}
-                                                <span class="badge bg-success">Approved / Emitted</span>
-                                            {% elif d.status == 'Rejected' %}
-                                                <span class="badge bg-danger">Rejected</span>
-                                            {% else %}
-                                                <span class="badge bg-warning text-dark">Pending Admin Review</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center py-4">
-                        <p class="text-muted mb-0">No blood demands requested yet. Create one above to get started.</p>
-                    </div>
-                {% endif %}
+            <div class="stats-row">
+                <div>
+                    <span style="color: var(--text-secondary-light); font-size: 0.85rem;">Blood Type</span>
+                    <h2 style="margin: 4px 0; color: var(--primary-color);">{{ req.blood_type }}</h2>
+                </div>
+                <div>
+                    <span style="color: var(--text-secondary-light); font-size: 0.85rem;">Required Units</span>
+                    <h2 style="margin: 4px 0;">{{ req.units }}</h2>
+                </div>
+                <div>
+                    <span style="color: var(--text-secondary-light); font-size: 0.85rem;">District</span>
+                    <h2 style="margin: 4px 0;">{{ req.district }}</h2>
+                </div>
+                <div>
+                    <span style="color: var(--text-secondary-light); font-size: 0.85rem;">Status</span>
+                    <h4 style="margin: 8px 0; color: #0b497b;">{{ req.status }}</h4>
+                </div>
+            </div>
+            <div style="text-align: right; margin-top: 16px; border-top: 1px solid var(--border-color-light); padding-top: 12px;">
+                <a href="/map" class="btn btn-outline">Locate Donors</a>
             </div>
         </div>
-    </div>
+        {% endfor %}
 
-    <!-- Scheduled Donors -->
-    <div class="col-lg-4 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 text-dark">Scheduled Donors</h5>
-            </div>
-            <div class="card-body">
-                {% if scheduled_donors %}
-                    <div class="list-group list-group-flush">
-                        {% for donor in scheduled_donors %}
-                            <div class="list-group-item px-0 py-3">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">{{ donor.name }}</h6>
-                                    <span class="badge bg-danger">{{ donor.blood_type }}</span>
-                                </div>
-                                <p class="mb-1 text-muted small">Appointment: {{ donor.time }}</p>
-                                <small class="text-success">✓ Verified & Registered</small>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted text-center py-3">No donor appointments scheduled for today.</p>
-                {% endif %}
-            </div>
+        <!-- Quick Links Hub -->
+        <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: center;">
+            <a href="/map" class="btn btn-primary">Open Donor Map</a>
+            <a href="/profile" class="btn btn-outline">Medical Documents</a>
+            <a href="/achievements" class="btn btn-outline">View Achievements</a>
         </div>
-    </div>
-</div>
-{% endblock %}
+    </main>
+
+    <script src="/js/api.js"></script>
+</body>
+</html>

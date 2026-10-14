@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile & Documents - BDCN</title>
+    <style>
+/*
+  Blood Donor Connection Network - Design System
+  Variant: variant-A
+  REQ-IDs: REQ-F-003, REQ-F-004, REQ-N-001
+*/
+:root {
+    --primary-color: #C8102E;
+    --primary-color-light: #E53935;
+    --accent-color: #007BFF;
+    --success-color: #28A745;
+    --warning-color: #FFC107;
+    --error-color: #DC3545;
+    --bg-color-light: #F8F9FA;
+    --surface-color-light: #FFFFFF;
+    --text-primary-light: #212529;
+    --text-secondary-light: #6C757D;
+    --border-color-light: #DEE2E6;
+    --radius-md: 8px;
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --space-3: 16px;
+    --space-4: 24px;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color-light);
+    color: var(--text-primary-light);
+    margin: 0;
+    padding: 0;
+}
+.app-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color-light);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.nav-links {
+    display: flex;
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-secondary-light);
+    font-weight: 500;
+}
+.nav-links a.active, .nav-links a:hover {
+    color: var(--primary-color);
+}
+.container {
+    max-width: 1000px;
+    margin: 32px auto;
+    padding: 0 16px;
+}
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 24px;
+}
+.card {
+    background: #ffffff;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+}
+.user-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #fde8eb;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 auto 16px auto;
+}
+.upload-dropzone {
+    border: 2px dashed #007bff;
+    background: #f8fbfe;
+    border-radius: var(--radius-md);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 16px;
+}
+.upload-dropzone:hover {
+    background: #edf5fd;
+}
+.btn {
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+}
+.btn-primary { background: var(--primary-color); color: #fff; }
+.btn-primary:hover { background: var(--primary-color-light); }
+.doc-list {
+    margin-top: 24px;
+    list-style: none;
+    padding: 0;
+}
+.doc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color-light);
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.badge-success { background: #d4edda; color: #155724; }
+.badge-warning { background: #fff3cd; color: #856404; }
+.alert {
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    display: none;
+}
+.alert-success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body class="light-theme">
+    <header class="app-header">
+        <a href="/dashboard" class="logo">
+            <span>🩸</span> BDCN
+        </a>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/map">Donor Map</a></li>
+                <li><a href="/profile" class="active">Profile & Docs</a></li>
+                <li><a href="/achievements">Achievements</a></li>
+                <li><a href="/settings">Settings</a></li>
+            </ul>
+        </nav>
+        <div>
+            <a href="/logout" style="color: var(--text-secondary-light); text-decoration: none;">Log Out</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <h1>Profile & Medical Document Repository</h1>
+        <p style="color: var(--text-secondary-light);">Manage your donor information and upload verified clinical documents.</p>
+
+        <div id="upload-status-alert" class="alert alert-success"></div>
+
+        <div class="profile-grid">
+            <!-- User Summary Card -->
+            <div class="card" style="text-align: center;">
+                <div class="user-avatar">🩸</div>
+                <h2 style="margin: 0 0 6px 0;">{{ user.full_name or 'John Doe' }}</h2>
+                <p style="color: var(--text-secondary-light); margin: 0 0 16px 0;">{{ user.email or 'john.doe@example.com' }}</p>
+
+                <div style="text-align: left; border-top: 1px solid var(--border-color-light); padding-top: 16px;">
+                    <p><strong>Blood Group:</strong> <span class="badge badge-success">{{ user.blood_type or 'O+' }}</span></p>
+                    <p><strong>District:</strong> {{ user.district or 'Downtown' }}</p>
+                    <p><strong>Total Donations:</strong> {{ user.total_donations or 5 }}</p>
+                    <p><strong>Status:</strong> Active & Verified</p>
+                </div>
+            </div>
+
+            <!-- AC 3: Document Upload Interface -->
+            <div class="card">
+                <h3 style="margin-top: 0;">Clinical & Medical Document Upload</h3>
+                <p style="color: var(--text-secondary-light); font-size: 0.9rem;">
+                    Upload certified blood donor clearance, serology certificates, or medical attestation forms. Files are secured in a HIPAA-compliant GCP-backed repository.
+                </p>
+
+                <form id="document-upload-form" action="/profile/upload" method="POST" enctype="multipart/form-data">
+                    <div class="upload-dropzone" onclick="document.getElementById('medical-file-input').click();">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p style="margin: 0; font-weight: 600;">Drag and drop files here, or click to browse</p>
+                        <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-secondary-light);">Supported: PDF, JPG, PNG (Max 15MB)</p>
+                        <input type="file" id="medical-file-input" name="file" style="display: none;" onchange="updateSelectedFileName(this)">
+                    </div>
+
+                    <div style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
+                        <input type="text" id="document-notes" name="notes" placeholder="Document description or notes..." style="flex: 1; padding: 10px; border: 1px solid var(--border-color-light); border-radius: 6px;">
+                        <button type="submit" id="btn-upload-doc" class="btn btn-primary">Upload Document</button>
+                    </div>
+                    <p id="selected-file-label" style="font-size: 0.85rem; color: var(--accent-color); margin-top: 6px;"></p>
+                </form>
+
+                <h4 style="margin-top: 32px; margin-bottom: 12px;">Uploaded Clinical Documents</h4>
+                <ul class="doc-list" id="documents-list">
+                    {% for doc in documents %}
+                    <li class="doc-item">
+                        <div>
+                            <strong>📄 {{ doc.filename }}</strong>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary-light);">{{ doc.document_type }} &bull; Uploaded {{ doc.uploaded_at or 'Recently' }}</div>
+                        </div>
+                        <span class="badge {% if doc.verification_status == 'Verified' %}badge-success{% else %}badge-warning{% endif %}">
+                            {{ doc.verification_status }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        function updateSelectedFileName(input) {
+            const label = document.getElementById('selected-file-label');
+            if (input.files && input.files[0]) {
+                label.innerText = 'Selected file: ' + input.files[0].name;
+            }
+        }
+
+        document.getElementById('document-upload-form').addEventListener('submit', async function(e) {
+            const fileInput = document.getElementById('medical-file-input');
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert('Please select a medical document to upload.');
+                e.preventDefault();
+                return;
+            }
+        });
+    </script>
+</body>
+</html>
