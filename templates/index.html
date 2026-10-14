@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDCN - Full UI Prototype Preview Hub</title>
+    <style>
+/*
+  Blood Donor Connection Network - Variant A Full UI Prototype Preview Hub
+  AC 5: All screens in the full UI preview are linked and navigable.
+*/
+:root {
+    --primary-color: #C8102E;
+    --accent-color: #007BFF;
+    --bg-color-light: #F8F9FA;
+    --surface-color-light: #FFFFFF;
+    --text-primary-light: #212529;
+    --text-secondary-light: #6C757D;
+    --border-color-light: #DEE2E6;
+    --radius-md: 8px;
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color-light);
+    color: var(--text-primary-light);
+    margin: 0;
+    padding: 0;
+}
+.header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color-light);
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 16px;
+}
+.screens-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+.screen-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s, border-color 0.2s;
+}
+.screen-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary-color);
+}
+.screen-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+}
+.btn-nav {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: #ffffff;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+}
+    </style>
+</head>
+<body class="light-theme">
+    <header class="header">
+        <div class="logo">
+            <span>🩸</span> Blood Donor Connection Network (BDCN)
+        </div>
+        <span style="font-weight: 600; color: #28a745;">● Variant A Live Prototype</span>
+    </header>
+
+    <main class="container">
+        <h1>Full UI Prototype Screen Hub</h1>
+        <p style="color: var(--text-secondary-light);">
+            Navigable index connecting all self-contained screens and application workflows per Acceptance Criterion 5.
+        </p>
+
+        <div class="screens-grid">
+            <a href="/login" class="screen-card">
+                <div>
+                    <div class="screen-icon">🔐</div>
+                    <h3 style="margin: 0 0 8px 0;">1. Login & Social Auth</h3>
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary-light);">
+                        Multi-provider authentication via Google, Apple, and Facebook (REQ-F-006, AC 1).
+                    </p>
+                </div>
+                <span class="btn-nav">Open Login</span>
+            </a>
+
+            <a href="/dashboard" class="screen-card">
+                <div>
+                    <div class="screen-icon">📊</div>
+                    <h3 style="margin: 0 0 8px 0;">2. Donor Dashboard</h3>
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary-light);">
+                        Active requests feed, urgency badges, hospital demand tracking, and action items.
+                    </p>
+                </div>
+                <span class="btn-nav">Open Dashboard</span>
+            </a>
+
+            <a href="/map" class="screen-card">
+                <div>
+                    <div class="screen-icon">🗺️</div>
+                    <h3 style="margin: 0 0 8px 0;">3. Clustered Donor Map</h3>
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary-light);">
+                        Privacy-preserving hotspot clustering with coarse centroids (REQ-F-008, REQ-F-009, AC 2).
+                    </p>
+                </div>
+                <span class="btn-nav">Open Map</span>
+            </a>
+
+            <a href="/profile" class="screen-card">
+                <div>
+                    <div class="screen-icon">📁</div>
+                    <h3 style="margin: 0 0 8px 0;">4. Profile & Document Upload</h3>
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary-light);">
+                        User profile management and drag-and-drop clinical document repository (REQ-F-003, AC 3).
+                    </p>
+                </div>
+                <span class="btn-nav">Open Profile</span>
+            </a>
+
+            <a href="/achievements" class="screen-card">
+                <div>
+                    <div class="screen-icon">🏆</div>
+                    <h3 style="margin: 0 0 8px 0;">5. Gamification & Badges</h3>
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary-light);">
+                        Achievement tiers, donation milestones, points rewards, and social sharing (REQ-F-002, AC 4).
+                    </p>
+                </div>
+                <span class="btn-nav">Open Achievements</span>
+            </a>
+
+            <a href="/settings" class="screen-card">
+                <div>
+                    <div class="screen-icon">⚙️</div>
+                    <h3 style="margin: 0 0 8px 0;">6. Settings & Notifications</h3>
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary-light);">
+                        Emergency push notifications, SMS fallback, and location privacy configurations.
+                    </p>
+                </div>
+                <span class="btn-nav">Open Settings</span>
+            </a>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+</body>
+</html>

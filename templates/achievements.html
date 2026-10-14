@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achievements - BDCN</title>
+    <style>
+/*
+  Blood Donor Connection Network - Design System
+  Variant: variant-A
+  REQ-IDs: REQ-F-002
+*/
+:root {
+    --primary-color: #C8102E;
+    --primary-color-light: #E53935;
+    --accent-color: #007BFF;
+    --success-color: #28A745;
+    --warning-color: #FFC107;
+    --error-color: #DC3545;
+    --bg-color-light: #F8F9FA;
+    --surface-color-light: #FFFFFF;
+    --text-primary-light: #212529;
+    --text-secondary-light: #6C757D;
+    --border-color-light: #DEE2E6;
+    --radius-md: 8px;
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color-light);
+    color: var(--text-primary-light);
+    margin: 0;
+    padding: 0;
+}
+.app-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color-light);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.nav-links {
+    display: flex;
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-secondary-light);
+    font-weight: 500;
+}
+.nav-links a.active, .nav-links a:hover {
+    color: var(--primary-color);
+}
+.container {
+    max-width: 1000px;
+    margin: 32px auto;
+    padding: 0 16px;
+}
+.tier-header-card {
+    background: linear-gradient(135deg, #c8102e, #8f061d);
+    color: #ffffff;
+    border-radius: var(--radius-md);
+    padding: 32px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.progress-bar-container {
+    background: rgba(255, 255, 255, 0.3);
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 12px;
+    width: 280px;
+}
+.progress-bar-fill {
+    background: #ffd700;
+    height: 100%;
+    width: 75%;
+}
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+.achievement-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s ease;
+}
+.achievement-card:hover {
+    transform: translateY(-2px);
+}
+.achievement-card.locked {
+    opacity: 0.6;
+    filter: grayscale(100%);
+}
+.badge-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+}
+.badge-tier {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.tier-bronze { background: #cd7f32; color: #fff; }
+.tier-silver { background: #c0c0c0; color: #333; }
+.tier-gold { background: #ffd700; color: #333; }
+.tier-platinum { background: #e5e4e2; color: #333; }
+.btn-share {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+}
+.btn-share:hover {
+    background: #0056b3;
+}
+.share-modal {
+    display: none;
+    background: #d4edda;
+    color: #155724;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+    </style>
+</head>
+<body class="light-theme">
+    <header class="app-header">
+        <a href="/dashboard" class="logo">
+            <span>🩸</span> BDCN
+        </a>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/map">Donor Map</a></li>
+                <li><a href="/profile">Profile & Docs</a></li>
+                <li><a href="/achievements" class="active">Achievements</a></li>
+                <li><a href="/settings">Settings</a></li>
+            </ul>
+        </nav>
+        <div>
+            <a href="/profile" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">My Account</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- REQ-F-002 & AC 4: Gamification Engine & Milestone Badges -->
+        <div class="tier-header-card">
+            <div>
+                <h1 style="margin: 0 0 8px 0; font-size: 1.8rem;">Donor Gamification Engine</h1>
+                <p style="margin: 0; opacity: 0.9;">Current Tier: <strong>{{ tier or 'Silver' }}</strong> &bull; Total Points: <strong>{{ points or 250 }} pts</strong></p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill"></div>
+                </div>
+                <small style="opacity: 0.85; margin-top: 4px; display: block;">75 points until Gold Tier</small>
+            </div>
+            <div style="font-size: 4rem;">
+                🏆
+            </div>
+        </div>
+
+        <div id="share-feedback" class="share-modal">
+            🎉 Badge successfully shared! Link copied to clipboard.
+        </div>
+
+        <h2>Milestone Badges & Honors</h2>
+        <p style="color: var(--text-secondary-light); margin-bottom: 24px;">Unlock higher tiers and badges through voluntary blood donations and urgent emergency responses.</p>
+
+        <div class="achievements-grid" id="achievements-container">
+            {% for ach in achievements %}
+            <div class="achievement-card {% if not ach.unlocked %}locked{% endif %}" id="badge-{{ ach.id }}">
+                <div class="badge-icon">{{ ach.badge_icon }}</div>
+                <span class="badge-tier tier-{{ ach.tier|lower }}">{{ ach.tier }}</span>
+                <h3 style="margin: 6px 0; font-size: 1.1rem;">{{ ach.title }}</h3>
+                <p style="color: var(--text-secondary-light); font-size: 0.85rem; margin: 0 0 10px 0;">{{ ach.description }}</p>
+                
+                {% if ach.unlocked %}
+                    <span style="color: var(--success-color); font-weight: 600; font-size: 0.85rem;">✓ Unlocked</span>
+                    <br>
+                    <button class="btn-share" onclick="shareBadge('{{ ach.id }}', '{{ ach.title }}')">Share Badge</button>
+                {% else %}
+                    <span style="color: var(--text-secondary-light); font-size: 0.85rem;">🔒 Locked ({{ ach.points_reward }} pts)</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        async function shareBadge(badgeId, badgeTitle) {
+            try {
+                const res = await BDCNApi.shareAchievement(badgeId, 'social');
+                const feedback = document.getElementById('share-feedback');
+                feedback.innerText = `🎉 Shared '${badgeTitle}'! Share URL: ${res.share_url || 'https://bdcn.health/badge/' + badgeId}`;
+                feedback.style.display = 'block';
+                setTimeout(() => { feedback.style.display = 'none'; }, 5000);
+            } catch (err) {
+                console.error('Error sharing badge:', err);
+                alert(`Shared '${badgeTitle}' on social media!`);
+            }
+        }
+    </script>
+</body>
+</html>

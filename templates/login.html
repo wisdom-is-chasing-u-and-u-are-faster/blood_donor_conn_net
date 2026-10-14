@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Blood Donor Connection Network</title>
+    <style>
+/*
+  Blood Donor Connection Network - Design System
+  Variant: variant-A
+  Art Direction: Clean, professional, trustworthy
+  REQ-IDs: REQ-F-002, REQ-F-003, REQ-F-005, REQ-F-006, REQ-F-007, REQ-F-008, REQ-F-009, REQ-F-012
+  CONSTRAINT-IDs: CONSTRAINT-004
+*/
+:root {
+    --primary-color: #C8102E;
+    --primary-color-light: #E53935;
+    --accent-color: #007BFF;
+    --gradient-primary: linear-gradient(45deg, var(--primary-color), var(--primary-color-light));
+    --success-color: #28A745;
+    --warning-color: #FFC107;
+    --error-color: #DC3545;
+    --bg-color-light: #F8F9FA;
+    --surface-color-light: #FFFFFF;
+    --text-primary-light: #212529;
+    --text-secondary-light: #6C757D;
+    --border-color-light: #DEE2E6;
+    --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --radius-md: 8px;
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --space-2: 8px;
+    --space-3: 16px;
+    --space-4: 24px;
+    --space-5: 32px;
+}
+body {
+    font-family: var(--font-family-base);
+    background-color: var(--bg-color-light);
+    color: var(--text-primary-light);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+.login-card {
+    background: var(--surface-color-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color-light);
+    max-width: 420px;
+    width: 90%;
+    padding: var(--space-5);
+    text-align: center;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    color: var(--primary-color);
+    margin-bottom: var(--space-3);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+.logo-icon {
+    width: 32px;
+    height: 32px;
+}
+.h3 {
+    margin: 0 0 var(--space-2) 0;
+    font-size: 1.25rem;
+}
+.text-secondary {
+    color: var(--text-secondary-light);
+    margin-bottom: var(--space-4);
+    font-size: 0.95rem;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid var(--border-color-light);
+    transition: all 0.2s ease;
+    background: #ffffff;
+    color: #333333;
+}
+.btn:hover {
+    background: #f1f3f5;
+    transform: translateY(-1px);
+}
+.btn svg {
+    width: 22px;
+    height: 22px;
+}
+.alert {
+    padding: 10px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+.alert-success { background: #d4edda; color: #155724; }
+.alert-info { background: #d1ecf1; color: #0c5460; }
+.footer-links {
+    margin-top: 24px;
+    font-size: 0.85rem;
+    color: var(--text-secondary-light);
+}
+.footer-links a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+    </style>
+</head>
+<body class="light-theme">
+    <main>
+        <div class="login-card">
+            <div class="logo">
+                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path>
+                </svg>
+                <span>Blood Donor Network</span>
+            </div>
+
+            <h2 class="h3">Connect. Donate. Save Lives.</h2>
+            <p class="text-secondary">Join our community of everyday heroes.</p>
+
+            {% if message %}
+            <div class="alert alert-info">{{ message }}</div>
+            {% endif %}
+
+            <!-- REQ-F-006 & AC 1: Social Media Login -->
+            <div class="form-group" id="social-login-group">
+                <a href="/login/social/google" id="btn-login-google" class="btn btn-social">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21.35,11.1H12.18V13.83H18.67C18.16,15.64 16.95,17.13 15.24,18.18V20.75H18.97C20.91,18.91 22.18,16.25 22.18,13.1C22.18,12.53 22.11,11.96 22,11.45L21.35,11.1Z"/></svg>
+                    Sign in with Google
+                </a>
+                <a href="/login/social/apple" id="btn-login-apple" class="btn btn-social">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.84c.62-.75 1.04-1.8 1.01-2.84-.9.04-2 .6-2.65 1.36-.58.67-.99 1.74-.96 2.76 1.01.08 2.07-.53 2.6-1.28z"/></svg>
+                    Sign in with Apple
+                </a>
+                <a href="/login/social/facebook" id="btn-login-facebook" class="btn btn-social">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#1877F2"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.69 21.21 10.44 22V14.5H7.43V11.06H10.44V8.56C10.44 5.63 12.19 4.03 14.73 4.03C15.92 4.03 17.13 4.23 17.13 4.23V7.27H15.5C14.12 7.27 13.56 8.16 13.56 9.12V11.06H17.01L16.42 14.5H13.56V22C18.31 21.21 22 17.06 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>
+                    Sign in with Facebook
+                </a>
+            </div>
+
+            <div class="footer-links">
+                <p>Or continue as guest to <a href="/dashboard">Browse Dashboard</a></p>
+                <p><a href="/index">Full UI Prototype Hub</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.querySelectorAll('.btn-social').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                console.log('Initiating social login for:', this.innerText);
+            });
+        });
+    </script>
+</body>
+</html>
