@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Discovery Map - BDCN</title>
+    <style>
+:root {
+    --primary-color: #D92A2A;
+    --primary-color-dark: #B32222;
+    --surface-color: #FFFFFF;
+    --background-color: #F8F9FA;
+    --on-surface-color: #212529;
+    --on-surface-color-light: #6C757D;
+    --border-color: #DEE2E6;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: var(--on-surface-color);
+    margin: 0;
+    line-height: 1.6;
+}
+.app-header, .app-footer {
+    background-color: var(--surface-color);
+    box-shadow: var(--shadow-md);
+    padding: 1rem 0;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+.app-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.app-nav a {
+    margin-left: 1.5rem;
+    font-weight: 500;
+    color: var(--on-surface-color);
+    text-decoration: none;
+}
+.app-nav a.active, .app-nav a:hover {
+    color: var(--primary-color);
+}
+.section {
+    padding: 2.5rem 0;
+}
+.card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1.5rem;
+}
+.form-group {
+    flex: 1;
+    min-width: 180px;
+    margin-bottom: 0;
+}
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+.form-control {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+.btn-primary {
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    padding: 0.65rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+.map-canvas {
+    width: 100%;
+    height: 440px;
+    background-color: #E5E9EC;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    text-align: center;
+    padding: 1rem;
+}
+.map-hotspot {
+    position: absolute;
+    background: rgba(217, 42, 42, 0.85);
+    color: #fff;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.map-hotspot:hover {
+    transform: scale(1.15);
+}
+.district-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+.district-table th, .district-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+.district-table th {
+    background: var(--background-color);
+    font-weight: 600;
+}
+.text-light { color: var(--on-surface-color-light); }
+.privacy-badge {
+    background: #e8f4fd;
+    color: #0d6efd;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+</style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="container">
+            <a href="/" class="logo">🩸 BDCN</a>
+            <nav class="app-nav">
+                <a href="/">Home</a>
+                <a href="/recipient/request">Request Blood</a>
+                <a href="/recipient/discovery-map" class="active">Find Donors</a>
+                <a href="/donor/dashboard">Donor Hub</a>
+                <a href="/profile/gamification">My Profile</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <h1>Find Available Donors</h1>
+            <p class="text-light">Explore voluntary donor density hotspots in your district. Precise residential coordinates are strictly masked to ensure HIPAA donor privacy.</p>
+
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div style="background: #d4edda; color: #155724; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem;">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+<!-- REQ-F-009, AC 2: Filter by Proximity and Blood Group -->
+            <div class="card">
+                <form action="/recipient/discovery-map" method="GET" class="filter-row">
+                    <div class="form-group">
+                        <label for="map-blood-group" class="form-label">Blood Group</label>
+                        <select id="map-blood-group" name="blood_type" class="form-control">
+                            <option value="All" {% if blood_type == 'All' %}selected{% endif %}>All Compatible Groups</option>
+                            <option value="O+" {% if blood_type == 'O+' %}selected{% endif %}>O+</option>
+                            <option value="O-" {% if blood_type == 'O-' %}selected{% endif %}>O- (Universal)</option>
+                            <option value="A+" {% if blood_type == 'A+' %}selected{% endif %}>A+</option>
+                            <option value="A-" {% if blood_type == 'A-' %}selected{% endif %}>A-</option>
+                            <option value="B+" {% if blood_type == 'B+' %}selected{% endif %}>B+</option>
+                            <option value="B-" {% if blood_type == 'B-' %}selected{% endif %}>B-</option>
+                            <option value="AB+" {% if blood_type == 'AB+' %}selected{% endif %}>AB+</option>
+                            <option value="AB-" {% if blood_type == 'AB-' %}selected{% endif %}>AB-</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="radius-filter" class="form-label">Filter by Radius</label>
+                        <select id="radius-filter" name="radius" class="form-control">
+                            <option value="5" {% if radius == 5 %}selected{% endif %}>5 km</option>
+                            <option value="10" {% if radius == 10 %}selected{% endif %}>10 km</option>
+                            <option value="25" {% if radius == 25 %}selected{% endif %}>25 km</option>
+                            <option value="50" {% if radius == 50 %}selected{% endif %}>50 km</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Apply Proximity Filter</button>
+                </form>
+            </div>
+
+            <!-- REQ-F-005, REQ-F-010, REQ-N-001: Google Maps SDK Simulation with Masked Centroids -->
+            <div class="map-canvas" id="map-container">
+                <div style="z-index: 2; background: rgba(255,255,255,0.9); padding: 1rem 1.5rem; border-radius: 8px;">
+                    <h3 style="margin: 0 0 0.5rem 0;">Google Maps SDK Simulation Active</h3>
+                    <p class="text-light" style="margin: 0;">Showing donor density within {{ radius }} km radius. Exact GPS locations obfuscated to municipal centroids.</p>
+                    <span class="privacy-badge">🔒 Privacy Protected: k-anonymity resolution 7 active</span>
+                </div>
+
+                <!-- Interactive Hotspot Markers -->
+                {% for h in hotspots %}
+                <div class="map-hotspot" style="top: {{ 20 + loop.index * 12 }}%; left: {{ 15 + loop.index * 15 }}%;" title="{{ h.district }}: {{ h.count }} donors ({{ h.blood_type }})">
+                    <span>{{ h.count }}</span>
+                    <small style="font-size: 0.65rem;">{{ h.blood_type }}</small>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- REQ-F-011: Fallback District List View -->
+            <div class="card">
+                <h3>District Fallback View (REQ-F-011)</h3>
+                <p class="text-light">Tabular alternative for low-bandwidth connections or screen readers.</p>
+                <table class="district-table">
+                    <thead>
+                        <tr>
+                            <th>District / Zone</th>
+                            <th>Active Donors</th>
+                            <th>Primary Blood Type</th>
+                            <th>Distance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in hotspots %}
+                        <tr>
+                            <td><strong>{{ h.district }}</strong></td>
+                            <td>{{ h.count }} donors registered</td>
+                            <td><span style="background: #fce8e6; color: #c5221f; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{{ h.blood_type }}</span></td>
+                            <td>{{ h.distance }} km</td>
+                            <td><span style="color: #28a745;">Available</span></td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-light" style="text-align: center; padding: 2rem;">No donor hotspots found for the selected radius and blood type. Try expanding the radius.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container" style="justify-content: center;">
+            <p>&copy; 2026 Blood Donor Connection Network. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="/static/js/api.js"></script>
+</body>
+</html>

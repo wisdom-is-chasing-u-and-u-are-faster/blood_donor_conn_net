@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipient Request Form - BDCN</title>
+    <style>
+:root {
+    --primary-color: #D92A2A;
+    --primary-color-dark: #B32222;
+    --surface-color: #FFFFFF;
+    --background-color: #F8F9FA;
+    --on-surface-color: #212529;
+    --on-surface-color-light: #6C757D;
+    --border-color: #DEE2E6;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: var(--on-surface-color);
+    margin: 0;
+    line-height: 1.6;
+}
+.app-header, .app-footer {
+    background-color: var(--surface-color);
+    box-shadow: var(--shadow-md);
+    padding: 1rem 0;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+.app-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.app-nav a {
+    margin-left: 1.5rem;
+    font-weight: 500;
+    color: var(--on-surface-color);
+    text-decoration: none;
+}
+.app-nav a.active, .app-nav a:hover {
+    color: var(--primary-color);
+}
+.page-content {
+    min-height: calc(100vh - 160px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2.5rem 0;
+}
+.card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 2.5rem;
+    max-width: 580px;
+    width: 100%;
+}
+.form-group {
+    margin-bottom: 1.25rem;
+}
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+.form-control {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-sizing: border-box;
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(217, 42, 42, 0.2);
+}
+.urgency-grid {
+    display: flex;
+    gap: 0.5rem;
+}
+.urgency-grid label {
+    flex: 1;
+    text-align: center;
+    padding: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.urgency-grid input[type="radio"] {
+    display: none;
+}
+.urgency-grid input[type="radio"]:checked + label {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+.btn-primary {
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    padding: 0.85rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    width: 100%;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+.btn-primary:hover {
+    background: var(--primary-color-dark);
+}
+.text-light { color: var(--on-surface-color-light); }
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.25rem;
+}
+.alert-success { background: #d4edda; color: #155724; }
+.alert-danger { background: #f8d7da; color: #721c24; }
+</style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="container">
+            <a href="/" class="logo">🩸 BDCN</a>
+            <nav class="app-nav">
+                <a href="/">Home</a>
+                <a href="/role-selection">Select Role</a>
+                <a href="/recipient/request" class="active">Request Blood</a>
+                <a href="/recipient/discovery-map">Find Donors</a>
+                <a href="/donor/dashboard">Donor Hub</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="card">
+            <h1>Request Blood</h1>
+            <p class="text-light" style="margin-bottom: 1.5rem;">Submit an urgent clinical or personal requisition to connect with eligible donors in your area.</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <!-- REQ-F-003, AC 3: Blood donation request creation with document upload -->
+            <form id="recipient-request-form" action="/recipient/request" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="recipient-blood-group" class="form-label">Required Blood Group *</label>
+                    <select id="recipient-blood-group" name="blood_type" class="form-control" required>
+                        <option value="">Select Blood Group</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="units" class="form-label">Required Units (Pints) *</label>
+                    <input type="number" id="units" name="units" class="form-control" min="1" max="50" value="2" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="district" class="form-label">District / Municipality *</label>
+                    <select id="district" name="district" class="form-control" required>
+                        <option value="Downtown">Downtown</option>
+                        <option value="North District">North District</option>
+                        <option value="East Valley">East Valley</option>
+                        <option value="South Coast">South Coast</option>
+                        <option value="West Hills">West Hills</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Urgency Level *</label>
+                    <div class="urgency-grid">
+                        <input type="radio" name="urgency" id="urgency-critical" value="Critical">
+                        <label for="urgency-critical">Critical</label>
+
+                        <input type="radio" name="urgency" id="urgency-high" value="High">
+                        <label for="urgency-high">High</label>
+
+                        <input type="radio" name="urgency" id="urgency-medium" value="Medium" checked>
+                        <label for="urgency-medium">Medium</label>
+
+                        <input type="radio" name="urgency" id="urgency-low" value="Low">
+                        <label for="urgency-low">Low</label>
+                    </div>
+                </div>
+
+                <!-- REQ-F-003: Proof of Medical Necessity Upload -->
+                <div class="form-group">
+                    <label for="documents" class="form-label">Proof of Medical Necessity *</label>
+                    <p class="text-light" style="font-size: 0.85rem; margin-top: -0.25rem; margin-bottom: 0.5rem;">Upload physician prescription or hospital requisition document (PDF/JPG/PNG).</p>
+                    <input type="file" id="documents" name="document" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes" class="form-label">Additional Clinical Notes (Optional)</label>
+                    <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="e.g. Patient admitted at City General Hospital, Room 402..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">Submit Blood Request</button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container" style="justify-content: center;">
+            <p>&copy; 2026 Blood Donor Connection Network. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="/static/js/api.js"></script>
+</body>
+</html>

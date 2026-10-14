@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Center - BDCN</title>
+    <style>
+:root {
+    --primary-color: #D92A2A;
+    --surface-color: #FFFFFF;
+    --background-color: #F8F9FA;
+    --on-surface-color: #212529;
+    --on-surface-color-light: #6C757D;
+    --border-color: #DEE2E6;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: var(--on-surface-color);
+    margin: 0;
+    line-height: 1.6;
+}
+.app-header, .app-footer {
+    background-color: var(--surface-color);
+    box-shadow: var(--shadow-md);
+    padding: 1rem 0;
+}
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+.app-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.app-nav a {
+    margin-left: 1.5rem;
+    font-weight: 500;
+    color: var(--on-surface-color);
+    text-decoration: none;
+}
+.app-nav a.active, .app-nav a:hover {
+    color: var(--primary-color);
+}
+.page-content {
+    padding: 2.5rem 0;
+    min-height: calc(100vh - 160px);
+}
+.card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+.notice-item {
+    padding: 1.25rem;
+    border-left: 4px solid var(--primary-color);
+    background: #fff;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.notice-item.urgent {
+    border-left-color: #dc3545;
+    background: #fffbfb;
+}
+.badge-urgent {
+    background: #dc3545;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.text-light { color: var(--on-surface-color-light); }
+</style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="container">
+            <a href="/" class="logo">🩸 BDCN</a>
+            <nav class="app-nav">
+                <a href="/">Home</a>
+                <a href="/donor/dashboard">Donor Hub</a>
+                <a href="/recipient/discovery-map">Find Donors</a>
+                <a href="/notifications" class="active">Notifications</a>
+                <a href="/profile/gamification">Profile</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="container">
+            <h1>Secure Notification Center (REQ-F-006)</h1>
+            <p class="text-light">End-to-end encrypted notification feed for blood match alerts, verification updates, and donor appointment confirmations.</p>
+
+            <div class="notice-item urgent">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="badge-urgent">URGENT TRAUMA ALERT</span>
+                    <small class="text-light">10 mins ago</small>
+                </div>
+                <h3 style="margin: 0.5rem 0;">Emergency Blood Request: General Hospital (O-)</h3>
+                <p style="margin: 0;">A critical surgery requires 4 units of O- blood within 12 km of your location. Your status is eligible.</p>
+            </div>
+
+            <div class="notice-item">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="background: #28a745; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">ACHIEVEMENT UNLOCKED</span>
+                    <small class="text-light">2 hours ago</small>
+                </div>
+                <h3 style="margin: 0.5rem 0;">New Badge Earned: Gold Guardian</h3>
+                <p style="margin: 0;">Congratulations! You have completed 5 voluntary donations and unlocked the Gold Guardian badge.</p>
+            </div>
+
+            <div class="notice-item">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="background: #0d6efd; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">SYSTEM NOTICE</span>
+                    <small class="text-light">1 day ago</small>
+                </div>
+                <h3 style="margin: 0.5rem 0;">Privacy & Masking Engine Updated</h3>
+                <p style="margin: 0;">Uber H3 resolution 7 centroid obfuscation is actively protecting your residential coordinates.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container" style="justify-content: center;">
+            <p>&copy; 2026 Blood Donor Connection Network. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="/static/js/api.js"></script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile & Progress - BDCN</title>
+    <style>
+:root {
+    --primary-color: #D92A2A;
+    --primary-color-dark: #B32222;
+    --surface-color: #FFFFFF;
+    --background-color: #F8F9FA;
+    --on-surface-color: #212529;
+    --on-surface-color-light: #6C757D;
+    --border-color: #DEE2E6;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: var(--on-surface-color);
+    margin: 0;
+    line-height: 1.6;
+}
+.app-header, .app-footer {
+    background-color: var(--surface-color);
+    box-shadow: var(--shadow-md);
+    padding: 1rem 0;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+.app-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.app-nav a {
+    margin-left: 1.5rem;
+    font-weight: 500;
+    color: var(--on-surface-color);
+    text-decoration: none;
+}
+.app-nav a.active, .app-nav a:hover {
+    color: var(--primary-color);
+}
+.page-content {
+    padding: 2.5rem 0;
+    min-height: calc(100vh - 160px);
+}
+.card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+}
+.profile-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+.gamification-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+.stat-item {
+    text-align: center;
+}
+.stat-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0;
+}
+.stat-label {
+    color: var(--on-surface-color-light);
+    font-size: 0.9rem;
+    margin: 0;
+}
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 1.25rem;
+    text-align: center;
+}
+.badge-item {
+    padding: 1rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: #fff;
+    opacity: 0.5;
+}
+.badge-item.earned {
+    opacity: 1.0;
+    border-color: var(--primary-color);
+    background: #fff8f8;
+}
+.badge-item svg {
+    width: 36px;
+    height: 36px;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+.badge-item p {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.badge-pill {
+    background: #e8f4fd;
+    color: #0d6efd;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+</style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="container">
+            <a href="/" class="logo">🩸 BDCN</a>
+            <nav class="app-nav">
+                <a href="/">Home</a>
+                <a href="/donor/dashboard">Donor Hub</a>
+                <a href="/recipient/discovery-map">Find Donors</a>
+                <a href="/profile/gamification" class="active">My Profile</a>
+                <a href="/notifications">Notifications</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="container">
+            <h1>My Profile & Progress</h1>
+
+            <!-- User Header Card -->
+            <div class="card">
+                <div class="profile-row">
+                    <div class="avatar">👤</div>
+                    <div>
+                        <h2 style="margin: 0 0 0.25rem 0;">{{ donor.name if donor else 'Jane Smith' }}</h2>
+                        <p style="margin: 0 0 0.5rem 0; color: var(--on-surface-color-light);">
+                            Voluntary Donor | @{{ donor.username if donor else 'janesmith' }}
+                        </p>
+                        <span class="badge-pill">Blood Group: {{ donor.blood_group if donor else 'O-' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REQ-F-002: Gamification Engine & Milestone Badges -->
+            <div class="card">
+                <h3 style="margin-top: 0;">Gamification & Impact Stats (REQ-F-002)</h3>
+                <div class="gamification-stats">
+                    <div class="stat-item">
+                        <p class="stat-value">{{ gamification.total_points if gamification else 1250 }}</p>
+                        <p class="stat-label">Total Points</p>
+                    </div>
+                    <div class="stat-item">
+                        <p class="stat-value">{{ gamification.lives_impacted if gamification else 5 }}</p>
+                        <p class="stat-label">Lives Impacted</p>
+                    </div>
+                    <div class="stat-item">
+                        <p class="stat-value">{{ donor.donation_count if donor else 5 }}</p>
+                        <p class="stat-label">Donations Completed</p>
+                    </div>
+                </div>
+
+                <h4 style="margin: 1.5rem 0 1rem 0;">Milestone Badges</h4>
+                <div class="badges-grid">
+                    <div class="badge-item earned">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-2 7H3l5.5 4.5L6 22l6-4.5 6 4.5-2.5-8.5L21 9h-7z"/></svg>
+                        <p>First Steps</p>
+                    </div>
+                    <div class="badge-item earned">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                        <p>Rapid Responder</p>
+                    </div>
+                    <div class="badge-item earned">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.967-7.417 3.967 1.481-8.279-6.064-5.828 8.332-1.151z"/></svg>
+                        <p>Community Hero</p>
+                    </div>
+                    <div class="badge-item earned">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                        <p>Team Player</p>
+                    </div>
+                    <div class="badge-item earned">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+                        <p>Gold Guardian</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container" style="justify-content: center;">
+            <p>&copy; 2026 Blood Donor Connection Network. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="/static/js/api.js"></script>
+</body>
+</html>

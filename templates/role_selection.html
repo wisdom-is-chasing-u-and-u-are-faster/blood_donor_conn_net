@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Your Role - BDCN</title>
+    <style>
+:root {
+    --primary-color: #D92A2A;
+    --primary-color-dark: #B32222;
+    --accent-color: #FF5C5C;
+    --gradient-text: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    --surface-color: #FFFFFF;
+    --background-color: #F8F9FA;
+    --on-surface-color: #212529;
+    --on-surface-color-light: #6C757D;
+    --border-color: #DEE2E6;
+    --radius-lg: 16px;
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: var(--on-surface-color);
+    margin: 0;
+    line-height: 1.6;
+}
+.app-header, .app-footer {
+    background-color: var(--surface-color);
+    box-shadow: var(--shadow-md);
+    padding: 1rem 0;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+.app-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.app-nav a {
+    margin-left: 1.5rem;
+    font-weight: 500;
+    color: var(--on-surface-color);
+    text-decoration: none;
+}
+.app-nav a:hover, .app-nav a.active {
+    color: var(--primary-color);
+}
+.page-content {
+    min-height: calc(100vh - 160px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem 0;
+}
+.text-center { text-align: center; }
+.text-gradient {
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.text-secondary { color: var(--on-surface-color-light); }
+.role-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    max-width: 800px;
+    margin: 2rem auto 0 auto;
+}
+.role-card {
+    background: var(--surface-color);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.25s ease-in-out;
+    display: block;
+}
+.role-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+}
+.role-card svg {
+    width: 64px;
+    height: 64px;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+.role-card h2 {
+    margin: 0.5rem 0 1rem 0;
+}
+</style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="container">
+            <a href="/" class="logo">🩸 BDCN</a>
+            <nav class="app-nav">
+                <a href="/">Home</a>
+                <a href="/role-selection" class="active">Select Role</a>
+                <a href="/donor/dashboard">Donor Hub</a>
+                <a href="/recipient/discovery-map">Find Donors</a>
+                <a href="/login-registration">Login</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="container text-center">
+            <h1>Choose Your Role</h1>
+            <p class="text-secondary" style="font-size: 1.25rem;">How will you be using the network today?</p>
+
+            <div class="role-selection-grid">
+                <!-- Donor Option -->
+                <a href="/donor/register" class="role-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                    </svg>
+                    <h2>I am a <span class="text-gradient">Donor</span></h2>
+                    <p class="text-secondary">I want to offer help and make my voluntary blood donations available to those in need.</p>
+                </a>
+
+                <!-- Recipient Option -->
+                <a href="/recipient/request" class="role-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                    </svg>
+                    <h2>I am a <span class="text-gradient">Recipient</span></h2>
+                    <p class="text-secondary">I am looking for blood donors for myself, a patient, a family member, or a friend.</p>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container" style="justify-content: center;">
+            <p>&copy; 2026 Blood Donor Connection Network. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="/static/js/api.js"></script>
+</body>
+</html>

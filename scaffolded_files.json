@@ -1,0 +1,111 @@
+{
+  "ticket_key": "ARCH-3522",
+  "language": "python",
+  "files": [
+    {
+      "path": ".env.example",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": "docker-compose.yml",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": "Dockerfile",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": "db/schema.sql",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": "db/seed.sql",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": "public/js/api.js",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "templates/login_registration.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "templates/role_selection.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "templates/donor_dashboard.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "templates/donor_discovery_map.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "templates/recipient_request_form.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "templates/profile_gamification.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "templates/secure_notification_center.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "templates/index.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "mobile/ios/Info.plist",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": "mobile/ios/AppDelegate.swift",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "mobile/android/AndroidManifest.xml",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": "mobile/android/MainActivity.kt",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "app.py",
+      "action": "modify",
+      "kind": "source"
+    },
+    {
+      "path": "tests/test_app.py",
+      "action": "modify",
+      "kind": "test"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "action": "modify",
+      "kind": "source"
+    }
+  ]
+}
