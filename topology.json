@@ -1,0 +1,37 @@
+{
+  "topology_type": "monolith_served_static",
+  "is_fullstack": true,
+  "primary_language": "python",
+  "frontend": {
+    "required": true,
+    "framework": "vanilla_html_js",
+    "language": "javascript",
+    "directory": "public",
+    "entry_point": "templates/index.html",
+    "has_design_assets": true,
+    "client_api_module": "public/js/api.js"
+  },
+  "backend": {
+    "required": true,
+    "framework": "flask",
+    "language": "python",
+    "directory": ".",
+    "entry_point": "app.py",
+    "api_prefix": "/api/v1"
+  },
+  "database": {
+    "required": true,
+    "engine": "sqlite",
+    "schema_file": "db/schema.sql",
+    "seed_file": "db/seed.sql",
+    "init_script": "init_db.py",
+    "models_dir": "models",
+    "has_existing_sql": true
+  },
+  "serving_strategy": {
+    "mode": "backend_mounts_static",
+    "static_directory": "public",
+    "mount_path": "/",
+    "fallback_html": "templates/index.html"
+  }
+}
