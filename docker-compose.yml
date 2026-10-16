@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-quantum-leap-secret-key-development-2026}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///quantum_leap.db}
+      - PORT=5000
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: quantum_user
+      POSTGRES_PASSWORD: quantum_password
+      POSTGRES_DB: quantum_leap
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

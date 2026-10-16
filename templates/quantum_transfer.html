@@ -1,0 +1,62 @@
+{% extends "quantum_base.html" %}
+
+{% block title %}Transfer Funds — QuantumLeap Investment Portal{% endblock %}
+
+{% block content %}
+<section class="section" style="max-width: 600px; margin: var(--space-3) auto;">
+    <div style="margin-bottom: var(--space-2);">
+        <a href="/dashboard" style="color: var(--accent); text-decoration: none; font-weight: 600;">&larr; Back to Dashboard</a>
+    </div>
+
+    <div class="card">
+        <div class="section-header" style="text-align: center; margin-bottom: var(--space-3);">
+            <h2>Transfer Funds Between Accounts</h2>
+            <p>Move cash and capital between your verified QuantumLeap accounts instantly.</p>
+        </div>
+
+        <div id="transfer-status" style="display: none;"></div>
+
+        <form id="transfer-form" method="POST" action="/transfer">
+            <div class="input-group" style="margin-bottom: var(--space-3);">
+                <label for="from_account_id"><strong>From Account (Source)</strong></label>
+                <select id="from_account_id" name="from_account_id" required class="input" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--surface); color: var(--on-surface);">
+                    <option value="" disabled {% if not selected_from %}selected{% endif %}>Select source account...</option>
+                    {% for acc in accounts %}
+                    <option value="{{ acc.id }}" {% if selected_from == acc.id %}selected{% endif %}>
+                        {{ acc.name }} ({{ acc.account_type }}) — Available: ${{ "{:,.2f}".format(acc.balance) }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="input-group" style="margin-bottom: var(--space-3);">
+                <label for="to_account_id"><strong>To Account (Destination)</strong></label>
+                <select id="to_account_id" name="to_account_id" required class="input" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--surface); color: var(--on-surface);">
+                    <option value="" disabled {% if not selected_to %}selected{% endif %}>Select destination account...</option>
+                    {% for acc in accounts %}
+                    <option value="{{ acc.id }}" {% if selected_to == acc.id %}selected{% endif %}>
+                        {{ acc.name }} ({{ acc.account_type }}) — Balance: ${{ "{:,.2f}".format(acc.balance) }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="input-group" style="margin-bottom: var(--space-3);">
+                <label for="amount"><strong>Transfer Amount ($ USD)</strong></label>
+                <input type="number" id="amount" name="amount" step="0.01" min="0.01" placeholder="500.00" required class="input" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 16px;">
+            </div>
+
+            <div class="input-group" style="margin-bottom: var(--space-4);">
+                <label for="memo">Memo / Note (Optional)</label>
+                <input type="text" id="memo" name="memo" placeholder="e.g. Monthly IRA contribution" class="input" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 16px;">Confirm & Execute Transfer</button>
+        </form>
+
+        <div style="margin-top: var(--space-3); padding: 12px; border-radius: var(--radius-sm); background-color: rgba(0, 168, 150, 0.08); font-size: 13px;">
+            🔒 <strong>Zero-Fee Transfer Guarantee:</strong> Inter-account transfers complete in real time with immediate ledger confirmation and zero execution fees.
+        </div>
+    </div>
+</section>
+{% endblock %}

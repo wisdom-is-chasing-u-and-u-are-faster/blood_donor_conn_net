@@ -1,0 +1,81 @@
+{% extends "quantum_base.html" %}
+
+{% block title %}{{ account.name }} — Transactions — QuantumLeap{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div style="margin-bottom: var(--space-3);">
+        <a href="/dashboard" style="color: var(--accent); text-decoration: none; font-weight: 600;">&larr; Back to Dashboard</a>
+    </div>
+
+    <!-- Account Details Header -->
+    <div class="card" style="margin-bottom: var(--space-4);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2);">
+            <div>
+                <span class="badge badge-dividend">{{ account.account_type }}</span>
+                <h2 style="margin: 6px 0 2px 0;">{{ account.name }}</h2>
+                <div style="font-size: 14px; opacity: 0.8;">Account Number: <strong>{{ account.account_number }}</strong></div>
+            </div>
+            <div>
+                <div style="font-size: 13px; text-transform: uppercase; opacity: 0.7;">Current Balance</div>
+                <div class="stat-value" style="margin: 0; font-size: 2.2rem;">
+                    ${{ "{:,.2f}".format(account.balance) }} {{ account.currency }}
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: var(--space-3); border-top: 1px solid var(--border-color); padding-top: var(--space-2); display: flex; gap: var(--space-2);">
+            <a href="/transfer?from={{ account.id }}" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;">Transfer from this Account</a>
+            <a href="/transfer?to={{ account.id }}" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">Transfer into this Account</a>
+        </div>
+    </div>
+
+    <!-- Detailed Transaction History (REQ-F-004) -->
+    <div class="section-header" style="margin-bottom: var(--space-2);">
+        <h3>Detailed Transaction History</h3>
+        <p>Complete ledger of deposits, trades, dividends, and transfers for this account.</p>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+        {% if transactions and transactions|length > 0 %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Type</th>
+                        <th>Description / Memo</th>
+                        <th>Amount</th>
+                        <th>Balance After</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr>
+                        <td style="white-space: nowrap; font-size: 14px;">{{ tx.created_at }}</td>
+                        <td>
+                            {% if 'DEPOSIT' in tx.type or 'IN' in tx.type or 'DIVIDEND' in tx.type or 'INTEREST' in tx.type %}
+                            <span class="badge badge-deposit">{{ tx.type }}</span>
+                            {% else %}
+                            <span class="badge badge-buy">{{ tx.type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ tx.description }}</td>
+                        <td style="font-weight: 600; white-space: nowrap; color: {{ 'var(--success)' if tx.amount > 0 else 'var(--error)' }};">
+                            {{ "+$" if tx.amount > 0 else "-$" }}{{ "{:,.2f}".format(tx.amount|abs) }}
+                        </td>
+                        <td style="white-space: nowrap; font-weight: 500;">
+                            ${{ "{:,.2f}".format(tx.balance_after) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="padding: var(--space-4); text-align: center; color: var(--on-surface); opacity: 0.7;">
+            No transactions found for this account yet.
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "quantum_base.html" %}
+
+{% block title %}Services — QuantumLeap Investment Portal{% endblock %}
+
+{% block content %}
+<section id="services" class="section">
+    <div class="section-header" style="text-align: center; margin-bottom: var(--space-4);">
+        <h2>Our Professional Services</h2>
+        <p>Comprehensive investment and financial management capabilities designed to achieve your financial milestones.</p>
+    </div>
+
+    <div class="account-grid">
+        <div class="card">
+            <h3>Individual Brokerage</h3>
+            <p>Direct market access to stocks, ETFs, mutual funds, and fixed-income assets with commission-free trading.</p>
+            <div style="margin-top: var(--space-2);">
+                <a href="/register" class="btn btn-secondary">Open Brokerage</a>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Retirement & Tax-Advantaged IRAs</h3>
+            <p>Traditional and Roth IRAs with tax-optimized rebalancing and automated contribution rollovers.</p>
+            <div style="margin-top: var(--space-2);">
+                <a href="/register" class="btn btn-secondary">Open IRA</a>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Quantum High-Yield Cash</h3>
+            <p>FDIC-insured cash management accounts delivering top-tier APY yields with liquid inter-account transfers.</p>
+            <div style="margin-top: var(--space-2);">
+                <a href="/register" class="btn btn-secondary">Explore High-Yield</a>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Cybersecurity & Asset Shield</h3>
+            <p>Industry-standard data encryption, multi-layered session verification, and 24/7 suspicious activity monitoring.</p>
+            <div style="margin-top: var(--space-2);">
+                <a href="/contact" class="btn btn-secondary">Security Overview</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
