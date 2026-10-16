@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urgent Donation Request - DonorConnect</title>
+    <style>
+:root {
+    --primary-color: #0055A4;
+    --secondary-color: #0D6EFD;
+    --accent-color: #E31C3D;
+    --success-color: #198754;
+    --warning-color: #FFC107;
+    --bg-color: #FFFFFF;
+    --surface-color: #F8F9FA;
+    --border-color: #DEE2E6;
+    --text-color: #212529;
+    --text-muted-color: #6C757D;
+    --primary-gradient: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    --font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --radius-md: 0.5rem;
+    --radius-lg: 1rem;
+    --shadow-2: 0 4px 8px rgba(0,0,0,0.1);
+    --transition-base: all 0.2s ease-in-out;
+}
+
+[data-theme="dark"] {
+    --bg-color: #121212;
+    --surface-color: #1E1E1E;
+    --border-color: #444444;
+    --text-color: #E0E0E0;
+    --text-muted-color: #9E9E9E;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: var(--font-sans-serif);
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    transition: var(--transition-base);
+}
+
+main { flex-grow: 1; }
+
+.navbar {
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-color);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.navbar-brand .logo-icon {
+    color: var(--accent-color);
+    margin-right: 0.5rem;
+}
+
+.nav-links a {
+    color: var(--text-muted-color);
+    text-decoration: none;
+    margin-left: 1.5rem;
+    font-weight: 500;
+}
+
+.nav-links a:hover, .nav-links a.active { color: var(--primary-color); }
+.theme-switcher { cursor: pointer; font-size: 1.5rem; }
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.card {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+    padding: 2rem;
+    text-align: center;
+}
+
+.gradient-text {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2rem;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.details-card {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.badge-emergency {
+    background-color: var(--accent-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+
+.map-placeholder {
+    width: 100%;
+    height: 180px;
+    background-color: #e9ecef;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted-color);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.btn {
+    display: inline-block;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    padding: 0.875rem 1.25rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: var(--transition-base);
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    color: #fff;
+    background: var(--primary-gradient);
+    border-color: var(--primary-color);
+}
+
+.btn-secondary {
+    color: var(--text-color);
+    background-color: var(--surface-color);
+    border-color: var(--border-color);
+}
+
+.btn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.alert {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-md);
+    text-align: left;
+}
+.alert-success { background-color: #d1e7dd; color: #0f5132; }
+.alert-warning { background-color: #fff3cd; color: #664d03; }
+
+.footer {
+    background-color: var(--surface-color);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted-color);
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.875rem;
+}
+</style>
+</head>
+<body data-theme="light">
+    <header class="navbar">
+        <a href="/donor/portal/login" class="navbar-brand">
+            <span class="logo-icon" aria-hidden="true">🩸</span>
+            <span>DonorConnect</span>
+        </a>
+        <nav class="nav-links" aria-label="Main navigation">
+            <a href="/donor/portal/login">Login</a>
+            <a href="/donor/portal/emergency-response" class="active" aria-current="page">Respond</a>
+            <a href="/donor/portal/check-in-pass">Pass</a>
+        </nav>
+        <div class="theme-switcher" id="theme-toggle" role="button" aria-label="Toggle light/dark theme">
+            <span>🌙</span>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <div class="container">
+            <div class="card">
+                <h1 class="gradient-text">Urgent Donation Request</h1>
+                <p style="color: var(--text-muted-color); margin-top: 0;">A patient's life is on the line. Your blood type is a match.</p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="details-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <h2 style="font-size: 1.25rem; margin: 0;">Request Details</h2>
+                        <span class="badge-emergency">{{ requisition.urgency or 'Emergency' }}</span>
+                    </div>
+                    <p style="margin: 0.35rem 0;"><strong>Blood Type Needed:</strong> <span style="color: var(--accent-color); font-weight: bold;">{{ requisition.blood_type or 'O-' }}</span></p>
+                    <p style="margin: 0.35rem 0;"><strong>Location:</strong> {{ requisition.hospital_name or 'City General Hospital (123 Health St.)' }}</p>
+                    <p style="margin: 0.35rem 0;"><strong>Proximity:</strong> Within {{ requisition.radius_km or 15 }} km (REQ-F-002)</p>
+                    <p style="margin: 0.35rem 0;"><strong>Units Requested:</strong> {{ requisition.units or 4 }} units</p>
+                    {% if requisition.notes %}
+                        <p style="margin: 0.35rem 0; color: var(--text-muted-color); font-size: 0.875rem;"><strong>Clinical Notes:</strong> {{ requisition.notes }}</p>
+                    {% endif %}
+                    <p style="color: var(--text-muted-color); font-size: 0.8125rem; margin-top: 0.75rem; margin-bottom: 0;">
+                        Please respond to help us meet the critical 45-minute fulfillment window (REQ-N-001).
+                    </p>
+                </div>
+
+                <div class="map-placeholder" role="img" aria-label="Map showing route to hospital">
+                    <span>📍 Proximity Route: Match Distance ~4.2 km (SLA &le; 15 mins)</span>
+                </div>
+
+                <p style="font-weight: 600; margin-bottom: 1rem;">Can you donate now?</p>
+
+                <form method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else 'mock_csrf' }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else 'mock_csrf' }}"> action="/donor/portal/respond" id="form-emergency-response">
+                    <input type="hidden" name="request_id" value="{{ requisition.request_id or 'REQ-EMERG-2026-001' }}">
+                    <div class="btn-grid">
+                        <button type="submit" name="action" value="confirmed" class="btn btn-primary" id="btn-confirm-donate">
+                            Yes, I can donate
+                        </button>
+                        <button type="submit" name="action" value="declined" class="btn btn-secondary" id="btn-decline-donate">
+                            No, I'm unable to
+                        </button>
+                    </div>
+                </form>
+
+                <p style="color: var(--text-muted-color); font-size: 0.75rem; margin-top: 1.5rem; margin-bottom: 0;">
+                    This workflow supports instantaneous confirmation as per REQ-F-005. Your response is submitted via REQ-F-009.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div>
+            <p>&copy; 2024 Emergency Blood Donor Connection Network. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/public/js/donor_api.js"></script>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', newTheme);
+            themeToggle.querySelector('span').textContent = newTheme === 'light' ? '🌙' : '☀️';
+        });
+    </script>
+</body>
+</html>

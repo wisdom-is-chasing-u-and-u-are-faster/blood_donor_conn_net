@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- **[ARCH-4675]** UI Pages + Requirements: Emergency Blood Donor Connection & Real-Time Dispatch Network Platform
+  - *Key modifications:*
+    - `.env.example`
+    - `docker-compose.yml`
+    - `db/schema.sql`
+    - `db/seed.sql`
+    - `db/init_db.py`
+    - `templates/donor_portal_login.html`
+    - `templates/donor_emergency_response.html`
+    - `templates/donor_check_in_pass.html`
+### Added
 
 - **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
 
