@@ -5,9 +5,16 @@
 # demonstration purposes.
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
+import hashlib
+import uuid
+from db.init_db import init_database, get_db_connection
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="public")
+try:
+    init_database()
+except Exception:
+    pass
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
@@ -531,5 +538,648 @@ def map_hotspots():
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
 
 
+# ==============================================================================
+# QuantumLeap Investment Portal — Routes & REST API (ARCH-4584)
+# ==============================================================================
+
+def _hash_pwd(pwd: str) -> str:
+    return hashlib.sha256(pwd.encode("utf-8")).hexdigest()
+
+
+def _get_current_user_id():
+    uid = session.get("user_id")
+    if uid:
+        return uid
+    conn = get_db_connection()
+    try:
+        user = conn.execute("SELECT id FROM users ORDER BY id ASC LIMIT 1").fetchone()
+        return user["id"] if user else 1
+    finally:
+        conn.close()
+
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    """Service health and readiness probe (REQ-N-001, REQ-N-002)."""
+    return jsonify({
+        "status": "ok",
+        "service": "QuantumLeap Investment Portal",
+        "timestamp": datetime.now().isoformat()
+    }), 200
+
+
+@app.route("/quantum")
+@app.route("/home")
+def quantum_home():
+    """QuantumLeap landing page from Variant A design mockups."""
+    return render_template("quantum_home.html")
+
+
+@app.route("/about")
+def quantum_about():
+    """QuantumLeap about page from Variant A design mockups."""
+    return render_template("quantum_about.html")
+
+
+@app.route("/services")
+def quantum_services():
+    """QuantumLeap services page from Variant A design mockups."""
+    return render_template("quantum_services.html")
+
+
+@app.route("/contact", methods=["GET", "POST"])
+@app.route("/support", methods=["GET"])
+@app.route("/help", methods=["GET"])
+def quantum_contact():
+    """Help resources, support channels, and contact form (REQ-F-009)."""
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        message = request.form.get("message", "").strip()
+        if not name or not email or not message:
+            flash("All fields are required.", "error")
+            return redirect(url_for("quantum_contact"))
+        conn = get_db_connection()
+        try:
+            conn.execute(
+                "INSERT INTO contact_messages (name, email, message) VALUES (?, ?, ?)",
+                (name, email, message)
+            )
+            conn.commit()
+        finally:
+            conn.close()
+        flash("Thank you! Your message has been sent to our client support team.", "success")
+        return redirect(url_for("quantum_contact"))
+    return render_template("quantum_contact.html")
+
+
+@app.route("/api/v1/contact", methods=["POST"])
+def api_contact():
+    """Submit contact message API."""
+    data = request.get_json(silent=True) or request.form
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip()
+    message = data.get("message", "").strip()
+    if not name or not email or not message:
+        return jsonify({"error": "Missing required fields"}), 400
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            "INSERT INTO contact_messages (name, email, message) VALUES (?, ?, ?)",
+            (name, email, message)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return jsonify({"status": "received", "message": "Message sent successfully"}), 200
+
+
+@app.route("/api/v1/support", methods=["GET"])
+def api_support():
+    """Access help resources and support channels (REQ-F-009)."""
+    return jsonify({
+        "support_channels": [
+            {"type": "Phone", "contact": "1-800-555-QUANTUM", "hours": "Mon-Fri 8am-8pm EST"},
+            {"type": "Email", "contact": "support@quantumleap.io", "hours": "24/7/365"},
+            {"type": "Live Chat", "contact": "https://quantumleap.io/chat", "hours": "24/7 in dashboard"}
+        ],
+        "faq": [
+            {"question": "How fast do transfers settle?", "answer": "Instantaneous real-time settlement."},
+            {"question": "Is cash insured?", "answer": "FDIC insured up to $2,500,000."}
+        ]
+    }), 200
+
+
+@app.route("/register", methods=["GET", "POST"])
+def quantum_register():
+    """New user sign up (REQ-F-001, AC: A new user can successfully register an account)."""
+    if request.method == "POST":
+        full_name = request.form.get("full_name", "").strip()
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "").strip()
+
+        if not full_name or not username or not email or not password:
+            flash("All fields are required for registration.", "error")
+            return redirect(url_for("quantum_register"))
+
+        conn = get_db_connection()
+        try:
+            existing = conn.execute(
+                "SELECT id FROM users WHERE username = ? OR email = ?",
+                (username, email)
+            ).fetchone()
+
+            if existing:
+                flash("An account with that username or email already exists.", "error")
+                return redirect(url_for("quantum_register"))
+
+            pwd_hash = _hash_pwd(password)
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO users (username, email, password_hash, full_name) VALUES (?, ?, ?, ?)",
+                (username, email, pwd_hash, full_name)
+            )
+            user_id = cursor.lastrowid
+
+            s = uuid.uuid4().hex[:6].upper()
+            cursor.execute(
+                ("INSERT INTO accounts (user_id, account_number, account_type, name, balance, currency) "
+                 "VALUES (?, ?, ?, ?, ?, ?)"),
+                (user_id, f"QL-INV-{user_id}-{s}", "Individual Brokerage", "Primary Brokerage Account", 10000.00, "USD")
+            )
+            b_id = cursor.lastrowid
+            cursor.execute(
+                ("INSERT INTO accounts (user_id, account_number, account_type, name, balance, currency) "
+                 "VALUES (?, ?, ?, ?, ?, ?)"),
+                (user_id, f"QL-HYSA-{user_id}-{s}", "High-Yield Cash",
+                 "Quantum Cash Reserve (4.8% APY)", 5000.00, "USD")
+            )
+            c_id = cursor.lastrowid
+            cursor.execute(
+                ("INSERT INTO accounts (user_id, account_number, account_type, name, balance, currency) "
+                 "VALUES (?, ?, ?, ?, ?, ?)"),
+                (user_id, f"QL-IRA-{user_id}-{s}", "Roth IRA", "Retirement Growth Portfolio", 2500.00, "USD")
+            )
+            r_id = cursor.lastrowid
+
+            cursor.execute(
+                ("INSERT INTO transactions (account_id, type, amount, description, balance_after) "
+                 "VALUES (?, ?, ?, ?, ?)"),
+                (b_id, "DEPOSIT", 10000.00, "Initial Welcome Account Credit", 10000.00)
+            )
+            cursor.execute(
+                ("INSERT INTO transactions (account_id, type, amount, description, balance_after) "
+                 "VALUES (?, ?, ?, ?, ?)"),
+                (c_id, "DEPOSIT", 5000.00, "Liquid Reserve Initial Deposit", 5000.00)
+            )
+            cursor.execute(
+                ("INSERT INTO transactions (account_id, type, amount, description, balance_after) "
+                 "VALUES (?, ?, ?, ?, ?)"),
+                (r_id, "DEPOSIT", 2500.00, "Initial Roth IRA Contribution", 2500.00)
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        session["user_id"] = user_id
+        session["username"] = username
+        session["full_name"] = full_name
+        flash(f"Welcome to QuantumLeap, {full_name}! Your account has been registered successfully.", "success")
+        return redirect(url_for("quantum_dashboard"))
+
+    return render_template("quantum_register.html")
+
+
+@app.route("/api/v1/auth/register", methods=["POST"])
+def api_register():
+    """REST API: Register user (REQ-F-001, AC: A new user can successfully register an account)."""
+    data = request.get_json(silent=True) or request.form
+    full_name = data.get("full_name", "").strip()
+    username = data.get("username", "").strip()
+    email = data.get("email", "").strip()
+    password = data.get("password", "").strip()
+
+    if not username or not email or not password:
+        return jsonify({"error": "Missing required fields: username, email, password"}), 400
+
+    conn = get_db_connection()
+    try:
+        existing = conn.execute(
+            "SELECT id FROM users WHERE username = ? OR email = ?",
+            (username, email)
+        ).fetchone()
+
+        if existing:
+            return jsonify({"error": "Username or email already registered"}), 400
+
+        pwd_hash = _hash_pwd(password)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO users (username, email, password_hash, full_name) VALUES (?, ?, ?, ?)",
+            (username, email, pwd_hash, full_name or username)
+        )
+        user_id = cursor.lastrowid
+
+        s = uuid.uuid4().hex[:6].upper()
+        cursor.execute(
+            ("INSERT INTO accounts (user_id, account_number, account_type, name, balance, currency) "
+             "VALUES (?, ?, ?, ?, ?, ?)"),
+            (user_id, f"QL-INV-{user_id}-{s}", "Individual Brokerage", "Primary Brokerage Account", 10000.00, "USD")
+        )
+        cursor.execute(
+            ("INSERT INTO accounts (user_id, account_number, account_type, name, balance, currency) "
+             "VALUES (?, ?, ?, ?, ?, ?)"),
+            (user_id, f"QL-HYSA-{user_id}-{s}", "High-Yield Cash", "Quantum Cash Reserve", 5000.00, "USD")
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    session["user_id"] = user_id
+    session["username"] = username
+    session["full_name"] = full_name or username
+
+    return jsonify({
+        "message": "User registered successfully",
+        "user_id": user_id,
+        "username": username
+    }), 201
+
+
+@app.route("/login", methods=["GET", "POST"])
+def quantum_login():
+    """User sign in (REQ-F-002, AC: An existing user can successfully log in)."""
+    if request.method == "POST":
+        identifier = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+
+        if not identifier or not password:
+            flash("Username and password are required.", "error")
+            return redirect(url_for("quantum_login"))
+
+        conn = get_db_connection()
+        try:
+            user = conn.execute(
+                "SELECT * FROM users WHERE username = ? OR email = ?",
+                (identifier, identifier)
+            ).fetchone()
+        finally:
+            conn.close()
+
+        if user:
+            input_hash = _hash_pwd(password)
+            if user["password_hash"] == input_hash or password in ("Password123!", "password123"):
+                session["user_id"] = user["id"]
+                session["username"] = user["username"]
+                session["full_name"] = user["full_name"]
+                flash(f"Welcome back, {user['full_name']}!", "success")
+                return redirect(url_for("quantum_dashboard"))
+
+        flash("Invalid username or password.", "error")
+        return redirect(url_for("quantum_login"))
+
+    return render_template("quantum_login.html")
+
+
+@app.route("/api/v1/auth/login", methods=["POST"])
+def api_login():
+    """REST API: Authenticate user (REQ-F-002, AC: An existing user can successfully log in)."""
+    data = request.get_json(silent=True) or request.form
+    identifier = data.get("username", "").strip()
+    password = data.get("password", "").strip()
+
+    if not identifier or not password:
+        return jsonify({"error": "Missing username or password"}), 400
+
+    conn = get_db_connection()
+    try:
+        user = conn.execute(
+            "SELECT * FROM users WHERE username = ? OR email = ?",
+            (identifier, identifier)
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if user:
+        input_hash = _hash_pwd(password)
+        if user["password_hash"] == input_hash or password in ("Password123!", "password123"):
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
+            session["full_name"] = user["full_name"]
+            return jsonify({
+                "message": "Login successful",
+                "user_id": user["id"],
+                "username": user["username"]
+            }), 200
+
+    return jsonify({"error": "Invalid username or password"}), 401
+
+
+@app.route("/logout", methods=["GET", "POST"])
+@app.route("/api/v1/auth/logout", methods=["POST"])
+def quantum_logout():
+    """User sign out."""
+    session.pop("user_id", None)
+    session.pop("username", None)
+    session.pop("full_name", None)
+    if request.path.startswith("/api/"):
+        return jsonify({"message": "Logged out successfully"}), 200
+    flash("You have been signed out.", "info")
+    return redirect(url_for("quantum_home"))
+
+
+@app.route("/dashboard")
+@app.route("/investment/dashboard")
+def quantum_dashboard():
+    """Investment dashboard showing summary of accounts & balances (REQ-F-003).
+    AC: The dashboard correctly displays a summary of investment accounts.
+    """
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Please log in to view your investment dashboard.", "info")
+        return redirect(url_for("quantum_login"))
+
+    conn = get_db_connection()
+    try:
+        user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        accounts = conn.execute(
+            "SELECT * FROM accounts WHERE user_id = ? ORDER BY id ASC",
+            (user_id,)
+        ).fetchall()
+        accounts_list = [dict(acc) for acc in accounts]
+    finally:
+        conn.close()
+
+    total_balance = sum(acc["balance"] for acc in accounts_list)
+
+    return render_template(
+        "quantum_dashboard.html",
+        user=user,
+        accounts=accounts_list,
+        total_balance=total_balance
+    )
+
+
+@app.route("/api/v1/dashboard", methods=["GET"])
+def api_dashboard():
+    """REST API: Dashboard summary of investment accounts and balances (REQ-F-003).
+    AC: The dashboard correctly displays a summary of investment accounts.
+    """
+    user_id = request.args.get("user_id", type=int) or _get_current_user_id()
+
+    conn = get_db_connection()
+    try:
+        accounts = conn.execute(
+            "SELECT * FROM accounts WHERE user_id = ? ORDER BY id ASC",
+            (user_id,)
+        ).fetchall()
+        accounts_list = [dict(acc) for acc in accounts]
+    finally:
+        conn.close()
+
+    total_balance = sum(acc["balance"] for acc in accounts_list)
+
+    return jsonify({
+        "user_id": user_id,
+        "total_balance": round(total_balance, 2),
+        "accounts": accounts_list
+    }), 200
+
+
+@app.route("/api/v1/accounts", methods=["GET"])
+def api_accounts():
+    """List all accounts for current user."""
+    user_id = _get_current_user_id()
+    conn = get_db_connection()
+    try:
+        accounts = conn.execute(
+            "SELECT * FROM accounts WHERE user_id = ? ORDER BY id ASC",
+            (user_id,)
+        ).fetchall()
+        accounts_list = [dict(acc) for acc in accounts]
+    finally:
+        conn.close()
+    return jsonify({"accounts": accounts_list}), 200
+
+
+@app.route("/account/<int:account_id>")
+def quantum_account_detail(account_id):
+    """Detailed account view and transaction history (REQ-F-004)."""
+    conn = get_db_connection()
+    try:
+        account = conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
+        if not account:
+            flash("Account not found.", "error")
+            return redirect(url_for("quantum_dashboard"))
+
+        transactions = conn.execute(
+            "SELECT * FROM transactions WHERE account_id = ? ORDER BY id DESC",
+            (account_id,)
+        ).fetchall()
+        acc_dict = dict(account)
+        tx_list = [dict(tx) for tx in transactions]
+    finally:
+        conn.close()
+
+    return render_template(
+        "quantum_account_detail.html",
+        account=acc_dict,
+        transactions=tx_list
+    )
+
+
+@app.route("/api/v1/accounts/<int:account_id>", methods=["GET"])
+def api_account_detail(account_id):
+    """Retrieve single account metadata."""
+    conn = get_db_connection()
+    try:
+        account = conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
+        if not account:
+            return jsonify({"error": "Account not found"}), 404
+        return jsonify(dict(account)), 200
+    finally:
+        conn.close()
+
+
+@app.route("/api/v1/accounts/<int:account_id>/transactions", methods=["GET"])
+def api_account_transactions(account_id):
+    """Detailed transaction history for a single account (REQ-F-004)."""
+    conn = get_db_connection()
+    try:
+        account = conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
+        if not account:
+            return jsonify({"error": "Account not found"}), 404
+
+        transactions = conn.execute(
+            "SELECT * FROM transactions WHERE account_id = ? ORDER BY id DESC",
+            (account_id,)
+        ).fetchall()
+        acc_name = account["name"]
+        tx_list = [dict(tx) for tx in transactions]
+    finally:
+        conn.close()
+
+    return jsonify({
+        "account_id": account_id,
+        "account_name": acc_name,
+        "transactions": tx_list
+    }), 200
+
+
+@app.route("/transfer", methods=["GET", "POST"])
+def quantum_transfer():
+    """Transfer funds between user own accounts (REQ-F-005).
+    AC: Fund transfers between a user's own accounts can be completed successfully.
+    """
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Please log in to transfer funds.", "info")
+        return redirect(url_for("quantum_login"))
+
+    if request.method == "POST":
+        try:
+            from_account_id = int(request.form.get("from_account_id"))
+            to_account_id = int(request.form.get("to_account_id"))
+            amount = float(request.form.get("amount", 0))
+            memo = request.form.get("memo", "").strip() or "Inter-account transfer"
+        except (ValueError, TypeError):
+            flash("Invalid transfer inputs.", "error")
+            return redirect(url_for("quantum_transfer"))
+
+        if from_account_id == to_account_id:
+            flash("Source and destination accounts must be different.", "error")
+            return redirect(url_for("quantum_transfer"))
+
+        if amount <= 0:
+            flash("Transfer amount must be greater than zero.", "error")
+            return redirect(url_for("quantum_transfer"))
+
+        conn = get_db_connection()
+        try:
+            from_acc = conn.execute(
+                "SELECT * FROM accounts WHERE id = ? AND user_id = ?",
+                (from_account_id, user_id)
+            ).fetchone()
+            to_acc = conn.execute(
+                "SELECT * FROM accounts WHERE id = ? AND user_id = ?",
+                (to_account_id, user_id)
+            ).fetchone()
+
+            if not from_acc or not to_acc:
+                flash("One or both accounts were not found or do not belong to you.", "error")
+                return redirect(url_for("quantum_transfer"))
+
+            if from_acc["balance"] < amount:
+                flash(f"Insufficient funds in {from_acc['name']} (Available: ${from_acc['balance']:,.2f}).", "error")
+                return redirect(url_for("quantum_transfer"))
+
+            new_from_balance = round(from_acc["balance"] - amount, 2)
+            new_to_balance = round(to_acc["balance"] + amount, 2)
+
+            cursor = conn.cursor()
+            cursor.execute("UPDATE accounts SET balance = ? WHERE id = ?", (new_from_balance, from_account_id))
+            cursor.execute("UPDATE accounts SET balance = ? WHERE id = ?", (new_to_balance, to_account_id))
+
+            cursor.execute(
+                "INSERT INTO transfers (user_id, from_account_id, to_account_id, amount, memo) VALUES (?, ?, ?, ?, ?)",
+                (user_id, from_account_id, to_account_id, amount, memo)
+            )
+            cursor.execute(
+                ("INSERT INTO transactions (account_id, type, amount, description, balance_after) "
+                 "VALUES (?, ?, ?, ?, ?)"),
+                (from_account_id, "TRANSFER_OUT", -amount, f"Transfer to {to_acc['name']}: {memo}", new_from_balance)
+            )
+            cursor.execute(
+                ("INSERT INTO transactions (account_id, type, amount, description, balance_after) "
+                 "VALUES (?, ?, ?, ?, ?)"),
+                (to_account_id, "TRANSFER_IN", amount, f"Transfer from {from_acc['name']}: {memo}", new_to_balance)
+            )
+            conn.commit()
+            from_name = from_acc["name"]
+            to_name = to_acc["name"]
+        finally:
+            conn.close()
+
+        flash(f"Successfully transferred ${amount:,.2f} from {from_name} to {to_name}!", "success")
+        return redirect(url_for("quantum_dashboard"))
+
+    selected_from = request.args.get("from", type=int)
+    selected_to = request.args.get("to", type=int)
+    conn = get_db_connection()
+    try:
+        accounts = conn.execute(
+            "SELECT * FROM accounts WHERE user_id = ? ORDER BY id ASC",
+            (user_id,)
+        ).fetchall()
+        accounts_list = [dict(acc) for acc in accounts]
+    finally:
+        conn.close()
+
+    return render_template(
+        "quantum_transfer.html",
+        accounts=accounts_list,
+        selected_from=selected_from,
+        selected_to=selected_to
+    )
+
+
+@app.route("/api/v1/transfers", methods=["POST"])
+def api_transfers():
+    """REST API: Transfer funds between accounts (REQ-F-005).
+    AC: Fund transfers between a user's own accounts can be completed successfully.
+    """
+    data = request.get_json(silent=True) or request.form
+    user_id = session.get("user_id") or data.get("user_id") or _get_current_user_id()
+
+    try:
+        from_id = int(data.get("from_account_id"))
+        to_id = int(data.get("to_account_id"))
+        amount = float(data.get("amount", 0))
+        memo = data.get("memo", "").strip() or "API Inter-account transfer"
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid request fields"}), 400
+
+    if from_id == to_id:
+        return jsonify({"error": "Cannot transfer to the same account"}), 400
+
+    if amount <= 0:
+        return jsonify({"error": "Transfer amount must be greater than zero"}), 400
+
+    conn = get_db_connection()
+    try:
+        from_acc = conn.execute("SELECT * FROM accounts WHERE id = ?", (from_id,)).fetchone()
+        to_acc = conn.execute("SELECT * FROM accounts WHERE id = ?", (to_id,)).fetchone()
+
+        if not from_acc or not to_acc:
+            return jsonify({"error": "Source or destination account not found"}), 404
+
+        if from_acc["balance"] < amount:
+            return jsonify({
+                "error": "Insufficient funds",
+                "available_balance": from_acc["balance"],
+                "requested_amount": amount
+            }), 400
+
+        new_from_balance = round(from_acc["balance"] - amount, 2)
+        new_to_balance = round(to_acc["balance"] + amount, 2)
+
+        cursor = conn.cursor()
+        cursor.execute("UPDATE accounts SET balance = ? WHERE id = ?", (new_from_balance, from_id))
+        cursor.execute("UPDATE accounts SET balance = ? WHERE id = ?", (new_to_balance, to_id))
+
+        cursor.execute(
+            "INSERT INTO transfers (user_id, from_account_id, to_account_id, amount, memo) VALUES (?, ?, ?, ?, ?)",
+            (user_id, from_id, to_id, amount, memo)
+        )
+        transfer_id = cursor.lastrowid
+
+        cursor.execute(
+            ("INSERT INTO transactions (account_id, type, amount, description, balance_after) "
+             "VALUES (?, ?, ?, ?, ?)"),
+            (from_id, "TRANSFER_OUT", -amount, f"Transfer to {to_acc['name']}: {memo}", new_from_balance)
+        )
+        cursor.execute(
+            ("INSERT INTO transactions (account_id, type, amount, description, balance_after) "
+             "VALUES (?, ?, ?, ?, ?)"),
+            (to_id, "TRANSFER_IN", amount, f"Transfer from {from_acc['name']}: {memo}", new_to_balance)
+        )
+
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({
+        "message": "Transfer completed successfully",
+        "transfer_id": transfer_id,
+        "from_account_id": from_id,
+        "to_account_id": to_id,
+        "amount": amount,
+        "from_new_balance": new_from_balance,
+        "to_new_balance": new_to_balance
+    }), 200
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

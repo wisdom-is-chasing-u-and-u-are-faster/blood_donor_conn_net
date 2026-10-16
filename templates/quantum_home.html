@@ -1,0 +1,45 @@
+{% extends "quantum_base.html" %}
+
+{% block title %}Home — QuantumLeap Investment Portal{% endblock %}
+
+{% block content %}
+<section class="hero" style="text-align: center; padding: var(--space-5) 0;">
+    <span class="eyebrow">INNOVATION & WEALTH INTELLIGENCE</span>
+    <h1 class="display">
+        Powering Your Financial Future with <span class="gradient-text">QuantumLeap</span>
+    </h1>
+    <p class="subheadline" style="max-width: 650px; margin: var(--space-3) auto;">
+        We deliver cutting-edge technology and intelligent portfolio management solutions that drive growth, asset protection, and superior market performance.
+    </p>
+    <div class="cta-buttons" style="display: flex; gap: var(--space-2); justify-content: center; margin-top: var(--space-4);">
+        {% if session.get('user_id') %}
+        <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+        <a href="/transfer" class="btn btn-secondary">Transfer Funds</a>
+        {% else %}
+        <a href="/register" class="btn btn-primary">Get Started (Free)</a>
+        <a href="/login" class="btn btn-secondary">Client Sign In</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section" style="margin-top: var(--space-5);">
+    <div class="section-header" style="text-align: center; margin-bottom: var(--space-4);">
+        <h2>Why Choose QuantumLeap?</h2>
+        <p>Institutional-grade wealth management tailored for individual investors.</p>
+    </div>
+    <div class="account-grid">
+        <div class="card">
+            <h3>Multi-Tier Portfolio Analytics</h3>
+            <p>Unified view of Traditional IRAs, Roth IRAs, Brokerage accounts, and High-Yield Cash reserves with real-time valuation.</p>
+        </div>
+        <div class="card">
+            <h3>Frictionless Capital Transfers</h3>
+            <p>Instantaneous inter-account transfers with real-time balance reconciliation and detailed audit ledgers.</p>
+        </div>
+        <div class="card">
+            <h3>Bank-Grade Security & Encryption</h3>
+            <p>Enterprise SHA-256 password protections, secure session orchestration, and automated transaction verification.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

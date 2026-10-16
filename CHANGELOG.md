@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- **[ARCH-4584]** UI Pages + Requirements: QuantumLeap
+  - *Key modifications:*
+    - `.env.example`
+    - `docker-compose.yml`
+    - `pytest.ini`
+    - `.gitignore`
+    - `db/schema.sql`
+    - `db/seed.sql`
+    - `db/init_db.py`
+    - `public/js/api.js`
+### Added
 
 - **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
 

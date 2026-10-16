@@ -1,0 +1,60 @@
+{% extends "quantum_base.html" %}
+
+{% block title %}Investment Dashboard — QuantumLeap{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4);">
+        <div>
+            <h2>Investment Portfolio Dashboard</h2>
+            <p>Welcome back, <strong>{{ user.full_name }}</strong> ({{ user.username }})</p>
+        </div>
+        <div style="display: flex; gap: var(--space-2);">
+            <a href="/transfer" class="btn btn-primary">⚡ Transfer Funds</a>
+            <a href="/contact" class="btn btn-secondary">Help & Support</a>
+        </div>
+    </div>
+
+    <!-- Aggregate Net Worth Card -->
+    <div class="card" style="background: var(--gradient); color: #ffffff; padding: var(--space-4); margin-bottom: var(--space-4);">
+        <span style="text-transform: uppercase; letter-spacing: 1px; font-size: 13px; opacity: 0.9;">Total Portfolio Net Worth</span>
+        <div class="stat-value" style="color: #ffffff; font-size: 2.75rem; margin: var(--space-1) 0;">
+            ${{ "{:,.2f}".format(total_balance) }} USD
+        </div>
+        <div style="display: flex; gap: var(--space-4); font-size: 14px; opacity: 0.95; flex-wrap: wrap;">
+            <span>Active Accounts: <strong>{{ accounts|length }}</strong></span>
+            <span>Portfolio Status: <strong>Verified & In Good Standing</strong></span>
+            <span>Currency: <strong>USD ($)</strong></span>
+        </div>
+    </div>
+
+    <!-- Summary of Investment Accounts (REQ-F-003, AC 3) -->
+    <div class="section-header" style="margin-bottom: var(--space-2);">
+        <h3>Your Investment Accounts</h3>
+        <p>Real-time balances and asset allocation across your individual holdings.</p>
+    </div>
+
+    <div class="account-grid">
+        {% for acc in accounts %}
+        <div class="account-card">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <span class="badge badge-dividend" style="margin-bottom: 6px;">{{ acc.account_type }}</span>
+                        <h4 style="margin: 4px 0 2px 0;">{{ acc.name }}</h4>
+                        <div style="font-size: 13px; color: var(--on-surface); opacity: 0.7;">Account #: {{ acc.account_number }}</div>
+                    </div>
+                </div>
+                <div class="stat-value" style="font-size: 1.8rem; margin: var(--space-3) 0 var(--space-1) 0;">
+                    ${{ "{:,.2f}".format(acc.balance) }}
+                </div>
+            </div>
+            <div style="margin-top: var(--space-3); border-top: 1px solid var(--border-color); padding-top: var(--space-2); display: flex; justify-content: space-between; align-items: center;">
+                <a href="/account/{{ acc.id }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 13px;">View Transactions &rarr;</a>
+                <a href="/transfer?from={{ acc.id }}" style="font-size: 13px; color: var(--accent); font-weight: 600; text-decoration: none;">Transfer &rarr;</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

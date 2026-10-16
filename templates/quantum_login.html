@@ -1,0 +1,37 @@
+{% extends "quantum_base.html" %}
+
+{% block title %}Sign In — QuantumLeap Investment Portal{% endblock %}
+
+{% block content %}
+<section class="section" style="max-width: 480px; margin: var(--space-4) auto;">
+    <div class="card">
+        <div class="section-header" style="text-align: center; margin-bottom: var(--space-3);">
+            <h2>Client Sign In</h2>
+            <p>Access your investment portfolio and secure account services.</p>
+        </div>
+
+        <form id="login-form" method="POST" action="/login">
+            <div class="input-group" style="margin-bottom: var(--space-2);">
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" name="username" placeholder="alex_investor" class="input" required style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            </div>
+
+            <div class="input-group" style="margin-bottom: var(--space-3);">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="••••••••••••" class="input" required style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">Sign In</button>
+        </form>
+
+        <div style="background-color: rgba(10, 61, 98, 0.05); border-radius: var(--radius-sm); padding: 12px; margin-top: var(--space-3); font-size: 13px;">
+            <strong>Demo Credentials:</strong><br>
+            Username: <code>alex_investor</code> | Password: <code>Password123!</code>
+        </div>
+
+        <p style="text-align: center; margin-top: var(--space-3); font-size: 14px;">
+            Don't have an account yet? <a href="/register" style="color: var(--accent); font-weight: 600;">Sign Up here</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

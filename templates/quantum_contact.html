@@ -1,0 +1,68 @@
+{% extends "quantum_base.html" %}
+
+{% block title %}Contact Us & Help Center — QuantumLeap{% endblock %}
+
+{% block content %}
+<section id="contact" class="section">
+    <div class="section-header" style="text-align: center; margin-bottom: var(--space-4);">
+        <h2>Contact Us & Help Center</h2>
+        <p>Ready to speak with our wealth advisors or have questions about your account? We are here to help.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-4);">
+        <!-- Contact Form -->
+        <div class="card">
+            <h3>Send Us a Message</h3>
+            <div id="contact-status" style="display: none;"></div>
+            <form id="contact-form" method="POST" action="/contact">
+                <div class="input-group" style="margin-bottom: var(--space-2);">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="John Doe" class="input" required style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                </div>
+                <div class="input-group" style="margin-bottom: var(--space-2);">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="you@example.com" class="input" required style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                </div>
+                <div class="input-group" style="margin-bottom: var(--space-3);">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="4" placeholder="How can we help you?" class="input" required style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+            </form>
+        </div>
+
+        <!-- Help Channels & FAQ (REQ-F-009) -->
+        <div class="card">
+            <h3>Support Channels & Resources (REQ-F-009)</h3>
+            <ul style="list-style: none; padding: 0; margin-bottom: var(--space-3);">
+                <li style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                    <strong>📞 Priority Support Line:</strong> 1-800-555-QUANTUM (Mon-Fri 8am-8pm EST)
+                </li>
+                <li style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                    <strong>✉️ Client Support Email:</strong> support@quantumleap.io
+                </li>
+                <li style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                    <strong>💬 Live Chat:</strong> Available 24/7 in the investment dashboard
+                </li>
+                <li style="padding: 10px 0;">
+                    <strong>🏢 Global Headquarters:</strong> 100 Financial Center Blvd, New York, NY 10005
+                </li>
+            </ul>
+
+            <h4 style="margin-top: var(--space-3); margin-bottom: var(--space-2);">Frequently Asked Questions</h4>
+            <details style="margin-bottom: var(--space-1); cursor: pointer;">
+                <summary><strong>How fast do inter-account transfers settle?</strong></summary>
+                <p style="margin-top: 4px; font-size: 14px;">Internal transfers between your QuantumLeap accounts are settled instantly in real time.</p>
+            </details>
+            <details style="margin-bottom: var(--space-1); cursor: pointer;">
+                <summary><strong>Are my investment balances insured?</strong></summary>
+                <p style="margin-top: 4px; font-size: 14px;">Securities are protected up to $500,000 via SIPC, and cash balances in High-Yield Cash are FDIC insured up to $2,500,000 through program banks.</p>
+            </details>
+            <details style="cursor: pointer;">
+                <summary><strong>How do I view my detailed transactions?</strong></summary>
+                <p style="margin-top: 4px; font-size: 14px;">Visit your Dashboard and click "View Transactions" on any specific account card.</p>
+            </details>
+        </div>
+    </div>
+</section>
+{% endblock %}
