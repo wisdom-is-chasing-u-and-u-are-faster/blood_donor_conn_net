@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Database and local environment overrides
+app.db
+*.db
+.env*.local
+*.env
+
