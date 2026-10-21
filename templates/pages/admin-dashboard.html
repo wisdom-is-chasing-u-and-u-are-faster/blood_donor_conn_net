@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Blood Donor Connection Network</title>
+    <style>
+:root {
+    --primary-color: #B71C1C;
+    --secondary-color: #0D47A1;
+    --accent-color: #4CAF50;
+    --warning-color: #FFC107;
+    --danger-color: #F44336;
+    --text-color: #212121;
+    --text-color-light: #616161;
+    --bg-color: #f9f9f9;
+    --border-color: #E0E0E0;
+    --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --border-radius-md: 8px;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
+.main-header { background: #fff; border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; }
+.main-nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+.nav-logo a { font-size: 1.25rem; font-weight: bold; color: var(--primary-color); text-decoration: none; }
+.nav-links { display: flex; list-style: none; gap: 1.5rem; }
+.nav-links a { text-decoration: none; color: var(--text-color); font-weight: 500; }
+.nav-links a.active { color: var(--primary-color); }
+.container { max-width: 1000px; margin: 3rem auto; padding: 0 1rem; }
+.card { background: #fff; padding: 2rem; border-radius: var(--border-radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+.table-responsive { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.table th, .table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+.table th { background-color: #f5f5f5; font-weight: 600; }
+.alert-warning { background-color: #fff9e6; }
+.badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+.badge-warning { background: #ffecb3; color: #8d6e63; }
+.badge-success { background: #c8e6c9; color: #2e7d32; }
+.btn { display: inline-block; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-weight: 500; cursor: pointer; border: none; font-size: 0.9rem; }
+.btn-secondary { background-color: var(--secondary-color); color: #fff; }
+.btn-outline { border: 1px solid var(--border-color); color: var(--text-color); }
+.main-footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border-color); background: #fff; margin-top: 3rem; font-size: 0.875rem; color: var(--text-color-light); }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="main-nav">
+            <div class="nav-logo">
+                <a href="/pages/login.html">Blood Donor Network</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/pages/recipient-search.html">Find Donors</a></li>
+                <li><a href="/pages/donor-dashboard.html">My Dashboard</a></li>
+                <li><a href="/pages/admin-dashboard.html" class="active">Admin</a></li>
+                <li><a href="/pages/login.html">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Admin Dashboard: Connection Requests</h2>
+            <p class="text-color-light">District Admin verification queue with automated reminders for requests &gt; 2 hours (REQ-F-006, REQ-F-008 / AC 4).</p>
+            <div class="card" style="margin-top: 1rem;">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Request ID</th>
+                                <th>Date Submitted</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-requests-tbody">
+                            <tr class="alert-warning">
+                                <td>REQ-10234 <span style="color:var(--danger-color); font-weight:bold;">[2h+ ALERT]</span></td>
+                                <td>3 hours ago</td>
+                                <td><span class="badge badge-warning">Pending</span></td>
+                                <td><a href="/pages/admin-request-details.html?id=REQ-10234" class="btn btn-secondary">Review</a></td>
+                            </tr>
+                            <tr>
+                                <td>REQ-10233</td>
+                                <td>30 minutes ago</td>
+                                <td><span class="badge badge-warning">Pending</span></td>
+                                <td><a href="/pages/admin-request-details.html?id=REQ-10233" class="btn btn-secondary">Review</a></td>
+                            </tr>
+                            <tr>
+                                <td>REQ-10232</td>
+                                <td>1 day ago</td>
+                                <td><span class="badge badge-success">Approved</span></td>
+                                <td><a href="/pages/admin-request-details.html?id=REQ-10232" class="btn btn-outline">View</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2024 Blood Donor Connection Network. All rights reserved.</p>
+        <p><a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+</body>
+</html>

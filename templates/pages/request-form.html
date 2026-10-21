@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Request - Blood Donor Connection Network</title>
+    <style>
+:root {
+    --primary-color: #B71C1C;
+    --secondary-color: #0D47A1;
+    --accent-color: #4CAF50;
+    --text-color: #212121;
+    --text-color-light: #616161;
+    --bg-color: #f9f9f9;
+    --border-color: #E0E0E0;
+    --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --border-radius-md: 8px;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
+.main-header { background: #fff; border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; }
+.main-nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+.nav-logo a { font-size: 1.25rem; font-weight: bold; color: var(--primary-color); text-decoration: none; }
+.nav-links { display: flex; list-style: none; gap: 1.5rem; }
+.nav-links a { text-decoration: none; color: var(--text-color); font-weight: 500; }
+.container { max-width: 800px; margin: 3rem auto; padding: 0 1rem; }
+.card { background: #fff; padding: 2rem; border-radius: var(--border-radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+.form-group { margin-bottom: 1.25rem; }
+.form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-control { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; }
+.form-control-file { border: 2px dashed var(--border-color); padding: 1.5rem; text-align: center; border-radius: 4px; cursor: pointer; }
+.btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: bold; cursor: pointer; border: none; font-size: 1rem; }
+.btn-primary { background-color: var(--primary-color); color: #fff; }
+.btn-lg { padding: 1rem 2rem; font-size: 1.125rem; }
+.main-footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border-color); background: #fff; margin-top: 3rem; font-size: 0.875rem; color: var(--text-color-light); }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="main-nav">
+            <div class="nav-logo">
+                <a href="/pages/login.html">Blood Donor Network</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/pages/recipient-search.html">Find Donors</a></li>
+                <li><a href="/pages/donor-dashboard.html">My Dashboard</a></li>
+                <li><a href="/pages/admin-dashboard.html">Admin</a></li>
+                <li><a href="/pages/login.html">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Connection Request</h2>
+            <div class="card" style="margin-top: 1rem;">
+                <p style="margin-bottom: 1.5rem;">You are about to request a connection with donors in your selected area. Please attach required medical necessity documentation (REQ-F-005).</p>
+                <form id="form-request-connection">
+                    <div class="form-group">
+                        <label for="request-message" class="form-label">Message (Optional)</label>
+                        <textarea id="request-message" class="form-control" rows="4" placeholder="A brief, anonymous message about your clinical or emergency need."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Medical Necessity Document (Required)</label>
+                        <div class="form-control-file" onclick="document.getElementById('medical-doc').click();">
+                            <p id="doc-upload-label">Drag & drop your file here, or click to select hospital letter / requisition</p>
+                            <input type="file" id="medical-doc" style="display:none;" onchange="document.getElementById('doc-upload-label').innerText = this.files[0] ? this.files[0].name : 'File selected';">
+                        </div>
+                        <small class="text-color-light">e.g., A letter from your hospital or clinic. The document will be securely reviewed by a District Administrator.</small>
+                    </div>
+                    <button type="submit" id="btn-submit-request" class="btn btn-primary btn-lg">Submit Request</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2024 Blood Donor Connection Network. All rights reserved.</p>
+        <p><a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+</body>
+</html>
