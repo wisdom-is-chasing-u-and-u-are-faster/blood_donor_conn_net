@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - FLASK_SECRET_KEY=super-secret-bdcn-key-12345
+      - DATABASE_URL=sqlite:///app.db
+      - GCP_PROJECT_ID=persistent-genai
+      - GCS_BUCKET_NAME=persistent-genai-tf-state
+      - REMINDER_THRESHOLD_HOURS=2.0
+    volumes:
+      - .:/app
+    command: python app.py

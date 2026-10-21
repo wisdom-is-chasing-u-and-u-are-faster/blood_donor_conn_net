@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find a Donor - Blood Donor Connection Network</title>
+    <style>
+:root {
+    --primary-color: #B71C1C;
+    --secondary-color: #0D47A1;
+    --accent-color: #4CAF50;
+    --text-color: #212121;
+    --text-color-light: #616161;
+    --bg-color: #f9f9f9;
+    --border-color: #E0E0E0;
+    --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --border-radius-md: 8px;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
+.main-header { background: #fff; border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; }
+.main-nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+.nav-logo a { font-size: 1.25rem; font-weight: bold; color: var(--primary-color); text-decoration: none; }
+.nav-links { display: flex; list-style: none; gap: 1.5rem; }
+.nav-links a { text-decoration: none; color: var(--text-color); font-weight: 500; }
+.nav-links a.active { color: var(--primary-color); }
+.container { max-width: 900px; margin: 3rem auto; padding: 0 1rem; }
+.card { background: #fff; padding: 2rem; border-radius: var(--border-radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+.form-group { margin-bottom: 1.25rem; }
+.form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-control { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; }
+.map-container { min-height: 250px; background: #eef2f5; border: 2px dashed #cfd8dc; border-radius: 6px; padding: 1.5rem; margin-top: 1rem; }
+.btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: bold; cursor: pointer; border: none; font-size: 1rem; }
+.btn-primary { background-color: var(--primary-color); color: #fff; }
+.btn-lg { padding: 1rem 2rem; font-size: 1.125rem; }
+.main-footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border-color); background: #fff; margin-top: 3rem; font-size: 0.875rem; color: var(--text-color-light); }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="main-nav">
+            <div class="nav-logo">
+                <a href="/pages/login.html">Blood Donor Network</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/pages/recipient-search.html" class="active">Find Donors</a></li>
+                <li><a href="/pages/donor-dashboard.html">My Dashboard</a></li>
+                <li><a href="/pages/admin-dashboard.html">Admin</a></li>
+                <li><a href="/pages/login.html">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Find a Donor</h2>
+            <p class="text-color-light">Search and view donor hotspots clustered by region (REQ-F-003, REQ-F-004 / AC 3).</p>
+            <div class="card" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="search-blood-type" class="form-label">Filter by Blood Type</label>
+                    <select id="search-blood-type" class="form-control" style="max-width: 250px;">
+                        <option value="Any">Any</option>
+                        <option value="A+">A+</option>
+                        <option value="O-">O-</option>
+                        <option value="B+">B+</option>
+                        <option value="AB+">AB+</option>
+                    </select>
+                </div>
+                <p class="text-color-light">Showing donor hotspots. Precise residential locations are never shared to protect donor privacy.</p>
+                <div class="map-container">
+                    <p>[Map with clustered donor hotspots loading...]</p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                 <a href="/pages/request-form.html" class="btn btn-primary btn-lg">Request a Connection</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2024 Blood Donor Connection Network. All rights reserved.</p>
+        <p><a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+</body>
+</html>

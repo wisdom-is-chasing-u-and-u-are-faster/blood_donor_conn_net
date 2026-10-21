@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard - Blood Donor Connection Network</title>
+    <style>
+:root {
+    --primary-color: #B71C1C;
+    --secondary-color: #0D47A1;
+    --accent-color: #4CAF50;
+    --text-color: #212121;
+    --text-color-light: #616161;
+    --bg-color: #f9f9f9;
+    --border-color: #E0E0E0;
+    --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --border-radius-md: 8px;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
+.main-header { background: #fff; border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; }
+.main-nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+.nav-logo a { font-size: 1.25rem; font-weight: bold; color: var(--primary-color); text-decoration: none; }
+.nav-links { display: flex; list-style: none; gap: 1.5rem; }
+.nav-links a { text-decoration: none; color: var(--text-color); font-weight: 500; }
+.nav-links a.active { color: var(--primary-color); }
+.container { max-width: 800px; margin: 3rem auto; padding: 0 1rem; }
+.card { background: #fff; padding: 2rem; border-radius: var(--border-radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+.card-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+.form-group { margin-bottom: 1.25rem; }
+.form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-control { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; }
+.btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: bold; cursor: pointer; border: none; font-size: 1rem; }
+.btn-primary { background-color: var(--primary-color); color: #fff; }
+.main-footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border-color); background: #fff; margin-top: 3rem; font-size: 0.875rem; color: var(--text-color-light); }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="main-nav">
+            <div class="nav-logo">
+                <a href="/pages/login.html">Blood Donor Network</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/pages/recipient-search.html">Find Donors</a></li>
+                <li><a href="/pages/donor-dashboard.html" class="active">My Dashboard</a></li>
+                <li><a href="/pages/admin-dashboard.html">Admin</a></li>
+                <li><a href="/pages/login.html">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Donor Dashboard</h2>
+            <p class="text-color-light" style="margin-bottom: 1.5rem;">Update your profile blood type and availability status (REQ-F-002 / AC 2).</p>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Your Information</h3>
+                </div>
+                <form id="form-donor-profile">
+                    <div class="form-group">
+                        <label for="donor-name" class="form-label">Full Name</label>
+                        <input type="text" id="donor-name" class="form-control" value="John Doe" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="blood-type" class="form-label">Blood Type</label>
+                        <select id="blood-type" class="form-control">
+                            <option value="A+">A+</option>
+                            <option value="O-" selected>O-</option>
+                            <option value="B+">B+</option>
+                            <option value="AB+">AB+</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="donor-location" class="form-label">General Location (City, State)</label>
+                        <input type="text" id="donor-location" class="form-control" value="San Francisco, CA" placeholder="e.g., San Francisco, CA">
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
+                        <input type="checkbox" id="donor-availability" checked style="width:1.25rem; height:1.25rem;">
+                        <label for="donor-availability" class="form-label" style="margin-bottom:0;">Currently available for blood donation requests</label>
+                    </div>
+                    <button type="submit" id="btn-update-profile" class="btn btn-primary">Update Profile</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2024 Blood Donor Connection Network. All rights reserved.</p>
+        <p><a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+</body>
+</html>

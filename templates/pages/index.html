@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Donor Connection Network - Interactive Hub</title>
+    <style>
+:root {
+    --primary-color: #B71C1C;
+    --secondary-color: #0D47A1;
+    --text-color: #212121;
+    --bg-color: #f9f9f9;
+    --border-color: #E0E0E0;
+    --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --border-radius-md: 8px;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
+.main-header { background: #fff; border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; }
+.main-nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+.nav-logo a { font-size: 1.25rem; font-weight: bold; color: var(--primary-color); text-decoration: none; }
+.nav-links { display: flex; list-style: none; gap: 1.5rem; }
+.nav-links a { text-decoration: none; color: var(--text-color); font-weight: 500; }
+.container { max-width: 1000px; margin: 3rem auto; padding: 0 1rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+.card { background: #fff; padding: 1.5rem; border-radius: var(--border-radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+.card h3 { color: var(--primary-color); margin-bottom: 0.5rem; }
+.btn { display: inline-block; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-weight: bold; background: var(--secondary-color); color: #fff; margin-top: 1rem; }
+.main-footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border-color); background: #fff; margin-top: 3rem; font-size: 0.875rem; color: #616161; }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="main-nav">
+            <div class="nav-logo">
+                <a href="/pages/index.html">Blood Donor Network</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/pages/recipient-search.html">Find Donors</a></li>
+                <li><a href="/pages/donor-dashboard.html">My Dashboard</a></li>
+                <li><a href="/pages/admin-dashboard.html">Admin</a></li>
+                <li><a href="/pages/login.html">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Blood Donor Connection Network — UI Pages & Screens</h2>
+            <p>Access all self-contained screens implemented for Jira Ticket ARCH-4989:</p>
+            <div class="grid">
+                <div class="card">
+                    <h3>1. Login Screen</h3>
+                    <p>Social media authentication (Google, Apple, Facebook) and email login.</p>
+                    <a href="/pages/login.html" class="btn">Open Login</a>
+                </div>
+                <div class="card">
+                    <h3>2. Donor Dashboard</h3>
+                    <p>Update donor profile, blood type, general location, and real-time availability.</p>
+                    <a href="/pages/donor-dashboard.html" class="btn">Open Dashboard</a>
+                </div>
+                <div class="card">
+                    <h3>3. Recipient Search</h3>
+                    <p>Find donors by blood type and explore coarse-clustered privacy-preserving hotspots.</p>
+                    <a href="/pages/recipient-search.html" class="btn">Open Search</a>
+                </div>
+                <div class="card">
+                    <h3>4. Request Form</h3>
+                    <p>Submit connection request with medical necessity documentation (hospital letter).</p>
+                    <a href="/pages/request-form.html" class="btn">Open Request Form</a>
+                </div>
+                <div class="card">
+                    <h3>5. Admin Dashboard</h3>
+                    <p>District Admin review queue highlighting pending requests older than 2 hours.</p>
+                    <a href="/pages/admin-dashboard.html" class="btn">Open Admin Queue</a>
+                </div>
+                <div class="card">
+                    <h3>6. Admin Request Details</h3>
+                    <p>Review medical necessity documentation, approve or reject requests.</p>
+                    <a href="/pages/admin-request-details.html?id=REQ-10234" class="btn">Open Review Screen</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2024 Blood Donor Connection Network. All rights reserved.</p>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+</body>
+</html>
