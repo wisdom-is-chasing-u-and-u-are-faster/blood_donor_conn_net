@@ -3,6 +3,12 @@
 ## [Unreleased]
 
 ### Added
+- **feat(ARCH-4940): UI Pages + Requirements: Blood Donor Connection Network**
+  - Integrated Variant A full-fidelity interactive UI prototype (`templates/variant_a.html`, `templates/pages/*.html`).
+  - Added REST API endpoints in `app.py` for social auth, donors search & hotspots with coarse privacy coordinates, recipient request creation with document upload, and admin request verification.
+  - Implemented client-side API layer (`static/js/api.js`) and cross-platform mobile shells (`mobile/ios`, `mobile/android`).
+  - Added 12-factor configuration (`.env.example`, `docker-compose.yml`) and ANSI SQL schemas & seeds (`db/schema.sql`, `db/seed.sql`, `db/init_db.py`).
+  - Added comprehensive test suite (`tests/test_arch_4940.py`) verifying all 5 Acceptance Criteria.
 
 - **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
 

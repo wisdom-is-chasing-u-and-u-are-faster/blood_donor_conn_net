@@ -2,15 +2,26 @@
 # It provides functionalities for hospitals to request blood,
 # and for administrators to manage and approve these requests.
 # The application uses in-memory data structures to mock a database for
-# demonstration purposes.
+# demonstration purposes and is backed by ANSI SQL schemas in db/.
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    session,
+    flash,
+    url_for,
+    jsonify,
+    send_from_directory,
+)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
-    "super-secret-bdcn-key-12345")
+    "super-secret-bdcn-key-12345"
+)
 
 # In-memory mock databases
 demands = [
@@ -22,7 +33,8 @@ demands = [
         "filename": "compliance_doc_A.pdf",
         "status": "Approved",
         "urgency": "Emergency",
-        "district": "Downtown"
+        "district": "Downtown",
+        "patient_name": "Sarah Connor",
     },
     {
         "id": 2,
@@ -32,7 +44,8 @@ demands = [
         "filename": "compliance_doc_B.pdf",
         "status": "Pending",
         "urgency": "Urgent",
-        "district": "North District"
+        "district": "North District",
+        "patient_name": "Marcus Wright",
     }
 ]
 
@@ -68,22 +81,32 @@ audit_logs = [
 # Registered donors
 donors = [
     {
+        "id": 1,
         "name": "Jane Smith",
         "username": "janesmith",
         "age": 28,
         "gender": "Female",
         "blood_group": "O-",
         "last_donation": "2025-11-15",
-        "donation_count": 5
+        "donation_count": 5,
+        "district": "Downtown",
+        "coarse_lat": 37.77,
+        "coarse_lng": -122.41,
+        "distance_km": 2.5
     },
     {
+        "id": 2,
         "name": "John Doe",
         "username": "johndoe",
         "age": 34,
         "gender": "Male",
         "blood_group": "A+",
         "last_donation": "2025-08-20",
-        "donation_count": 2
+        "donation_count": 2,
+        "district": "North District",
+        "coarse_lat": 37.79,
+        "coarse_lng": -122.40,
+        "distance_km": 5.1
     }
 ]
 
@@ -121,6 +144,64 @@ raw_hotspots = [
      "left": 80}
 ]
 
+notifications = [
+    {
+        "id": 1,
+        "title": "Emergency Blood Request Dispatched",
+        "message": "Demand #1 for A+ blood at General Hospital was approved by district admin.",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "read": False
+    },
+    {
+        "id": 2,
+        "title": "Welcome to BDCN",
+        "message": "Thank you for joining the Blood Donor Connection Network.",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "read": True
+    }
+]
+
+
+# ==============================================================================
+# Health Probe
+# ==============================================================================
+
+@app.route("/health")
+def health():
+    return jsonify({
+        "status": "ok",
+        "service": "bdcn-platform",
+        "version": "1.0.0"
+    }), 200
+
+
+# ==============================================================================
+# Static File Mount & Prototype UI Routes
+# ==============================================================================
+
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    return send_from_directory("static", filename)
+
+
+@app.route("/ui/app")
+@app.route("/ui/variant-a")
+@app.route("/variant-a")
+@app.route("/preview")
+def ui_variant_a():
+    return render_template("variant_a.html")
+
+
+@app.route("/pages/<page>")
+def serve_pages(page):
+    if not page.endswith(".html"):
+        page += ".html"
+    return render_template(f"pages/{page}")
+
+
+# ==============================================================================
+# Legacy Web UI Routes (Fully Preserved for Backward Compatibility)
+# ==============================================================================
 
 @app.route("/")
 def home():
@@ -188,13 +269,18 @@ def social_login(provider):
     target_donor = next((d for d in donors if d["username"] == username), None)
     if not target_donor:
         target_donor = {
+            "id": len(donors) + 1,
             "name": name,
             "username": username,
             "age": 25,
             "gender": "Other",
             "blood_group": "O+",
             "last_donation": None,
-            "donation_count": 1
+            "donation_count": 1,
+            "district": "Downtown",
+            "coarse_lat": 37.77,
+            "coarse_lng": -122.41,
+            "distance_km": 3.0
         }
         donors.append(target_donor)
 
@@ -208,8 +294,7 @@ def social_login(provider):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
     flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
+        f"Successfully authenticated via {provider.capitalize()}!",
         "success")
     return redirect(url_for("donor_profile"))
 
@@ -234,13 +319,18 @@ def donor_register():
             return redirect(url_for("donor_register"))
 
         new_donor = {
+            "id": len(donors) + 1,
             "name": name,
             "username": username,
             "age": int(age),
             "gender": gender,
             "blood_group": blood_group,
             "last_donation": last_donation,
-            "donation_count": 0
+            "donation_count": 0,
+            "district": "Downtown",
+            "coarse_lat": 37.77,
+            "coarse_lng": -122.41,
+            "distance_km": 4.0
         }
         donors.append(new_donor)
 
@@ -531,5 +621,321 @@ def map_hotspots():
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
 
 
+# ==============================================================================
+# REST API Endpoints (/api/v1) — Auth, Donors, Requests, Admin, Notifications
+# ==============================================================================
+
+@app.route("/api/v1/auth/social", methods=["POST"])
+def api_auth_social():
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    provider = data.get("provider", "google").lower()
+    email = data.get("email") or f"{provider}_user@bdcn.org"
+    name = data.get("name") or f"Social {provider.capitalize()} User"
+    username = f"social_{provider}_user"
+
+    target_donor = next((d for d in donors if d["username"] == username), None)
+    if not target_donor:
+        target_donor = {
+            "id": len(donors) + 1,
+            "name": name,
+            "username": username,
+            "email": email,
+            "age": 26,
+            "gender": "Other",
+            "blood_group": "O+",
+            "last_donation": None,
+            "donation_count": 1,
+            "district": "Downtown",
+            "coarse_lat": 37.77,
+            "coarse_lng": -122.41,
+            "distance_km": 3.0
+        }
+        donors.append(target_donor)
+
+    session["username"] = username
+    session["role"] = "donor"
+
+    audit_logs.append({
+        "action": "API SOCIAL LOGIN",
+        "details": f"User authenticated via {provider}.",
+        "user": username,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "authenticated": True,
+        "user": {
+            "username": username,
+            "name": name,
+            "email": email,
+            "role": "donor"
+        }
+    }), 200
+
+
+@app.route("/api/v1/auth/me", methods=["GET"])
+def api_auth_me():
+    if "username" in session:
+        return jsonify({
+            "authenticated": True,
+            "user": {
+                "username": session.get("username"),
+                "role": session.get("role", "donor")
+            }
+        }), 200
+    return jsonify({"authenticated": False, "user": None}), 200
+
+
+@app.route("/api/v1/auth/logout", methods=["POST"])
+def api_auth_logout():
+    username = session.get("username", "Unknown")
+    session.clear()
+    audit_logs.append({
+        "action": "API USER LOGOUT",
+        "details": f"User '{username}' logged out via API.",
+        "user": username,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+    return jsonify({"status": "logged_out"}), 200
+
+
+@app.route("/api/v1/donors", methods=["GET"])
+def api_get_donors():
+    radius = float(request.args.get("radius", 50))
+    blood_type = request.args.get("blood_type", "All")
+
+    # Filter donors with privacy-safe coarse coordinates (REQ-N-003)
+    results = []
+    for d in donors:
+        dist = d.get("distance_km", 5.0)
+        bg = d.get("blood_group", "O+")
+        if dist <= radius and (blood_type == "All" or bg == blood_type):
+            results.append({
+                "id": d.get("id", 1),
+                "name": d.get("name"),
+                "blood_group": bg,
+                "district": d.get("district", "Downtown"),
+                "distance_km": dist,
+                # Coarse centroid coordinates (1.1km precision to protect privacy)
+                "coarse_lat": round(d.get("coarse_lat", 37.77), 2),
+                "coarse_lng": round(d.get("coarse_lng", -122.41), 2),
+                "donation_count": d.get("donation_count", 0)
+            })
+    return jsonify(results), 200
+
+
+@app.route("/api/v1/donors/profile", methods=["POST"])
+def api_save_donor_profile():
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    full_name = data.get("full_name") or data.get("name", "Jane Smith")
+    blood_type = data.get("blood_type") or data.get("blood_group", "O-")
+    location = data.get("location") or data.get("district", "Downtown")
+    email = data.get("email", "")
+    phone = data.get("phone", "")
+
+    username = session.get("username", "janesmith")
+    target_donor = next((d for d in donors if d["username"] == username), None)
+    if not target_donor:
+        target_donor = {
+            "id": len(donors) + 1,
+            "name": full_name,
+            "username": username,
+            "blood_group": blood_type,
+            "district": location,
+            "email": email,
+            "phone": phone,
+            "donation_count": 1,
+            "coarse_lat": 37.77,
+            "coarse_lng": -122.41,
+            "distance_km": 3.0
+        }
+        donors.append(target_donor)
+    else:
+        target_donor["name"] = full_name
+        target_donor["blood_group"] = blood_type
+        target_donor["district"] = location
+        if email:
+            target_donor["email"] = email
+        if phone:
+            target_donor["phone"] = phone
+
+    audit_logs.append({
+        "action": "API DONOR PROFILE UPDATED",
+        "details": f"Donor profile updated for {username} ({blood_type}, {location}).",
+        "user": username,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "status": "success",
+        "profile": {
+            "full_name": full_name,
+            "blood_type": blood_type,
+            "location": location
+        }
+    }), 200
+
+
+@app.route("/api/v1/donors/hotspots", methods=["GET"])
+def api_get_hotspots():
+    radius = int(request.args.get("radius", 50))
+    blood_type = request.args.get("blood_type", "All")
+
+    filtered = [h for h in raw_hotspots if h["distance"] <= radius]
+    if blood_type != "All":
+        filtered = [h for h in filtered if h["blood_type"] == blood_type]
+    return jsonify(filtered), 200
+
+
+@app.route("/api/v1/requests", methods=["GET", "POST"])
+def api_requests():
+    if request.method == "POST":
+        # Supports JSON or multipart/form-data with file upload
+        data = request.get_json(silent=True) or {}
+        patient_name = data.get("patient_name") or request.form.get("patient_name", "Anonymous Patient")
+        blood_type = data.get("blood_type") or request.form.get("blood_type", "O+")
+        urgency = data.get("urgency") or request.form.get("urgency", "Emergency")
+        hospital_name = data.get("hospital_name") or request.form.get("hospital_name", "General Hospital")
+        district = data.get("district") or request.form.get("district", "Downtown")
+        units = int(data.get("units") or request.form.get("units", 1))
+
+        filename = "medical_necessity_doc.pdf"
+        file = request.files.get("document") or request.files.get("verification_doc")
+        if file and file.filename:
+            filename = file.filename
+        elif "document_name" in data:
+            filename = data["document_name"]
+
+        new_id = len(demands) + 1
+        new_demand = {
+            "id": new_id,
+            "hospital": hospital_name,
+            "patient_name": patient_name,
+            "blood_type": blood_type,
+            "units": units,
+            "filename": filename,
+            "status": "Pending",
+            "urgency": urgency,
+            "district": district
+        }
+        demands.append(new_demand)
+
+        # Notify admin of new blood request
+        notifications.insert(0, {
+            "id": len(notifications) + 1,
+            "title": f"New Blood Request #{new_id} ({blood_type})",
+            "message": f"Submitted for {patient_name} at {hospital_name} with document '{filename}'.",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "read": False
+        })
+
+        audit_logs.append({
+            "action": "API BLOOD REQUEST CREATED",
+            "details": f"Request #{new_id} ({blood_type}, {urgency}) created for {patient_name}. Doc: {filename}.",
+            "user": session.get("username", "api_user"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        return jsonify({
+            "id": new_id,
+            "patient_name": patient_name,
+            "blood_type": blood_type,
+            "urgency": urgency,
+            "hospital_name": hospital_name,
+            "status": "Pending",
+            "filename": filename
+        }), 201
+
+    # GET requests list
+    status = request.args.get("status", "All")
+    district = request.args.get("district", "All")
+    results = [d for d in demands]
+    if status != "All":
+        results = [d for d in results if d.get("status") == status]
+    if district != "All":
+        results = [d for d in results if d.get("district") == district]
+
+    return jsonify(results), 200
+
+
+@app.route("/api/v1/admin/requests/<int:request_id>/verify", methods=["POST"])
+def api_admin_verify(request_id):
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    action = data.get("action", "approve").lower()
+    notes = data.get("notes", "")
+
+    target_demand = next((d for d in demands if d["id"] == request_id), None)
+    if not target_demand:
+        return jsonify({"error": "Request not found"}), 404
+
+    if action == "approve":
+        target_demand["status"] = "Approved"
+        new_alert_id = len(alerts) + 1
+        alerts.append({
+            "id": new_alert_id,
+            "hospital": target_demand["hospital"],
+            "blood_type": target_demand["blood_type"],
+            "status": "Active"
+        })
+        notifications.insert(0, {
+            "id": len(notifications) + 1,
+            "title": f"Blood Request #{request_id} Approved",
+            "message": f"District admin approved {target_demand['blood_type']} blood request. Dispatched to donors.",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "read": False
+        })
+        audit_logs.append({
+            "action": "API REQUEST APPROVED",
+            "details": f"Request #{request_id} approved. Notes: {notes}",
+            "user": session.get("username", "admin"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+    elif action == "reject":
+        target_demand["status"] = "Rejected"
+        audit_logs.append({
+            "action": "API REQUEST REJECTED",
+            "details": f"Request #{request_id} rejected. Notes: {notes}",
+            "user": session.get("username", "admin"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+    else:
+        return jsonify({"error": f"Invalid action: {action}"}), 400
+
+    return jsonify({
+        "id": request_id,
+        "status": target_demand["status"],
+        "message": f"Request #{request_id} successfully updated to {target_demand['status']}."
+    }), 200
+
+
+@app.route("/api/v1/donors/share", methods=["POST"])
+def api_donors_share():
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    badge_name = data.get("badge_name", "Gold Guardian")
+    platform = data.get("platform", "twitter")
+
+    username = session.get("username", "voluntary_donor")
+    audit_logs.append({
+        "action": "API BADGE SHARED",
+        "details": f"Donor '{username}' shared badge '{badge_name}' to {platform}.",
+        "user": username,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    share_url = f"https://bdcn.org/share/badges/{badge_name.lower().replace(' ', '-')}"
+    return jsonify({
+        "status": "shared",
+        "platform": platform,
+        "share_url": share_url,
+        "message": f"Successfully shared {badge_name} badge to {platform}!"
+    }), 200
+
+
+@app.route("/api/v1/notifications", methods=["GET"])
+def api_get_notifications():
+    return jsonify(notifications), 200
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

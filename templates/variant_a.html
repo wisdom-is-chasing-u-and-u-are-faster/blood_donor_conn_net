@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Donor Connection Network</title>
+    <style>
+        /*================================================================================*/
+        /* ART DIRECTION & DESIGN SYSTEM */
+        /*================================================================================*/
+
+        :root {
+            /* Personality: Trustworthy, Clean, Modern, Professional */
+            
+            /* Color Palette (Enterprise Grade) */
+            --color-primary-hue: 205;
+            --color-accent-hue: 160;
+            --color-danger-hue: 350;
+            --color-warning-hue: 45;
+            --color-success-hue: 140;
+
+            --light-text: hsl(var(--color-primary-hue), 10%, 95%);
+            
+            /* Light Theme */
+            --bg-light: hsl(var(--color-primary-hue), 20%, 98%);
+            --surface-light: #FFFFFF;
+            --text-light: hsl(var(--color-primary-hue), 25%, 20%);
+            --text-muted-light: hsl(var(--color-primary-hue), 20%, 45%);
+            --border-light: hsl(var(--color-primary-hue), 20%, 88%);
+            --shadow-color-light: 205deg 25% 40%;
+            
+            /* Dark Theme */
+            --bg-dark: hsl(var(--color-primary-hue), 15%, 12%);
+            --surface-dark: hsl(var(--color-primary-hue), 15%, 18%);
+            --text-dark: hsl(var(--color-primary-hue), 10%, 90%);
+            --text-muted-dark: hsl(var(--color-primary-hue), 10%, 60%);
+            --border-dark: hsl(var(--color-primary-hue), 15%, 28%);
+            --shadow-color-dark: 205deg 15% 5%;
+
+            /* Default to Light Theme */
+            --bg: var(--bg-light);
+            --surface: var(--surface-light);
+            --text: var(--text-light);
+            --text-muted: var(--text-muted-light);
+            --border: var(--border-light);
+            --shadow-color: var(--shadow-color-light);
+
+            /* Semantic Colors */
+            --color-primary: hsl(var(--color-primary-hue), 70%, 50%);
+            --color-primary-hover: hsl(var(--color-primary-hue), 70%, 45%);
+            --color-primary-gradient: linear-gradient(90deg, hsl(var(--color-primary-hue), 70%, 55%), hsl(var(--color-accent-hue), 50%, 50%));
+            --color-accent: hsl(var(--color-accent-hue), 50%, 50%);
+            --color-danger: hsl(var(--color-danger-hue), 75%, 55%);
+            --color-warning: hsl(var(--color-warning-hue), 90%, 55%);
+            --color-success: hsl(var(--color-success-hue), 60%, 45%);
+
+            /* Typography */
+            --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            --font-size-base: 16px;
+            --font-size-display: 4.5rem;
+            --font-size-h1: 3rem;
+            --font-size-h2: 2.25rem;
+            --font-size-h3: 1.75rem;
+            --font-size-h4: 1.25rem;
+            --font-size-body: 1rem;
+            --font-size-small: 0.875rem;
+            --font-size-caption: 0.75rem;
+            --line-height-base: 1.6;
+            --letter-spacing-tight: -0.025em;
+
+            /* Spacing (8pt Grid) */
+            --space-1: 0.25rem; /* 4px */
+            --space-2: 0.5rem;  /* 8px */
+            --space-3: 1rem;    /* 16px */
+            --space-4: 1.5rem;  /* 24px */
+            --space-5: 2rem;    /* 32px */
+            --space-6: 3rem;    /* 48px */
+
+            /* Radius */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 1rem;
+            --radius-full: 9999px;
+
+            /* Elevation */
+            --shadow-1: 0 1px 2px 0 hsl(var(--shadow-color) / 0.1), 0 1px 3px 0 hsl(var(--shadow-color) / 0.1);
+            --shadow-2: 0 4px 6px -1px hsl(var(--shadow-color) / 0.1), 0 2px 4px -2px hsl(var(--shadow-color) / 0.1);
+            --shadow-3: 0 10px 15px -3px hsl(var(--shadow-color) / 0.1), 0 4px 6px -4px hsl(var(--shadow-color) / 0.1);
+            --shadow-4: 0 20px 25px -5px hsl(var(--shadow-color) / 0.1), 0 8px 10px -6px hsl(var(--shadow-color) / 0.1);
+
+            /* Transitions */
+            --transition-base: all 0.2s ease-in-out;
+        }
+
+        html[data-theme='dark'] {
+            --bg: var(--bg-dark);
+            --surface: var(--surface-dark);
+            --text: var(--text-dark);
+            --text-muted: var(--text-muted-dark);
+            --border: var(--border-dark);
+            --shadow-color: var(--shadow-color-dark);
+        }
+        
+        /*================================================================================*/
+        /* BASE & RESET */
+        /*================================================================================*/
+        
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; font-size: var(--font-size-base); }
+        body {
+            margin: 0;
+            font-family: var(--font-family-sans);
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: var(--line-height-base);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        a { color: var(--color-primary); text-decoration: none; transition: var(--transition-base); }
+        a:hover { color: var(--color-primary-hover); }
+        h1, h2, h3, h4, h5, h6 { margin: 0; line-height: 1.2; letter-spacing: var(--letter-spacing-tight); }
+        h1 { font-size: var(--font-size-h1); }
+        h2 { font-size: var(--font-size-h2); }
+        h3 { font-size: var(--font-size-h3); }
+        h4 { font-size: var(--font-size-h4); }
+        p { margin-top: 0; margin-bottom: var(--space-3); }
+        .container { max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 var(--space-4); }
+
+        /* Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: 0;
+            background: var(--color-primary);
+            color: white;
+            padding: var(--space-2) var(--space-3);
+            z-index: 1000;
+            transition: top 0.3s;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /*================================================================================*/
+        /* COMPONENTS */
+        /*================================================================================*/
+
+        /* --- Buttons --- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            font-weight: 600;
+            font-size: var(--font-size-body);
+            padding: 0.75em 1.5em;
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: var(--transition-base);
+            user-select: none;
+            white-space: nowrap;
+        }
+        .btn:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+        .btn-primary {
+            background: var(--color-primary);
+            color: var(--light-text);
+            border-color: var(--color-primary);
+        }
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-2);
+        }
+        .btn-secondary {
+            background-color: var(--surface);
+            color: var(--text);
+            border-color: var(--border);
+        }
+        .btn-secondary:hover {
+            background-color: var(--bg);
+            border-color: var(--text-muted);
+            box-shadow: var(--shadow-1);
+        }
+        .btn-danger {
+            background-color: var(--color-danger);
+            color: var(--light-text);
+            border-color: var(--color-danger);
+        }
+        .btn-success {
+            background-color: var(--color-success);
+            color: var(--light-text);
+            border-color: var(--color-success);
+        }
+        .btn-social {
+            width: 100%;
+            border-color: var(--border);
+            background-color: var(--surface);
+            color: var(--text);
+        }
+        .btn-social svg { width: 20px; height: 20px; }
+
+        /* --- Cards --- */
+        .card {
+            background-color: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-2);
+            padding: var(--space-4);
+            transition: var(--transition-base);
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-3);
+        }
+        
+        /* --- Forms --- */
+        .form-group { margin-bottom: var(--space-3); }
+        .form-label { display: block; font-weight: 600; margin-bottom: var(--space-2); }
+        .form-input, .form-select {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: var(--font-size-body);
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text);
+            transition: var(--transition-base);
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px hsl(var(--color-primary-hue), 70%, 50%, 0.3);
+        }
+        .checkbox-group { display: flex; gap: var(--space-3); align-items: center; }
+        .checkbox-group label { font-weight: normal; }
+
+        /* --- Header / Nav --- */
+        .app-header {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: var(--space-3) var(--space-4);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-1);
+        }
+        .app-header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .app-title { font-size: 1.25rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: var(--space-2); }
+        .app-title .gradient-text { background: var(--color-primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .app-nav ul { margin: 0; padding: 0; list-style: none; display: flex; align-items: center; gap: var(--space-3); }
+        .app-nav a { font-weight: 600; color: var(--text-muted); padding: var(--space-2) 0; border-bottom: 2px solid transparent; }
+        .app-nav a:hover { color: var(--text); }
+        .app-nav a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+
+        /* --- Table --- */
+        .table-wrapper { overflow-x: auto; }
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--font-size-small);
+        }
+        .styled-table th, .styled-table td {
+            padding: var(--space-2) var(--space-3);
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .styled-table thead th {
+            background-color: var(--bg);
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .styled-table tbody tr:hover { background-color: var(--bg); }
+
+        /* --- Badges/Pills --- */
+        .badge {
+            display: inline-block;
+            padding: var(--space-1) var(--space-2);
+            font-size: var(--font-size-caption);
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+        }
+        .badge-danger { background-color: hsl(var(--color-danger-hue), 20%, 90%); color: var(--color-danger); }
+        .badge-warning { background-color: hsl(var(--color-warning-hue), 20%, 90%); color: var(--color-warning); }
+        .badge-success { background-color: hsl(var(--color-success-hue), 20%, 90%); color: var(--color-success); }
+        .badge-neutral { background-color: var(--border); color: var(--text-muted); }
+
+        /* --- Utility Classes --- */
+        .d-none { display: none; }
+        .text-center { text-align: center; }
+        .mt-1 { margin-top: var(--space-1); }
+        .mt-2 { margin-top: var(--space-2); }
+        .mt-3 { margin-top: var(--space-3); }
+        .mt-4 { margin-top: var(--space-4); }
+        .mb-4 { margin-bottom: var(--space-4); }
+        .space-y-3 > * + * { margin-top: var(--space-3); }
+
+        /*================================================================================*/
+        /* LAYOUT & SCREEN SPECIFIC STYLES */
+        /*================================================================================*/
+        .app-screen {
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .app-screen.active {
+            display: block;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Login Screen */
+        #login {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: var(--space-4);
+        }
+        .login-card {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .login-card h1 { font-size: var(--font-size-h2); }
+        .login-card .gradient-text { background: var(--color-primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Main App View */
+        .app-main { padding: var(--space-5) 0; }
+        
+        /* Map View */
+        .map-container {
+            height: 500px;
+            background-color: var(--border);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 1.2rem;
+            background-image: repeating-linear-gradient(45deg, transparent 0 10px, hsl(var(--color-primary-hue), 20%, 85%) 10px 12px);
+        }
+        .filter-controls {
+            margin-top: var(--space-4);
+            padding: var(--space-3);
+            background-color: var(--surface);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-1);
+        }
+        
+        /* Request Feed */
+        .request-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--space-4);
+        }
+        .request-card h4 { margin-bottom: var(--space-2); }
+        .request-card-info { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3); }
+        .request-card-info p { margin: 0; }
+
+        /* Footer */
+        .app-footer {
+            margin-top: var(--space-6);
+            padding: var(--space-4) 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: var(--font-size-small);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            :root {
+                --font-size-display: 3.5rem;
+                --font-size-h1: 2.5rem;
+            }
+            .app-header-inner { flex-direction: column; gap: var(--space-3); }
+            .app-nav ul { flex-wrap: wrap; justify-content: center; }
+        }
+        @media (max-width: 375px) {
+            :root {
+                --font-size-display: 2.5rem;
+                --font-size-h1: 2rem;
+            }
+            .btn { width: 100%; }
+            .app-nav ul { gap: var(--space-2); }
+            .app-nav a { font-size: var(--font-size-small); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <a href="#main" class="skip-link">Skip to main content</a>
+    
+    <!-- LOGIN SCREEN (Initial View) -->
+    <section id="login" class="app-screen active">
+        <div class="card login-card">
+            <h1 class="mb-4">
+                Blood Donor<br>
+                <span class="gradient-text">Connection Network</span>
+            </h1>
+            <p class="text-muted mb-4">Connect to save lives. Please sign in.</p>
+            <div class="space-y-3">
+                <!-- REQ-F-011: Social Login -->
+                <button class="btn btn-social" onclick="showApp('map-view')">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.75 8.36,4.73 12.19,4.73C15.28,4.73 17.27,6.08 17.27,6.08L19.68,3.74C19.68,3.74 16.56,1.23 12.19,1.23C6.42,1.23 2.03,5.52 2.03,12C2.03,18.48 6.42,22.77 12.19,22.77C18.23,22.77 21.5,18.51 21.5,11.33C21.5,11.22 21.35,11.1 21.35,11.1Z"></path></svg>
+                    <span>Sign in with Google</span>
+                </button>
+                <button class="btn btn-social" onclick="showApp('map-view')">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,2.23C10.33,2.23 8.74,2.81 7.5,3.75C6.76,3.33 5.96,3 5.13,3C3.28,3 2.13,4.25 2.13,6.11C2.13,7.63 3.09,8.5 4,9.25C4.05,9.28 4.09,9.32 4.13,9.35C3.2,10.23 2.5,11.38 2.5,12.73C2.5,15.11 4.39,16.96 6.75,16.96C7.6,16.96 8.4,16.7 9.11,16.25C9.9,17.41 11.08,18.23 12.45,18.23C12.8,18.23 13.15,18.17 13.47,18.09C12.93,18.82 12.5,19.68 12.5,20.61C12.5,21.38 12.81,22 13.38,22C14,22 14.33,21.63 15,21.63C15.67,21.63 16,22 16.63,22C17.19,22 17.5,21.38 17.5,20.61C17.5,19.68 17.08,18.82 16.53,18.09C16.85,18.17 17.2,18.23 17.55,18.23C18.93,18.23 20.1,17.41 20.89,16.25C21.6,16.7 22.4,16.96 23.25,16.96C25.61,16.96 27.5,15.11 27.5,12.73C27.5,11.38 26.8,10.23 25.88,9.35C25.91,9.32 25.95,9.28 26,9.25C26.91,8.5 27.88,7.63 27.88,6.11C27.88,4.25 26.72,3 24.88,3C24.04,3 23.24,3.33 22.5,3.75C21.26,2.81 19.67,2.23 18,2.23C16.22,2.23 14.61,2.88 13.47,3.93C13.15,2.97 12.58,2.23 12,2.23M18,5C18.83,5 19.5,5.67 19.5,6.5C19.5,7.33 18.83,8 18,8C17.17,8 16.5,7.33 16.5,6.5C16.5,5.67 17.17,5 18,5M12,5C12.83,5 13.5,5.67 13.5,6.5C13.5,7.33 12.83,8 12,8C11.17,8 10.5,7.33 10.5,6.5C10.5,5.67 11.17,5 12,5M6,5C6.83,5 7.5,5.67 7.5,6.5C7.5,7.33 6.83,8 6,8C5.17,8 4.5,7.33 4.5,6.5C4.5,5.67 5.17,5 6,5M6.75,14C6.19,14 5.75,13.55 5.75,13C5.75,12.45 6.19,12 6.75,12C7.31,12 7.75,12.45 7.75,13C7.75,13.55 7.31,14 6.75,14M23.25,14C22.69,14 22.25,13.55 22.25,13C22.25,12.45 22.69,12 23.25,12C23.81,12 24.25,12.45 24.25,13C24.25,13.55 23.81,14 23.25,14Z"></path></svg>
+                    <span>Sign in with Apple</span>
+                </button>
+                <button class="btn btn-social" onclick="showApp('map-view')">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.04C6.48 2.04 2 6.52 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.52 17.52 2.04 12 2.04Z"></path></svg>
+                    <span>Sign in with Facebook</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN APPLICATION (Hidden by default) -->
+    <div id="app-container" class="d-none">
+        <!-- REQ-F-001: Web Frontend -->
+        <header class="app-header">
+            <div class="app-header-inner container">
+                <a href="#map-view" class="app-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-droplet" style="color: var(--color-danger);"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                    <span class="gradient-text">BDCN</span>
+                </a>
+                <nav class="app-nav">
+                    <ul>
+                        <li><a href="#map-view" class="nav-link">Map View</a></li>
+                        <li><a href="#request-feed" class="nav-link">Request Feed</a></li>
+                        <li><a href="#profile-management" class="nav-link">My Profile</a></li>
+                        <li><a href="#notifications" class="nav-link">Notifications</a></li>
+                        <li><a href="#admin-dashboard" class="nav-link">Admin</a></li>
+                    </ul>
+                </nav>
+                <a href="#login" class="btn btn-secondary">Logout</a>
+            </div>
+        </header>
+
+        <main id="main" class="app-main container">
+            
+            <!-- SCREEN 2: Home / Map View -->
+            <section id="map-view" class="app-screen">
+                <h2 class="mb-4">Donor Locator</h2>
+                <!-- REQ-F-006, CONSTRAINT-003: Map Placeholder -->
+                <div class="map-container mb-4" role="application" aria-label="Map of donor locations">
+                    [ Google Map Placeholder ]
+                </div>
+                <!-- REQ-F-007: Proximity Filter -->
+                <div class="card filter-controls">
+                    <h3 class="mt-1 mb-4">Filter Donors</h3>
+                    <div class="form-group">
+                        <label for="proximity-slider" class="form-label">Proximity: <span id="proximity-value">50</span> km</label>
+                        <input type="range" id="proximity-slider" class="form-input" min="5" max="200" value="50" oninput="document.getElementById('proximity-value').textContent = this.value">
+                    </div>
+                </div>
+            </section>
+
+            <!-- SCREEN 3: Donor Profile Management -->
+            <section id="profile-management" class="app-screen">
+                 <!-- REQ-F-003: Profile Management -->
+                <h2 class="mb-4">My Donor Profile</h2>
+                <div class="card">
+                    <form onsubmit="event.preventDefault(); alert('Profile Saved!');">
+                        <div class="form-group">
+                            <label for="full-name" class="form-label">Full Name</label>
+                            <input type="text" id="full-name" class="form-input" value="Jane Donor" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" id="email" class="form-input" value="jane.donor@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" id="phone" class="form-input" value="555-123-4567">
+                        </div>
+                        <div class="form-group">
+                            <label for="blood-type-profile" class="form-label">Blood Type</label>
+                            <select id="blood-type-profile" class="form-select">
+                                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                                <option selected>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <span class="form-label">Availability</span>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="weekdays" checked><label for="weekdays">Weekdays</label>
+                                <input type="checkbox" id="weekends"><label for="weekends">Weekends</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                             <label for="location" class="form-label">Location</label>
+                            <input type="text" id="location" class="form-input" placeholder="e.g., San Francisco, CA">
+                            <!-- REQ-F-010: Geolocation -->
+                            <button type="button" class="btn btn-secondary mt-2" onclick="alert('Geolocation activated!')">Use Current Location</button>
+                        </div>
+                        <div class="mt-4" style="display: flex; gap: var(--space-3);">
+                            <button type="submit" class="btn btn-primary">Save Profile</button>
+                            <button type="reset" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SCREEN 4: Recipient Request Form -->
+            <section id="request-form" class="app-screen">
+                <!-- REQ-F-004: Request Creation -->
+                <h2 class="mb-4">New Donation Request</h2>
+                <div class="card">
+                     <form onsubmit="event.preventDefault(); alert('Request Submitted!'); showApp('request-feed');">
+                        <div class="form-group">
+                            <label for="patient-name" class="form-label">Patient Name</label>
+                            <input type="text" id="patient-name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="blood-type-request" class="form-label">Required Blood Type</label>
+                            <select id="blood-type-request" class="form-select">
+                                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                                <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="urgency" class="form-label">Urgency</label>
+                            <select id="urgency" class="form-select">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                         <div class="form-group">
+                            <label for="hospital-name" class="form-label">Hospital/Clinic Name</label>
+                            <input type="text" id="hospital-name" class="form-input" required>
+                        </div>
+                        <!-- REQ-F-012: Document Upload -->
+                        <div class="form-group">
+                            <label for="verification-doc" class="form-label">Medical Necessity Verification</label>
+                            <input type="file" id="verification-doc" class="form-input">
+                            <p class="text-muted mt-1" style="font-size: var(--font-size-small);">Upload a hospital letter or physician's request.</p>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Submit Request</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SCREEN 5: Request Feed / List -->
+            <section id="request-feed" class="app-screen">
+                <div style="display: flex; justify-content: space-between; align-items: center;" class="mb-4">
+                    <h2 class="m-0">Active Donation Requests</h2>
+                    <a href="#request-form" class="btn btn-primary">Create Request</a>
+                </div>
+                <div class="request-grid">
+                    <!-- REQ-F-004: Request Management -->
+                    <div class="card request-card">
+                        <h4>Patient: John Smith</h4>
+                        <div class="request-card-info">
+                            <p><strong>Blood Type:</strong> A+</p>
+                            <p><strong>Urgency:</strong> <span class="badge badge-danger">HIGH</span></p>
+                            <p><strong>Location:</strong> City General Hospital</p>
+                        </div>
+                        <button class="btn btn-secondary" style="width: 100%;">View Details</button>
+                    </div>
+                     <div class="card request-card">
+                        <h4>Patient: Mary P.</h4>
+                        <div class="request-card-info">
+                            <p><strong>Blood Type:</strong> O-</p>
+                            <p><strong>Urgency:</strong> <span class="badge badge-warning">MEDIUM</span></p>
+                            <p><strong>Location:</strong> Downtown Medical Center</p>
+                        </div>
+                        <button class="btn btn-secondary" style="width: 100%;">View Details</button>
+                    </div>
+                     <div class="card request-card">
+                        <h4>Patient: Sam Lee</h4>
+                        <div class="request-card-info">
+                            <p><strong>Blood Type:</strong> B+</p>
+                            <p><strong>Urgency:</strong> <span class="badge badge-success">LOW</span></p>
+                            <p><strong>Location:</strong> County Hospital</p>
+                        </div>
+                        <button class="btn btn-secondary" style="width: 100%;">View Details</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SCREEN 6: Admin Approval Dashboard -->
+            <section id="admin-dashboard" class="app-screen">
+                <h2 class="mb-4">Admin Approval Dashboard</h2>
+                <!-- REQ-F-013: Admin Approval -->
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Patient Name</th>
+                                    <th>Blood Type</th>
+                                    <th>Date Submitted</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>REQ-00124</td>
+                                    <td>Alice Johnson</td>
+                                    <td>AB+</td>
+                                    <td>2023-10-27</td>
+                                    <td><span class="badge badge-warning">Pending</span></td>
+                                    <td>
+                                        <div style="display: flex; gap: var(--space-2);">
+                                            <button class="btn btn-success" style="padding: 0.5em 1em;">Approve</button>
+                                            <button class="btn btn-danger" style="padding: 0.5em 1em;">Reject</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>REQ-00123</td>
+                                    <td>Robert Brown</td>
+                                    <td>O+</td>
+                                    <td>2023-10-26</td>
+                                    <td><span class="badge badge-success">Approved</span></td>
+                                    <td>-</td>
+                                </tr>
+                                 <tr>
+                                    <td>REQ-00122</td>
+                                    <td>Emily White</td>
+                                    <td>A-</td>
+                                    <td>2023-10-25</td>
+                                    <td><span class="badge badge-danger">Rejected</span></td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- SCREEN 7: Notifications Screen -->
+            <section id="notifications" class="app-screen">
+                <h2 class="mb-4">Notifications</h2>
+                <!-- REQ-F-009: Notifications -->
+                <div class="card space-y-3">
+                    <div style="display: flex; align-items: start; gap: var(--space-3);">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <div>
+                            <p class="m-0"><strong>New Request Match!</strong> A new request for O+ blood has been posted near you.</p>
+                            <span class="text-muted" style="font-size: var(--font-size-small);">5 minutes ago</span>
+                        </div>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 0;">
+                    <div style="display: flex; align-items: start; gap: var(--space-3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        <div>
+                            <p class="m-0">Your profile has been successfully updated.</p>
+                            <span class="text-muted" style="font-size: var(--font-size-small);">1 hour ago</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2023 Blood Donor Connection Network. All rights reserved.</p>
+        </footer>
+    </div>
+    
+
+    <script>
+        //================================================================================
+        // INLINE JAVASCRIPT FOR SPA-LIKE NAVIGATION
+        //================================================================================
+        const appContainer = document.getElementById('app-container');
+        const loginScreen = document.getElementById('login');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const screens = document.querySelectorAll('.app-screen');
+
+        function showApp(initialScreenId) {
+            loginScreen.classList.remove('active');
+            loginScreen.classList.add('d-none');
+            appContainer.classList.remove('d-none');
+            
+            // Use a slight delay to ensure container is visible before screen transition
+            setTimeout(() => navigateTo(initialScreenId), 50);
+        }
+
+        function navigateTo(screenId) {
+            // Hide all screens
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+            });
+
+            // Show the target screen
+            const targetScreen = document.getElementById(screenId);
+            if (targetScreen) {
+                targetScreen.classList.add('active');
+            } else {
+                // Default to map view if hash is invalid
+                document.getElementById('map-view').classList.add('active');
+            }
+
+            // Update active state in nav
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${screenId}`) {
+                    link.classList.add('active');
+                }
+            });
+            
+            window.location.hash = screenId;
+        }
+
+        // Handle browser back/forward
+        window.addEventListener('hashchange', () => {
+            const screenId = window.location.hash.substring(1);
+            if(screenId && screenId !== 'login') {
+                if (appContainer.classList.contains('d-none')) {
+                    showApp(screenId);
+                } else {
+                    navigateTo(screenId);
+                }
+            }
+        });
+        
+        // Handle clicks on all internal links
+        document.addEventListener('click', (event) => {
+            const target = event.target.closest('a');
+            if (target && target.hash) {
+                const screenId = target.hash.substring(1);
+                
+                if (screenId === 'login') {
+                     appContainer.classList.add('d-none');
+                     loginScreen.classList.remove('d-none');
+                     loginScreen.classList.add('active');
+                     window.location.hash = 'login';
+                } else if (document.getElementById(screenId)) {
+                    event.preventDefault();
+                    if(appContainer.classList.contains('d-none')) {
+                        showApp(screenId);
+                    } else {
+                        navigateTo(screenId);
+                    }
+                }
+            }
+        });
+
+
+        // Set initial state based on hash
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialHash = window.location.hash.substring(1);
+            if (initialHash && initialHash !== 'login' && document.getElementById(initialHash)) {
+                showApp(initialHash);
+            } else {
+                navigateTo('login');
+            }
+        });
+    </script>
+    <script src="/static/js/api.js"></script>
+</body>
+</html>
