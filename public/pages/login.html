@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BDCN</title>
+    <style>
+
+/*
+* Blood Donor Connection Network (BDCN) - Design System
+* Variant: variant-A
+* Author: UIBuilderAgent
+*/
+
+/* ------------------------- */
+/* --- VARIABLES & THEMES -- */
+/* ------------------------- */
+
+:root {
+  /* Color Palette */
+  --primary: #005A9C;
+  --accent: #D9344A;
+  --secondary-accent: #15B3A0;
+  --gradient: linear-gradient(90deg, var(--primary), var(--accent));
+
+  --text-primary: #14171A;
+  --text-secondary: #657786;
+  --text-on-primary: #FFFFFF;
+
+  --surface: #FFFFFF;
+  --background: #F5F7FA;
+  --border-color: #E1E8ED;
+
+  --success: #28A745;
+  --warning: #FFC107;
+  --danger: #DC3545;
+
+  /* Typography */
+  --font-family: 'Inter', sans-serif;
+  --fs-display: 48px;
+  --fs-h1: 36px;
+  --fs-h2: 28px;
+  --fs-h3: 22px;
+  --fs-body: 16px;
+  --fs-caption: 14px;
+
+  --fw-bold: 700;
+  --fw-semibold: 600;
+  --fw-regular: 400;
+
+  /* Spacing (8pt Grid) */
+  --space-1: 0.5rem; /* 8px */
+  --space-2: 1rem;   /* 16px */
+  --space-3: 1.5rem; /* 24px */
+  --space-4: 2rem;   /* 32px */
+  --space-5: 2.5rem; /* 40px */
+  --space-6: 3rem;   /* 48px */
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+
+  /* Elevation */
+  --shadow-1: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-2: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-3: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+
+  /* Motion */
+  --transition: all 0.2s ease-in-out;
+}
+
+/* ------------------------- */
+/* --- GLOBAL RESETS & BASE -- */
+/* ------------------------- */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Main Container */
+.main-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 var(--space-4);
+}
+
+/* ------------------------- */
+/* --- TYPOGRAPHY CLASSES -- */
+/* ------------------------- */
+h1, .h1 { font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.02em; }
+h2, .h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); }
+h3, .h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); }
+.caption { font-size: var(--fs-caption); color: var(--text-secondary); }
+.text-gradient {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+
+/* ------------------------- */
+/* --- SHARED COMPONENTS --- */
+/* ------------------------- */
+
+/* --- Header / Navbar --- */
+.main-header {
+    background-color: var(--surface);
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    color: var(--primary);
+    text-decoration: none;
+}
+.logo-accent {
+    color: var(--accent);
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: var(--space-3);
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: var(--fw-semibold);
+    transition: var(--transition);
+}
+
+.nav-links a:hover, .nav-links a.active {
+    color: var(--primary);
+}
+
+
+/* --- Footer --- */
+.main-footer {
+    background-color: var(--surface);
+    border-top: 1px solid var(--border-color);
+    padding: var(--space-4);
+    text-align: center;
+    margin-top: var(--space-6);
+}
+
+.footer-links {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.footer-links a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+.footer-links a:hover {
+    color: var(--primary);
+}
+
+.copyright {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+/* --- Buttons --- */
+.btn {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-semibold);
+    text-align: center;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    color: var(--text-on-primary);
+}
+.btn-primary:hover {
+    opacity: 0.9;
+    box-shadow: var(--shadow-2);
+}
+
+.btn-secondary {
+    background-color: var(--primary);
+    color: var(--text-on-primary);
+}
+.btn-secondary:hover {
+    opacity: 0.9;
+    box-shadow: var(--shadow-2);
+}
+
+.btn-ghost {
+    background-color: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-ghost:hover {
+    background-color: var(--primary);
+    color: var(--text-on-primary);
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* --- Cards --- */
+.card {
+    background-color: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+    padding: var(--space-4);
+    transition: var(--transition);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-3);
+}
+
+.card-header {
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* --- Forms & Inputs --- */
+.form-group {
+    margin-bottom: var(--space-3);
+}
+
+.form-group label {
+    display: block;
+    font-weight: var(--fw-semibold);
+    margin-bottom: var(--space-1);
+}
+
+.form-control {
+    width: 100%;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--fs-body);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--surface);
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 90, 156, 0.2);
+}
+
+/* --- Badges/Pills --- */
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.75em;
+    font-size: 0.8em;
+    font-weight: var(--fw-bold);
+    border-radius: var(--radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge-success { background-color: var(--success); color: white; }
+.badge-danger { background-color: var(--danger); color: white; }
+.badge-warning { background-color: var(--warning); color: var(--text-primary); }
+.badge-primary { background-color: var(--primary); color: white; }
+.badge-secondary { background-color: #E1E8ED; color: var(--text-secondary); }
+
+/* --- Screen specific sections --- */
+.screen {
+    display: none; /* Hidden by default */
+    padding: var(--space-5) 0;
+}
+.screen.active {
+    display: block; /* Shown by JS */
+}
+
+/* --- Auth Forms --- */
+.auth-container {
+  max-width: 450px;
+  margin: var(--space-6) auto;
+}
+
+.auth-card {
+  padding: var(--space-5);
+}
+
+.auth-title {
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+
+.social-login {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.divider {
+  text-align: center;
+  margin: var(--space-3) 0;
+  color: var(--text-secondary);
+  position: relative;
+}
+.divider::before, .divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background-color: var(--border-color);
+}
+.divider::before { left: 0; }
+.divider::after { right: 0; }
+
+/* ------------------------- */
+/* --- PAGE-SPECIFIC STYLES -- */
+/* ------------------------- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-4);
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-3);
+}
+
+.data-table th, .data-table td {
+    padding: var(--space-2);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.data-table thead th {
+    background-color: #F5F7FA;
+    font-weight: var(--fw-bold);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .main-header {
+        padding: var(--space-2);
+    }
+    .main-nav {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+    .nav-links {
+        justify-content: center;
+        width: 100%;
+    }
+    .screen {
+        padding: var(--space-4) 0;
+    }
+    h1, .h1 { font-size: 28px; }
+    h2, .h2 { font-size: 24px; }
+}
+
+@media (max-width: 375px) {
+    .main-container {
+        padding: 0 var(--space-2);
+    }
+    .btn {
+        padding: var(--space-2) var(--space-3);
+    }
+}
+
+
+</style>
+</head>
+<body>
+    <a href="#main-content" class="sr-only">Skip to main content</a>
+
+    <header class="main-header">
+        <nav class="main-nav main-container">
+            <a href="login.html" class="logo">BDCN<span class="logo-accent">.</span></a>
+            <ul class="nav-links">
+                <li><a href="login.html" class="active">Login</a></li>
+                <li><a href="signup.html">Sign Up</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main id="main-content" class="main-container auth-container">
+        <section class="screen active">
+            <div class="card auth-card">
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="caption" style="text-align: center; margin-top: -24px; margin-bottom: 32px;">Sign in to continue your life-saving journey.</p>
+
+                <form action="#donor-dashboard">
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" class="form-control" required placeholder="name@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" class="form-control" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 24px;">Sign In</button>
+                </form>
+
+                <div class="divider">or</div>
+
+                <div class="social-login">
+                    <a href="#" class="btn btn-ghost btn-block">Continue with Google</a>
+                    <a href="#" class="btn btn-ghost btn-block">Continue with Facebook</a>
+                </div>
+
+                <p class="caption" style="text-align: center; margin-top: 24px;">
+                    Don't have an account? <a href="signup.html">Sign Up</a>
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="main-container">
+            <ul class="footer-links">
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+                <li><a href="#">Contact Us</a></li>
+            </ul>
+            <p class="copyright">&copy; 2024 Blood Donor Connection Network. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
