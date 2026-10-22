@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDCN - Clean and Professional</title>
+    <style>
+
+/*
+DESIGN SYSTEM: Clean and Professional (variant-A)
+PROJECT: Blood Donor Connection Network (BDCN)
+*/
+
+/* 1. ROOT & THEMES */
+:root {
+    /* Color Palette */
+    --color-primary: #C8102E; /* A strong, attention-grabbing red, common in healthcare/emergency contexts */
+    --color-primary-dark: #A20D25;
+    --color-accent: #005A9C;  /* A professional, trustworthy blue */
+    --color-accent-light: #E6F0F8;
+    --color-gradient: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    --color-text-light: #FFFFFF;
+    --color-text: #333333;
+    --color-text-muted: #6c757d;
+    --color-surface: #FFFFFF;
+    --color-surface-alt: #F8F9FA;
+    --color-border: #DEE2E6;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-disabled: #E9ECEF;
+    --color-disabled-text: #6C757D;
+
+    /* Typography */
+    --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-size-base: 16px;
+    --font-size-display: 3.5rem; /* 56px */
+    --font-size-h1: 2.5rem;    /* 40px */
+    --font-size-h2: 2rem;      /* 32px */
+    --font-size-h3: 1.75rem;   /* 28px */
+    --font-size-body: 1rem;    /* 16px */
+    --font-size-small: 0.875rem;/* 14px */
+    --font-size-caption: 0.75rem; /* 12px */
+    --font-weight-light: 300;
+    --font-weight-normal: 400;
+    --font-weight-bold: 700;
+    --line-height-base: 1.6;
+
+    /* Spacing (8pt Grid) */
+    --spacing-xs: 0.25rem;  /* 4px */
+    --spacing-sm: 0.5rem;   /* 8px */
+    --spacing-md: 1rem;     /* 16px */
+    --spacing-lg: 1.5rem;   /* 24px */
+    --spacing-xl: 2rem;     /* 32px */
+    --spacing-xxl: 4rem;    /* 64px */
+
+    /* Borders & Radius */
+    --border-width: 1px;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-pill: 50rem;
+
+    /* Shadows / Elevation */
+    --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+
+    /* Transitions */
+    --transition-base: all 0.2s ease-in-out;
+}
+
+[data-theme="dark"] {
+    --color-text: #EAEAEA;
+    --color-text-muted: #999999;
+    --color-surface: #121212;
+    --color-surface-alt: #1E1E1E;
+    --color-border: #444444;
+    --color-disabled: #2A2A2A;
+    --color-disabled-text: #6C757D;
+    --color-accent-light: #2A3B49;
+}
+
+
+/* 2. GLOBAL STYLES */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: var(--font-size-base);
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px; /* Offset for sticky header */
+}
+
+body {
+    font-family: var(--font-family-sans);
+    line-height: var(--line-height-base);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    margin: 0;
+    padding-top: 70px; /* Space for the fixed header */
+}
+
+h1, h2, h3 {
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.02em;
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+}
+h1 { font-size: var(--font-size-h1); }
+h2 { font-size: var(--font-size-h2); }
+h3 { font-size: var(--font-size-h3); }
+p { margin-top: 0; margin-bottom: var(--spacing-md); }
+a { color: var(--color-accent); text-decoration: none; transition: var(--transition-base); }
+a:hover { color: var(--color-primary); }
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+}
+.section {
+    padding: var(--spacing-xxl) 0;
+}
+.text-gradient {
+    background: var(--color-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-accent);
+    color: white;
+    padding: var(--spacing-sm);
+    z-index: 10000;
+    transition: top 0.3s;
+}
+.skip-link:focus {
+    top: 10px;
+}
+
+
+/* 3. COMPONENTS */
+
+/* Header & Navbar */
+.app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-md) 0;
+    border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-h3);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+}
+.nav-brand-icon { margin-right: var(--spacing-sm); }
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.nav-links li { margin-left: var(--spacing-lg); }
+.nav-links a { font-weight: var(--font-weight-bold); color: var(--color-text); }
+.nav-links a:hover, .nav-links a.active { color: var(--color-primary); }
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-light);
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    border: var(--border-width) solid transparent;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-body);
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+}
+.btn:disabled {
+    background-color: var(--color-disabled);
+    color: var(--color-disabled-text);
+    border-color: var(--color-disabled);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text-light);
+}
+.btn-primary:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.btn-secondary {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-text-light);
+}
+.btn-secondary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.btn-outline {
+    color: var(--color-primary);
+    border-color: currentColor;
+}
+.btn-outline:hover {
+    background-color: var(--color-primary);
+    color: var(--color-text-light);
+}
+.btn-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: var(--spacing-md);
+}
+.btn-social svg {
+    margin-right: var(--spacing-md);
+    width: 24px;
+    height: 24px;
+}
+.btn-google { background-color: #4285F4; color: white; }
+.btn-apple { background-color: #000000; color: white; }
+.btn-facebook { background-color: #1877F2; color: white; }
+
+/* Cards */
+.card {
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-lg);
+    transition: var(--transition-base);
+    overflow: hidden;
+}
+.card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+}
+.card-header {
+    padding-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border-bottom: var(--border-width) solid var(--color-border);
+}
+.card-header h3 {
+    margin-bottom: 0;
+}
+.card-body {
+    padding-top: var(--spacing-md);
+}
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+
+/* Forms */
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+.form-label {
+    display: block;
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-sm);
+}
+.form-input {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-base);
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    background-clip: padding-box;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.form-input:focus {
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border-color: var(--color-accent);
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem var(--color-accent-light);
+}
+
+/* Footer */
+.app-footer {
+    background-color: var(--color-surface-alt);
+    color: var(--color-text-muted);
+    padding: var(--spacing-xl) 0;
+    border-top: var(--border-width) solid var(--color-border);
+    text-align: center;
+}
+
+/* Map Placeholder */
+.map-placeholder {
+    width: 100%;
+    height: 500px;
+    background-color: var(--color-surface-alt);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--border-width) solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-h3);
+}
+
+/* Document List */
+.doc-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
+    background-color: var(--color-surface-alt);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body { padding-top: 60px; }
+    h1 { font-size: 2.25rem; }
+    h2 { font-size: 1.75rem; }
+    .nav-links { display: none; /* Simplification for this example. A real app would use a hamburger menu */ }
+    .section { padding: var(--spacing-xl) 0; }
+}
+
+@media (max-width: 375px) {
+    :root { --font-size-base: 15px; }
+    h1 { font-size: 2rem; }
+    .container { padding: 0 var(--spacing-md); }
+}
+
+</style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="app-header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="#login" class="nav-brand">
+                    <svg class="nav-brand-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z" fill="#C8102E"></path></svg>
+                    <span>BDCN</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="#login" class="nav-link active">Login</a></li>
+                    <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
+                    <li><a href="#upload" class="nav-link">Upload</a></li>
+                    <li><a href="#admin_review" class="nav-link">Admin</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content">
+
+        <!-- Login Screen -->
+        <section class="section page" id="login">
+            <div class="container">
+                <div style="text-align: center; max-width: 600px; margin: auto;">
+                    <h1 style="font-size: var(--font-size-display); letter-spacing: -0.04em;">Connect.<br>Donate. <span class="text-gradient">Save Lives.</span></h1>
+                    <p style="font-size: 1.25rem; color: var(--color-text-muted);">Welcome to the Blood Donor Connection Network. Your gateway to making a difference. Please log in to continue.</p>
+                    
+                    <div class="card" style="margin-top: var(--spacing-xl); text-align: left;">
+                         <div class="card-header">
+                            <h3>Login with Socials (REQ-F-008)</h3>
+                         </div>
+                        <a href="#dashboard" class="btn btn-social btn-google nav-link">
+                            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,5 12,5C14.5,5 16.22,6.11 17.1,7.23L19.33,5.22C17.22,3.34 14.86,2 12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.5,22 21.5,18.15 21.5,12.33C21.5,11.76 21.45,11.43 21.35,11.1Z"></path></svg>
+                            Sign in with Google
+                        </a>
+                        <a href="#dashboard" class="btn btn-social btn-apple nav-link">
+                            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M17.4,14.61C17.4,17.1,19.22,18.39,19.28,18.44C19.21,18.44 17.1,19.45 15.35,19.45C14.43,19.45 13.3,18.91 12.5,18.91C11.7,18.91 10.5,19.45 9.5,19.5C7.5,19.55 5.5,18.44 5.5,15.54C5.5,11.3 8.35,9.64 10.25,9.64C11.55,9.64 12.75,10.33 13.5,10.33C14.2,10.33 15.6,9.5 17.1,9.5C17.2,9.5 18.26,9.56 19.3,10.5C19.2,10.55 17.4,11.66 17.4,14.61M13.44,7.41C14.39,6.47 14.94,5.22 14.84,3.93C13.84,4.03 12.7,4.63 11.9,5.5C11.05,6.32 10.5,7.55 10.63,8.84C11.72,8.79 12.79,8.05 13.44,7.41"></path></svg>
+                             Sign in with Apple
+                        </a>
+                        <a href="#dashboard" class="btn btn-social btn-facebook nav-link">
+                            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.81C10.44 7.31 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 12 2.04Z"></path></svg>
+                            Sign in with Facebook
+                        </a>
+                        <p style="font-size: var(--font-size-caption); color: var(--color-text-muted); text-align: center; margin-top: var(--spacing-lg);">By signing in, you agree to our terms of service.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Screen -->
+        <section class="section page" id="dashboard" style="display: none;">
+            <div class="container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+                    <h2>Donor Hotspots (REQ-F-005, REQ-F-006)</h2>
+                    <a href="#upload" class="btn btn-primary nav-link">Upload Document</a>
+                </div>
+                <p style="color: var(--color-text-muted); max-width: 800px; margin-bottom: var(--spacing-xl);">This map displays donor locations as clustered hotspots to protect privacy. Exact addresses are never shown. Use this to find donation centers and events near you.</p>
+                <div class="card">
+                    <div class="map-placeholder">[Google Maps SDK Placeholder - REQ-F-005]</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Upload Screen -->
+        <section class="section page" id="upload" style="display: none;">
+             <div class="container" style="max-width: 700px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Secure Document Upload (REQ-F-003)</h2>
+                    </div>
+                    <p style="color: var(--color-text-muted);">Upload your verification documents here. All documents are stored in a secure, encrypted repository (REQ-N-001, REQ-N-003) and will be reviewed by a verified administrator. Documents are automatically deleted after 30 days (REQ-F-011).</p>
+                    <form onsubmit="event.preventDefault(); alert('Simulating document upload...');">
+                        <div class="form-group">
+                            <label for="documentType" class="form-label">Document Type</label>
+                            <select id="documentType" class="form-input">
+                                <option>Donor ID Card</option>
+                                <option>Medical Clearance Form</option>
+                                <option>Other Identification</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="documentFile" class="form-label">File Upload</label>
+                            <input type="file" id="documentFile" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="checkbox" id="consent" required>
+                            <label for="consent" style="display: inline; font-weight: normal;"> I consent to my document being reviewed by a verified administrator.</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Submit for Verification</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Review Screen -->
+        <section class="section page" id="admin_review" style="display: none;">
+            <div class="container">
+                <div style="text-align: center; margin-bottom: var(--spacing-xl);">
+                    <h2>Documents for Verification (REQ-F-009)</h2>
+                    <p style="color: var(--color-text-muted);">Review and verify uploaded documents. Access is restricted to verified administrators (REQ-F-010).</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Pending Documents</h3>
+                    </div>
+                    <div class="doc-list-item">
+                        <div>
+                            <strong><span class="doc-user">user_a@email.com</span></strong> - Donor ID Card
+                            <p style="font-size: var(--font-size-small); color: var(--color-text-muted); margin: 0;">Uploaded: 2023-10-26 10:30 AM</p>
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-md);">
+                            <button class="btn btn-secondary">View</button>
+                            <button class="btn btn-primary">Approve</button>
+                            <button class="btn btn-outline" style="color: var(--color-danger);">Reject</button>
+                        </div>
+                    </div>
+                    <div class="doc-list-item">
+                        <div>
+                            <strong>user_b@email.com</strong> - Medical Clearance Form
+                            <p style="font-size: var(--font-size-small); color: var(--color-text-muted); margin: 0;">Uploaded: 2023-10-26 09:15 AM</p>
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-md);">
+                            <button class="btn btn-secondary">View</button>
+                            <button class="btn btn-primary">Approve</button>
+                            <button class="btn btn-outline" style="color: var(--color-danger);">Reject</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="app-footer">
+        <div class="container">
+            <p>&copy; 2023 Blood Donor Connection Network. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pages = document.querySelectorAll('.page');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            function showPage(pageId) {
+                // Default to 'login' if pageId is missing or invalid
+                const targetPage = document.getElementById(pageId);
+                if (!targetPage) {
+                    pageId = 'login';
+                }
+
+                pages.forEach(page => {
+                    page.style.display = page.id === pageId ? 'block' : 'none';
+                });
+                navLinks.forEach(link => {
+                    const linkPageId = link.hash.substring(1);
+                    link.classList.toggle('active', linkPageId === pageId);
+                });
+                window.scrollTo(0, 0);
+            }
+
+            function handleNavigation() {
+                const pageId = window.location.hash.substring(1) || 'login';
+                showPage(pageId);
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    const targetId = this.hash.substring(1);
+                    if (this.tagName === 'A') {
+                         window.location.hash = targetId;
+                    }
+                });
+            });
+
+            window.addEventListener('hashchange', handleNavigation);
+            handleNavigation();
+        });
+    </script>
+
+<script src="/js/api.js"></script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+{
+  "ticket_key": "ARCH-5065",
+  "language": "python",
+  "files": [
+    {
+      "path": ".env.example",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": "docker-compose.yml",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": "pytest.ini",
+      "action": "create",
+      "kind": "config"
+    },
+    {
+      "path": ".gitignore",
+      "action": "modify",
+      "kind": "config"
+    },
+    {
+      "path": "db/schema.sql",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "db/seed.sql",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "db/init_db.py",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/js/api.js",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/index.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/login.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/dashboard.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/upload.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/admin_dashboard.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/admin_review.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/pages/login.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/pages/dashboard.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/pages/upload.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/pages/admin_dashboard.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/pages/admin_review.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "public/pages/index.html",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "ios/BDCN/Info.plist",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "ios/BDCN/AppDelegate.swift",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/bdcn/app/MainActivity.kt",
+      "action": "create",
+      "kind": "source"
+    },
+    {
+      "path": "app.py",
+      "action": "modify",
+      "kind": "source"
+    },
+    {
+      "path": "tests/test_bdcn_features.py",
+      "action": "create",
+      "kind": "test"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "action": "modify",
+      "kind": "config"
+    }
+  ]
+}
