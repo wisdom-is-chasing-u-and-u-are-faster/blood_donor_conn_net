@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDCN - Blood Donor Connection Network</title>
+    <style>
+
+/*
+* Blood Donor Connection Network (BDCN) - Design System
+* Variant: variant-A
+* Author: UIBuilderAgent
+*/
+
+/* ------------------------- */
+/* --- VARIABLES & THEMES -- */
+/* ------------------------- */
+
+:root {
+  /* Color Palette */
+  --primary: #005A9C;
+  --accent: #D9344A;
+  --secondary-accent: #15B3A0;
+  --gradient: linear-gradient(90deg, var(--primary), var(--accent));
+
+  --text-primary: #14171A;
+  --text-secondary: #657786;
+  --text-on-primary: #FFFFFF;
+
+  --surface: #FFFFFF;
+  --background: #F5F7FA;
+  --border-color: #E1E8ED;
+
+  --success: #28A745;
+  --warning: #FFC107;
+  --danger: #DC3545;
+
+  /* Typography */
+  --font-family: 'Inter', sans-serif;
+  --fs-display: 48px;
+  --fs-h1: 36px;
+  --fs-h2: 28px;
+  --fs-h3: 22px;
+  --fs-body: 16px;
+  --fs-caption: 14px;
+
+  --fw-bold: 700;
+  --fw-semibold: 600;
+  --fw-regular: 400;
+
+  /* Spacing (8pt Grid) */
+  --space-1: 0.5rem; /* 8px */
+  --space-2: 1rem;   /* 16px */
+  --space-3: 1.5rem; /* 24px */
+  --space-4: 2rem;   /* 32px */
+  --space-5: 2.5rem; /* 40px */
+  --space-6: 3rem;   /* 48px */
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+
+  /* Elevation */
+  --shadow-1: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-2: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-3: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+
+  /* Motion */
+  --transition: all 0.2s ease-in-out;
+}
+
+/* ------------------------- */
+/* --- GLOBAL RESETS & BASE -- */
+/* ------------------------- */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Main Container */
+.main-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 var(--space-4);
+}
+
+/* ------------------------- */
+/* --- TYPOGRAPHY CLASSES -- */
+/* ------------------------- */
+h1, .h1 { font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.02em; }
+h2, .h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); }
+h3, .h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); }
+.caption { font-size: var(--fs-caption); color: var(--text-secondary); }
+.text-gradient {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+
+/* ------------------------- */
+/* --- SHARED COMPONENTS --- */
+/* ------------------------- */
+
+/* --- Header / Navbar --- */
+.main-header {
+    background-color: var(--surface);
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    color: var(--primary);
+    text-decoration: none;
+}
+.logo-accent {
+    color: var(--accent);
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: var(--space-3);
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: var(--fw-semibold);
+    transition: var(--transition);
+}
+
+.nav-links a:hover, .nav-links a.active {
+    color: var(--primary);
+}
+
+
+/* --- Footer --- */
+.main-footer {
+    background-color: var(--surface);
+    border-top: 1px solid var(--border-color);
+    padding: var(--space-4);
+    text-align: center;
+    margin-top: var(--space-6);
+}
+
+.footer-links {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.footer-links a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+.footer-links a:hover {
+    color: var(--primary);
+}
+
+.copyright {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+/* --- Buttons --- */
+.btn {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-semibold);
+    text-align: center;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    color: var(--text-on-primary);
+}
+.btn-primary:hover {
+    opacity: 0.9;
+    box-shadow: var(--shadow-2);
+}
+
+.btn-secondary {
+    background-color: var(--primary);
+    color: var(--text-on-primary);
+}
+.btn-secondary:hover {
+    opacity: 0.9;
+    box-shadow: var(--shadow-2);
+}
+
+.btn-ghost {
+    background-color: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-ghost:hover {
+    background-color: var(--primary);
+    color: var(--text-on-primary);
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* --- Cards --- */
+.card {
+    background-color: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+    padding: var(--space-4);
+    transition: var(--transition);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-3);
+}
+
+.card-header {
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* --- Forms & Inputs --- */
+.form-group {
+    margin-bottom: var(--space-3);
+}
+
+.form-group label {
+    display: block;
+    font-weight: var(--fw-semibold);
+    margin-bottom: var(--space-1);
+}
+
+.form-control {
+    width: 100%;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--fs-body);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--surface);
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 90, 156, 0.2);
+}
+
+/* --- Badges/Pills --- */
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.75em;
+    font-size: 0.8em;
+    font-weight: var(--fw-bold);
+    border-radius: var(--radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge-success { background-color: var(--success); color: white; }
+.badge-danger { background-color: var(--danger); color: white; }
+.badge-warning { background-color: var(--warning); color: var(--text-primary); }
+.badge-primary { background-color: var(--primary); color: white; }
+.badge-secondary { background-color: #E1E8ED; color: var(--text-secondary); }
+
+/* --- Screen specific sections --- */
+.screen {
+    display: none; /* Hidden by default */
+    padding: var(--space-5) 0;
+}
+.screen.active {
+    display: block; /* Shown by JS */
+}
+
+/* --- Auth Forms --- */
+.auth-container {
+  max-width: 450px;
+  margin: var(--space-6) auto;
+}
+
+.auth-card {
+  padding: var(--space-5);
+}
+
+.auth-title {
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+
+.social-login {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.divider {
+  text-align: center;
+  margin: var(--space-3) 0;
+  color: var(--text-secondary);
+  position: relative;
+}
+.divider::before, .divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background-color: var(--border-color);
+}
+.divider::before { left: 0; }
+.divider::after { right: 0; }
+
+/* ------------------------- */
+/* --- PAGE-SPECIFIC STYLES -- */
+/* ------------------------- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-4);
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-3);
+}
+
+.data-table th, .data-table td {
+    padding: var(--space-2);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.data-table thead th {
+    background-color: #F5F7FA;
+    font-weight: var(--fw-bold);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .main-header {
+        padding: var(--space-2);
+    }
+    .main-nav {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+    .nav-links {
+        justify-content: center;
+        width: 100%;
+    }
+    .screen {
+        padding: var(--space-4) 0;
+    }
+    h1, .h1 { font-size: 28px; }
+    h2, .h2 { font-size: 24px; }
+}
+
+@media (max-width: 375px) {
+    .main-container {
+        padding: 0 var(--space-2);
+    }
+    .btn {
+        padding: var(--space-2) var(--space-3);
+    }
+}
+
+
+</style>
+    <style>
+        /* Initially hide all screens except the first one */
+        .screen:not(.active) {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="sr-only">Skip to main content</a>
+
+    <header class="main-header">
+        <nav id="main-nav" class="main-nav main-container">
+            <!-- Nav content is dynamically updated by JS -->
+        </nav>
+    </header>
+
+    <main id="main-content" class="main-container">
+
+        <!-- Screen 01: Login Screen (REQ-F-001) -->
+        <section id="login" class="screen active auth-container">
+             <div class="card auth-card">
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="caption" style="text-align: center; margin-top: -24px; margin-bottom: 32px;">Sign in to continue your life-saving journey.</p>
+                <form data-navigate="donor-dashboard">
+                    <div class="form-group">
+                        <label for="login-email-idx">Email Address</label>
+                        <input type="email" id="login-email-idx" class="form-control" required placeholder="name@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password-idx">Password</label>
+                        <input type="password" id="login-password-idx" class="form-control" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 24px;">Sign In</button>
+                </form>
+                <div class="divider">or</div>
+                <div class="social-login">
+                    <a href="#" data-navigate="donor-dashboard" class="btn btn-ghost btn-block">Continue with Google</a>
+                    <a href="#" data-navigate="donor-dashboard" class="btn btn-ghost btn-block">Continue with Facebook</a>
+                </div>
+                <p class="caption" style="text-align: center; margin-top: 24px;">
+                    Don\'t have an account? <a href="#" data-navigate="signup">Sign Up</a>
+                </p>
+            </div>
+        </section>
+
+        <!-- Screen 02: Sign Up Screen (REQ-F-001) -->
+        <section id="signup" class="screen auth-container">
+            <div class="card auth-card">
+                <h1 class="auth-title">Create Your Account</h1>
+                <p class="caption" style="text-align: center; margin-top: -24px; margin-bottom: 32px;">Join our network and start saving lives today.</p>
+                <form data-navigate="donor-dashboard">
+                    <div class="form-group">
+                        <label for="signup-name-idx">Full Name</label>
+                        <input type="text" id="signup-name-idx" class="form-control" required placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email-idx">Email Address</label>
+                        <input type="email" id="signup-email-idx" class="form-control" required placeholder="name@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password-idx">Password</label>
+                        <input type="password" id="signup-password-idx" class="form-control" required placeholder="Create a strong password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 24px;">Create Account</button>
+                </form>
+                <div class="divider">or</div>
+                <div class="social-login">
+                    <a href="#" data-navigate="donor-dashboard" class="btn btn-ghost btn-block">Sign up with Google</a>
+                    <a href="#" data-navigate="donor-dashboard" class="btn btn-ghost btn-block">Sign up with Facebook</a>
+                </div>
+                <p class="caption" style="text-align: center; margin-top: 24px;">
+                    Already have an account? <a href="#" data-navigate="login">Sign In</a>
+                </p>
+            </div>
+        </section>
+
+        <!-- Screen 03: Donor Dashboard (REQ-F-003, REQ-F-008) -->
+        <section id="donor-dashboard" class="screen">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                <h1>Welcome, Jane Doe</h1>
+                <div style="display: flex; align-items: center; gap: var(--space-3);">
+                    <span>Availability Status:</span>
+                     <div class="form-group" style="margin-bottom: 0;">
+                        <select id="availability-status-idx" class="form-control" style="width: auto;">
+                            <option value="available" selected>Available</option>
+                            <option value="unavailable">Unavailable</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="margin-bottom: var(--space-4);">
+                <div class="card-header"><h2>Urgent Requests Near You</h2></div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead><tr><th>Blood Type</th><th>Location</th><th>Urgency</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-danger">A+</span></td>
+                                <td>City General Hospital</td>
+                                <td><span class="badge badge-danger">URGENT</span></td>
+                                <td><a href="#" data-navigate="request-details" class="btn btn-secondary">View Details</a></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-primary">O-</span></td>
+                                <td>Community Medical Center</td>
+                                <td><span class="badge badge-warning">HIGH</span></td>
+                                <td><a href="#" data-navigate="request-details" class="btn btn-secondary">View Details</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+             <div class="card">
+                <div class="card-header"><h2>My Pledged Donations</h2></div>
+                 <div class="table-container">
+                    <table class="data-table">
+                        <thead><tr><th>Recipient ID</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td>R-45678</td>
+                                <td><span class="badge badge-success">Contact Initiated</span></td>
+                                <td><a href="#" data-navigate="secure-messaging" class="btn btn-ghost">Open Chat</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Screen 04: Donor Profile Management (REQ-F-002) -->
+        <section id="donor-profile" class="screen">
+             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                <h1>Manage Your Profile</h1>
+                <button type="submit" form="profile-form-idx" class="btn btn-primary">Save Changes</button>
+            </div>
+            <div class="card">
+                <form id="profile-form-idx" data-navigate="donor-profile">
+                    <div class="dashboard-grid">
+                        <div class="form-group"><label for="profile-name-idx">Full Name</label><input type="text" id="profile-name-idx" class="form-control" value="Jane Doe"></div>
+                        <div class="form-group"><label for="profile-email-idx">Email Address</label><input type="email" id="profile-email-idx" class="form-control" value="jane.doe@example.com" disabled><small class="caption">Email cannot be changed.</small></div>
+                        <div class="form-group"><label for="profile-phone-idx">Phone Number</label><input type="tel" id="profile-phone-idx" class="form-control" value="+1 (123) 456-7890"></div>
+                        <div class="form-group"><label for="profile-blood-type-idx">Blood Type</label><select id="profile-blood-type-idx" class="form-control"><option value="A+" selected>A+</option><option value="O-">O-</option></select></div>
+                    </div>
+                </form>
+            </div>
+            <div class="card" style="margin-top: var(--space-4);">
+                 <div class="card-header"><h2>Donation History</h2></div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead><tr><th>Date</th><th>Location</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr><td>2023-10-26</td><td>Community Blood Center</td><td><span class="badge badge-success">Completed</span></td></tr>
+                            <tr><td>2023-07-15</td><td>City General Hospital</td><td><span class="badge badge-success">Completed</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Screen 05: Blood Request Submission (REQ-F-004) -->
+        <section id="request-submission" class="screen auth-container" style="max-width: 650px;">
+             <div class="card auth-card">
+                 <h1 class="auth-title">Submit a Blood Request</h1>
+                 <p class="caption" style="text-align: center; margin-top: -24px; margin-bottom: 32px;">For yourself or on behalf of a recipient.</p>
+                <form data-navigate="donor-dashboard">
+                     <div class="form-group"><label for="req-blood-type-idx">Required Blood Type</label><select id="req-blood-type-idx" class="form-control"><option>Select Blood Type</option><option value="A+">A+</option></select></div>
+                    <div class="form-group"><label for="req-location-idx">Location</label><input type="text" id="req-location-idx" class="form-control" required placeholder="e.g., City General Hospital"></div>
+                     <div class="form-group"><label for="req-urgency-idx">Urgency Level</label><select id="req-urgency-idx" class="form-control"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+                    <div class="form-group"><label for="req-notes-idx">Additional Notes</label><textarea id="req-notes-idx" class="form-control" rows="4" placeholder="Provide any other relevant details..."></textarea></div>
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 24px;">Submit Request</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Screen 06: Admin Dashboard (REQ-F-005, REQ-F-006) -->
+        <section id="admin-dashboard" class="screen">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);"><h1>Pending Blood Requests</h1></div>
+            <div class="card">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead><tr><th>Request ID</th><th>Blood Type</th><th>Location</th><th>Urgency</th><th>Submitted On</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td>REQ-00123</td><td><span class="badge badge-danger">A+</span></td><td>City General Hospital</td><td><span class="badge badge-danger">URGENT</span></td><td>2024-10-27 10:30 AM</td>
+                                <td style="display: flex; gap: 8px;"><button class="btn btn-secondary" style="background-color: var(--success);">Approve</button><button class="btn btn-primary">Reject</button></td>
+                            </tr>
+                            <tr>
+                                <td>REQ-00124</td><td><span class="badge badge-primary">O-</span></td><td>Community Medical Center</td><td><span class="badge badge-warning">HIGH</span></td><td>2024-10-27 09:15 AM</td>
+                                <td style="display: flex; gap: 8px;"><button class="btn btn-secondary" style="background-color: var(--success);">Approve</button><button class="btn btn-primary">Reject</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Screen 07: Donor Request Details (REQ-F-008) -->
+        <section id="request-details" class="screen" style="max-width: 800px; margin: auto;">
+             <a href="#" data-navigate="donor-dashboard" style="text-decoration: none; margin-bottom: 24px; display: inline-block;">&larr; Back to Dashboard</a>
+            <div class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h1 class="h2">Blood Request Details</h1><span class="badge badge-danger">URGENT</span>
+                </div>
+                <div class="card-body" style="padding-top: 24px;">
+                    <div class="dashboard-grid" style="grid-template-columns: 1fr 2fr; gap: 32px;">
+                        <div><p><strong>Blood Type Needed:</strong></p><p style="font-size: 24px; font-weight: bold;"><span class="badge badge-danger" style="font-size: 22px; padding: 8px 16px;">A+</span></p></div>
+                        <div><p><strong>Location:</strong></p><p>City General Hospital, 123 Health St, Anytown</p></div>
+                    </div>
+                    <div style="margin-top: 24px;"><p><strong>Request Notes:</strong></p><p>Patient is undergoing emergency surgery...</p></div>
+                    <div style="border-top: 1px solid var(--border-color); margin-top: 32px; padding-top: 32px; text-align: center;">
+                        <p style="margin-bottom: 16px;">Can you help save a life today?</p>
+                        <a href="#" data-navigate="donor-dashboard" class="btn btn-primary" style="font-size: 1.2rem; padding: 12px 24px;">Yes, I can donate! (Pledge)</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Screen 08: Secure Messaging (REQ-F-009) -->
+        <section id="secure-messaging" class="screen" style="max-width: 800px; margin: auto;">
+            <a href="#" data-navigate="donor-dashboard" style="text-decoration: none; margin-bottom: 24px; display: inline-block;">&larr; Back to Dashboard</a>
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="h2">Secure Chat with Recipient Representative</h1>
+                    <p class="caption">All communication is anonymized to protect your privacy (REQ-F-009, CON-002).</p>
+                </div>
+                <div class="card-body chat-container" style="height: 60vh;">
+                     <div class="chat-messages" style="flex-grow: 1; overflow-y: auto; padding: var(--space-3); background-color: #F9F9F9; border-radius: var(--radius-md);">
+                        <div class="message received" style="margin-bottom: var(--space-2); padding: var(--space-1) var(--space-2); border-radius: var(--radius-lg); max-width: 80%; background-color: var(--surface); border: 1px solid var(--border-color); align-self: flex-start; border-bottom-left-radius: var(--radius-sm);"><p>Thank you so much for pledging to donate!</p><small class="caption" style="color: #ccc;">10:45 AM</small></div>
+                        <div class="message sent" style="margin-bottom: var(--space-2); padding: var(--space-1) var(--space-2); border-radius: var(--radius-lg); max-width: 80%; background-color: var(--primary); color: white; align-self: flex-end; margin-left: auto; border-bottom-right-radius: var(--radius-sm);"><p>Of course! I can be there this afternoon.</p><small class="caption" style="color: #eee;">10:47 AM</small></div>
+                    </div>
+                    <form class="chat-input" style="display: flex; margin-top: var(--space-3);">
+                        <input type="text" class="form-control" placeholder="Type your message..." style="flex-grow: 1; border-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                        <button type="submit" class="btn btn-primary" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Send</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <div class="main-container">
+            <ul class="footer-links">
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+                <li><a href="#">Contact Us</a></li>
+            </ul>
+            <p class="copyright">&copy; 2024 Blood Donor Connection Network. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const screens = document.querySelectorAll('.screen');
+            const navContainer = document.getElementById('main-nav');
+
+            const navs = {
+                'login': \'\`<a href="#" data-navigate="login" class="logo">BDCN<span class="logo-accent">.</span></a>
+                            <ul class="nav-links">
+                                <li><a href="#" data-navigate="login" class="active">Login</a></li>
+                                <li><a href="#" data-navigate="signup">Sign Up</a></li>
+                                <li><a href="#" data-navigate="admin-dashboard">Admin View</a></li>
+                            </ul>\'\'\',
+                'signup': \'\`<a href="#" data-navigate="login" class="logo">BDCN<span class="logo-accent">.</span></a>
+                             <ul class="nav-links">
+                                 <li><a href="#" data-navigate="login">Login</a></li>
+                                 <li><a href="#" data-navigate="signup" class="active">Sign Up</a></li>
+                                 <li><a href="#" data-navigate="admin-dashboard">Admin View</a></li>
+                             </ul>\'\'\',
+                'donor': \'\`<a href="#" data-navigate="donor-dashboard" class="logo">BDCN<span class="logo-accent">.</span></a>
+                           <ul class="nav-links">
+                               <li><a href="#" data-navigate="donor-dashboard">Dashboard</a></li>
+                               <li><a href="#" data-navigate="donor-profile">Profile</a></li>
+                               <li><a href="#" data-navigate="request-submission">New Request</a></li>
+                               <li><a href="#" data-navigate="login">Logout</a></li>
+                           </ul>\'\'\',
+                'admin': \'\`<a href="#" data-navigate="admin-dashboard" class="logo">BDCN<span class="logo-accent">.</span> Admin</a>
+                           <ul class="nav-links">
+                               <li><a href="#" data-navigate="admin-dashboard" class="active">Request Management</a></li>
+                               <li><a href="#" data-navigate="login">Logout</a></li>
+                           </ul>\'\'\'
+            };
+
+            function showScreen(screenId) {
+                let currentNav = 'login';
+                if (screenId.startsWith('donor') || screenId.startsWith('request') || screenId.startsWith('secure')) {
+                    currentNav = 'donor';
+                } else if (screenId.startsWith('admin')) {
+                    currentNav = 'admin';
+                } else if (screenId === 'signup') {
+                    currentNav = 'signup';
+                }
+
+                navContainer.innerHTML = navs[currentNav];
+
+                // Update active link in the new nav
+                const navLinks = navContainer.querySelectorAll('.nav-links a');
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.dataset.navigate === screenId) {
+                        link.classList.add('active');
+                    }
+                });
+
+
+                screens.forEach(screen => {
+                    screen.classList.toggle('active', screen.id === screenId);
+                });
+                window.scrollTo(0, 0);
+            }
+
+            document.body.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-navigate]');
+                if (target) {
+                    e.preventDefault();
+                    const screenId = target.dataset.navigate;
+                    showScreen(screenId);
+                }
+            });
+
+             document.body.addEventListener('submit', (e) => {
+                const target = e.target.closest('[data-navigate]');
+                if (target) {
+                    e.preventDefault();
+                    const screenId = target.dataset.navigate;
+                    showScreen(screenId);
+                }
+            });
+
+            // Initial setup
+            showScreen('login');
+        });
+    </script>
+
+</body>
+</html>

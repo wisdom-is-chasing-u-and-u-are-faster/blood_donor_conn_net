@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find a Donor - Blood Donor Connection Network</title>
+    <style>
+
+/* ==========================================================================
+   Design System: Blood Donor Connection Network
+   ========================================================================== */
+
+/* --------------------
+   1. Root & Variables
+   -------------------- */
+:root {
+    /* Color Palette */
+    --primary-color: #B71C1C; /* Deep Red for primary actions, reflecting the blood theme */
+    --primary-color-dark: #801313;
+    --secondary-color: #0D47A1; /* Calm Blue for secondary elements */
+    --accent-color: #4CAF50; /* Green for success states */
+    --warning-color: #FFC107; /* Amber for warnings */
+    --danger-color: #F44336;  /* Red for errors and critical alerts */
+
+    --text-color: #212121;
+    --text-color-light: #616161;
+    --text-on-primary: #FFFFFF;
+    --bg-color: #f9f9f9;
+    --surface-color: #FFFFFF;
+    --border-color: #E0E0E0;
+
+    /* Typography */
+    --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-size-base: 16px;
+    --line-height-base: 1.6;
+
+    --h1-size: 2.5rem; /* 40px */
+    --h2-size: 2rem;   /* 32px */
+    --h3-size: 1.5rem; /* 24px */
+    --h4-size: 1.25rem;/* 20px */
+    --text-large: 1.125rem; /* 18px */
+    --text-small: 0.875rem; /* 14px */
+    --text-caption: 0.75rem; /* 12px */
+
+    /* Spacing (8pt Grid) */
+    --space-1: 0.5rem;  /* 8px */
+    --space-2: 1rem;    /* 16px */
+    --space-3: 1.5rem;  /* 24px */
+    --space-4: 2rem;    /* 32px */
+    --space-5: 2.5rem;  /* 40px */
+    --space-6: 3rem;    /* 48px */
+
+    /* Borders & Radius */
+    --border-width: 1px;
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 16px;
+    --border-radius-pill: 9999px;
+
+    /* Elevation (Shadows) */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* Transitions */
+    --transition-fast: all 150ms ease-in-out;
+    --transition-std: all 250ms ease-in-out;
+}
+
+/* --------------------
+   2. Base & Reset
+   -------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: var(--font-size-base);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: var(--line-height-base);
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex-grow: 1;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0 0 var(--space-2);
+    line-height: 1.2;
+    font-weight: 600;
+}
+
+h1 { font-size: var(--h1-size); }
+h2 { font-size: var(--h2-size); }
+h3 { font-size: var(--h3-size); }
+h4 { font-size: var(--h4-size); }
+
+p {
+    margin: 0 0 var(--space-2);
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+a:hover {
+    color: var(--primary-color-dark);
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* --------------------
+   3. Layout
+   -------------------- */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-3);
+}
+
+.screen-section {
+    display: none; /* Hidden by default, shown by JS */
+    animation: fadeIn 0.5s;
+}
+
+.screen-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+
+/* --------------------
+   4. Components
+   -------------------- */
+
+/* Header & Nav */
+.main-header {
+    background-color: var(--surface-color);
+    border-bottom: var(--border-width) solid var(--border-color);
+    padding: 0 var(--space-3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 70px;
+}
+
+.nav-logo a {
+    font-weight: 700;
+    font-size: var(--text-large);
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.nav-logo a:hover {
+    text-decoration: none;
+}
+
+.nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: var(--space-3);
+}
+
+.nav-links a {
+    font-weight: 500;
+    color: var(--text-color-light);
+    padding: var(--space-1) 0;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    text-decoration: none;
+}
+
+
+/* Footer */
+.main-footer {
+    background-color: #333;
+    color: var(--bg-color);
+    padding: var(--space-4) var(--space-3);
+    text-align: center;
+    margin-top: auto;
+}
+.main-footer p {
+    margin: 0;
+    color: #ccc;
+}
+.main-footer a {
+    color: white;
+}
+
+
+/* Cards */
+.card {
+    background-color: var(--surface-color);
+    border-radius: var(--border-radius-md);
+    border: var(--border-width) solid var(--border-color);
+    padding: var(--space-3);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-std);
+}
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+.card-header {
+    padding-bottom: var(--space-2);
+    border-bottom: var(--border-width) solid var(--border-color);
+    margin-bottom: var(--space-3);
+}
+
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    font-weight: 600;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    border: var(--border-width) solid transparent;
+    padding: var(--space-1) var(--space-2);
+    font-size: 1rem;
+    line-height: var(--line-height-base);
+    border-radius: var(--border-radius-md);
+    transition: var(--transition-fast);
+    text-decoration: none;
+}
+.btn:hover {
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--text-on-primary);
+    border-color: var(--primary-color);
+}
+.btn-primary:hover {
+    background-color: var(--primary-color-dark);
+    border-color: var(--primary-color-dark);
+    color: var(--text-on-primary);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: var(--text-on-primary);
+    border-color: var(--secondary-color);
+}
+.btn-secondary:hover {
+    background-color: #09316d;
+    border-color: #09316d;
+    color: var(--text-on-primary);
+}
+
+.btn-outline {
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+.btn-outline:hover {
+    background-color: var(--bg-color);
+    border-color: var(--text-color);
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+.btn-lg {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-large);
+}
+
+.btn-group {
+    display: flex;
+    gap: var(--space-2);
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: var(--space-2);
+}
+
+.form-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: var(--space-1);
+    color: var(--text-color-light);
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    padding: var(--space-1) var(--space-2);
+    font-size: 1rem;
+    line-height: var(--line-height-base);
+    color: var(--text-color);
+    background-color: var(--surface-color);
+    background-clip: padding-box;
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.form-control:focus {
+    color: var(--text-color);
+    background-color: var(--surface-color);
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(183, 28, 28, 0.25);
+}
+.form-control-file {
+    border: 2px dashed var(--border-color);
+    padding: var(--space-4);
+    text-align: center;
+    cursor: pointer;
+}
+.form-control-file:hover {
+    border-color: var(--primary-color);
+}
+
+/* Tables */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--surface-color);
+}
+.table th, .table td {
+    padding: var(--space-2);
+    text-align: left;
+    border-bottom: var(--border-width) solid var(--border-color);
+}
+.table thead th {
+    font-weight: 600;
+    background-color: var(--bg-color);
+}
+.table tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+
+/* Alerts */
+.alert {
+    padding: var(--space-2);
+    margin-bottom: var(--space-2);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-md);
+}
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+/* --------------------
+   5. Page Specifics
+   -------------------- */
+.login-container {
+    max-width: 450px;
+    margin: var(--space-6) auto;
+}
+.social-login-divider {
+    text-align: center;
+    margin: var(--space-3) 0;
+    color: var(--text-color-light);
+}
+
+.map-container {
+    height: 500px;
+    background-color: #e0e0e0; /* Placeholder for map */
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color-light);
+    font-style: italic;
+}
+
+.request-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+@media (max-width: 768px) {
+    .request-details-grid {
+        grid-template-columns: 1fr;
+    }
+    .main-nav {
+        flex-direction: column;
+        height: auto;
+        padding: var(--space-2) 0;
+    }
+    .nav-links {
+        margin-top: var(--space-2);
+    }
+}
+
+</style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="main-nav">
+            <div class="nav-logo">
+                <a href="login.html">Blood Donor Network</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="recipient-search.html" class="active">Find Donors</a></li>
+                <li><a href="donor-dashboard.html">My Dashboard</a></li>
+                <li><a href="admin-dashboard.html">Admin</a></li>
+                <li><a href="login.html">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Find a Donor</h2>
+            <div class="card">
+                <div class="form-group">
+                    <label for="search-blood-type" class="form-label">Filter by Blood Type</label>
+                    <select id="search-blood-type" class="form-control" style="max-width: 200px;">
+                        <option>Any</option>
+                        <option>A+</option>
+                        <option>O-</option>
+                        <option>B+</option>
+                        <option>AB+</option>
+                    </select>
+                </div>
+                <p class="text-color-light">Showing donor hotspots. Precise locations are never shared. (CON-002)</p>
+                <div class="map-container">
+                    <p>[Map with clustered donor hotspots will be displayed here]</p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: var(--space-4);">
+                 <a href="request-form.html" class="btn btn-primary btn-lg">Request a Connection</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2024 Blood Donor Connection Network. All rights reserved.</p>
+        <p><a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </footer>
+</body>
+</html>

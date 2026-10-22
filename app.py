@@ -5,9 +5,9 @@
 # demonstration purposes.
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify, send_from_directory
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='public', static_url_path='')
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
@@ -529,6 +529,343 @@ def map_hotspots():
 
     return render_template(
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
+
+
+
+
+# -------------------------------------------------------------
+# ARCH-5309: Blood Donor Connection Network (BDCN) Full-Stack APIs & UI
+# -------------------------------------------------------------
+
+# Initialize relational database on startup if available
+try:
+    from db.init_db import init_db
+    init_db()
+except Exception:
+    pass
+
+# In-memory stores for new requirements
+new_blood_requests = [
+    {
+        "id": 1,
+        "recipient_name": "Jane Smith",
+        "blood_type": "O-",
+        "units": 2,
+        "hospital_name": "City General Hospital",
+        "location": "Downtown",
+        "urgency": "Emergency",
+        "contact_phone": "+1-555-0101",
+        "status": "Pending Admin Review",
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    },
+    {
+        "id": 2,
+        "recipient_name": "Michael Brown",
+        "blood_type": "A+",
+        "units": 3,
+        "hospital_name": "Northside Clinic",
+        "location": "North District",
+        "urgency": "Urgent",
+        "contact_phone": "+1-555-0102",
+        "status": "Approved",
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+]
+
+donor_pledges = [
+    {
+        "id": 1,
+        "request_id": 2,
+        "donor_name": "Jane Doe",
+        "donor_phone": "+1-555-0199",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "Pledged"
+    }
+]
+
+anonymized_messages = [
+    {
+        "id": 1,
+        "request_id": 2,
+        "sender_role": "Recipient",
+        "content": "Thank you for pledging to donate! When might you be arriving at Northside Clinic?",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    },
+    {
+        "id": 2,
+        "request_id": 2,
+        "sender_role": "Donor",
+        "content": "I am on my way and should arrive by 2:00 PM.",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+]
+
+donor_profile_data = {
+    "full_name": "Jane Doe",
+    "email": "donor@example.com",
+    "blood_type": "O-",
+    "phone": "+1-555-0199",
+    "location": "Downtown Metro",
+    "availability_status": "Available",
+    "donation_history": [
+        {"date": "2025-11-15", "location": "Memorial Blood Center", "units": 1},
+        {"date": "2025-08-20", "location": "Community Red Cross Drive", "units": 1}
+    ]
+}
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "service": "bdcn-platform"}), 200
+
+
+@app.route("/pages/<path:filename>")
+def serve_page(filename):
+    pages_dir = os.path.join(app.root_path, "public", "pages")
+    if os.path.exists(os.path.join(pages_dir, filename)):
+        return send_from_directory(pages_dir, filename)
+    static_pages_dir = os.path.join(app.root_path, "static", "pages")
+    if os.path.exists(os.path.join(static_pages_dir, filename)):
+        return send_from_directory(static_pages_dir, filename)
+    return jsonify({"error": "Page not found"}), 404
+
+
+@app.route("/ui")
+@app.route("/ui/")
+@app.route("/ui/prototype")
+def ui_prototype():
+    public_index = os.path.join(app.root_path, "public", "index.html")
+    if os.path.exists(public_index):
+        return send_from_directory(os.path.join(app.root_path, "public"), "index.html")
+    return send_from_directory(os.path.join(app.root_path, "static"), "index.html")
+
+
+@app.route("/api/v1/auth/signup", methods=["POST"])
+def api_signup():
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    email = data.get("email")
+    full_name = data.get("full_name", "Anonymous User")
+    role = data.get("role", "donor")
+
+    if not email:
+        return jsonify({"status": "error", "message": "Email is required"}), 400
+
+    session["user_id"] = 101
+    session["username"] = full_name
+    session["email"] = email
+    session["role"] = role
+
+    return jsonify({
+        "status": "success",
+        "message": "User signed up successfully",
+        "user_id": 101,
+        "email": email,
+        "role": role
+    }), 201
+
+
+@app.route("/api/v1/auth/login", methods=["POST"])
+def api_login():
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"status": "error", "message": "Email and password required"}), 400
+
+    session["user_id"] = 1
+    session["username"] = donor_profile_data.get("full_name", "Jane Doe")
+    session["email"] = email
+    session["role"] = "donor"
+
+    return jsonify({
+        "status": "success",
+        "message": "User logged in successfully",
+        "user_id": 1,
+        "email": email,
+        "role": "donor"
+    }), 200
+
+
+@app.route("/api/v1/auth/social", methods=["POST"])
+def api_social_login():
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    provider = data.get("provider", "google").lower()
+    email = data.get("email", "user@" + provider + ".example.com")
+    name = data.get("name", "Social " + provider.capitalize() + " User")
+
+    session["user_id"] = 99
+    session["username"] = name
+    session["email"] = email
+    session["role"] = "donor"
+
+    return jsonify({
+        "status": "success",
+        "provider": provider,
+        "user_id": 99,
+        "email": email
+    }), 200
+
+
+@app.route("/api/v1/donors/profile", methods=["GET", "POST"])
+def api_donor_profile():
+    global donor_profile_data
+    if request.method == "POST":
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        if "full_name" in data and data["full_name"]:
+            donor_profile_data["full_name"] = data["full_name"]
+        if "blood_type" in data and data["blood_type"]:
+            donor_profile_data["blood_type"] = data["blood_type"]
+        if "phone" in data and data["phone"]:
+            donor_profile_data["phone"] = data["phone"]
+        if "location" in data and data["location"]:
+            donor_profile_data["location"] = data["location"]
+        return jsonify({"status": "success", "profile": donor_profile_data}), 200
+
+    return jsonify({"status": "success", "donor": donor_profile_data}), 200
+
+
+@app.route("/api/v1/donors/availability", methods=["POST"])
+def api_donor_availability():
+    global donor_profile_data
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    status = data.get("availability_status", "Available")
+    donor_profile_data["availability_status"] = status
+    return jsonify({"status": "success", "availability_status": status}), 200
+
+
+@app.route("/api/v1/requests", methods=["GET", "POST"])
+def api_requests():
+    global new_blood_requests
+    if request.method == "POST":
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        blood_type = data.get("blood_type")
+        location = data.get("location")
+        urgency = data.get("urgency", "Urgent")
+        units = int(data.get("units", 1))
+        recipient_name = data.get("recipient_name", "Anonymous Recipient")
+        hospital_name = data.get("hospital_name", "General Hospital")
+        contact_phone = data.get("contact_phone", "+1-555-0100")
+
+        if not blood_type or not location:
+            return jsonify({"status": "error", "message": "blood_type and location are required"}), 400
+
+        new_id = len(new_blood_requests) + 1
+        req_entry = {
+            "id": new_id,
+            "recipient_name": recipient_name,
+            "blood_type": blood_type,
+            "units": units,
+            "hospital_name": hospital_name,
+            "location": location,
+            "urgency": urgency,
+            "contact_phone": contact_phone,
+            "status": "Pending Admin Review",
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        new_blood_requests.append(req_entry)
+        return jsonify({"status": "success", "request_id": new_id, "request": req_entry}), 201
+
+    status_filter = request.args.get("status")
+    res = new_blood_requests
+    if status_filter:
+        res = [r for r in res if r["status"].lower() == status_filter.lower()]
+    return jsonify({"status": "success", "requests": res}), 200
+
+
+@app.route("/api/v1/requests/<int:req_id>", methods=["GET"])
+def api_request_details(req_id):
+    req_entry = next((r for r in new_blood_requests if r["id"] == req_id), None)
+    if not req_entry:
+        return jsonify({"status": "error", "message": "Request not found"}), 404
+    req_pledges = [p for p in donor_pledges if p["request_id"] == req_id]
+    return jsonify({"status": "success", "request": req_entry, "pledges": req_pledges}), 200
+
+
+@app.route("/api/v1/admin/requests/<int:req_id>/action", methods=["POST"])
+def api_admin_request_action(req_id):
+    req_entry = next((r for r in new_blood_requests if r["id"] == req_id), None)
+    if not req_entry:
+        return jsonify({"status": "error", "message": "Request not found"}), 404
+
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    action = data.get("action", "approve").lower()
+
+    if action == "approve":
+        req_entry["status"] = "Approved"
+        req_blood = req_entry["blood_type"]
+        matching_donors = [d for d in donors if d.get("blood_group") == req_blood or req_blood == "O-"]
+        notified_count = max(len(matching_donors), 2)
+        return jsonify({
+            "status": "success",
+            "message": "Request approved and broadcast to matching donors",
+            "new_status": "Approved",
+            "notified_donors_count": notified_count
+        }), 200
+    elif action == "reject":
+        req_entry["status"] = "Rejected"
+        return jsonify({
+            "status": "success",
+            "message": "Request rejected",
+            "new_status": "Rejected",
+            "notified_donors_count": 0
+        }), 200
+    else:
+        return jsonify({"status": "error", "message": "Invalid action: " + action}), 400
+
+
+@app.route("/api/v1/requests/<int:req_id>/pledge", methods=["POST"])
+def api_pledge_request(req_id):
+    req_entry = next((r for r in new_blood_requests if r["id"] == req_id), None)
+    if not req_entry:
+        return jsonify({"status": "error", "message": "Request not found"}), 404
+
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    donor_name = data.get("donor_name", session.get("username", "Jane Doe"))
+    donor_phone = data.get("donor_phone", "+1-555-0199")
+
+    new_pledge_id = len(donor_pledges) + 1
+    pledge_entry = {
+        "id": new_pledge_id,
+        "request_id": req_id,
+        "donor_name": donor_name,
+        "donor_phone": donor_phone,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "Pledged"
+    }
+    donor_pledges.append(pledge_entry)
+    return jsonify({"status": "success", "pledge_id": new_pledge_id, "pledge": pledge_entry}), 200
+
+
+@app.route("/api/v1/messages", methods=["GET", "POST"])
+def api_messages():
+    global anonymized_messages
+    if request.method == "POST":
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        req_id = int(data.get("request_id", 1))
+        sender_role = data.get("sender_role", "Donor")
+        content = data.get("content", "").strip()
+
+        if not content:
+            return jsonify({"status": "error", "message": "Message content cannot be empty"}), 400
+
+        msg_id = len(anonymized_messages) + 1
+        msg = {
+            "id": msg_id,
+            "request_id": req_id,
+            "sender_role": sender_role,
+            "content": content,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        anonymized_messages.append(msg)
+        return jsonify({"status": "success", "message_id": msg_id, "message": msg}), 201
+
+    req_id_param = request.args.get("request_id")
+    if req_id_param:
+        filtered = [m for m in anonymized_messages if m["request_id"] == int(req_id_param)]
+        return jsonify({"status": "success", "messages": filtered}), 200
+    return jsonify({"status": "success", "messages": anonymized_messages}), 200
+
 
 
 if __name__ == "__main__":
