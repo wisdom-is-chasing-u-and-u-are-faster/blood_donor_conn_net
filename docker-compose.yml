@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-super-secret-bdcn-key-12345}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///blood_donor_network.db}
+      - GCP_STORAGE_BUCKET=${GCP_STORAGE_BUCKET:-bdcn-encrypted-docs-vault}
+      - DOCUMENT_RETENTION_DAYS=${DOCUMENT_RETENTION_DAYS:-30}
+    restart: unless-stopped

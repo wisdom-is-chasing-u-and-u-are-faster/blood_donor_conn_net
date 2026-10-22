@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- **[ARCH-5065]** UI Pages + Requirements: Blood Donor Connection Network (BDCN)
+  - *Key modifications:*
+    - `.env.example`
+    - `docker-compose.yml`
+    - `pytest.ini`
+    - `.gitignore`
+    - `db/schema.sql`
+    - `db/seed.sql`
+    - `db/init_db.py`
+    - `public/js/api.js`
+### Added
 
 - **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
 
