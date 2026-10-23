@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDCN - Adjudication Dashboard</title>
+    <style>
+
+/*
+ * BDCN Design System - Variant A
+ * Author: Gemini UI Builder
+ *
+ * Art Direction:
+ * - Personality: Clean, modern, trustworthy, and professional for a medical application.
+ * - Colors: A primary red, complemented by a safe blue and a full range of neutrals.
+ * - Typography: A clear, readable sans-serif scale.
+ * - Spacing: 8pt grid system.
+ * - Components: Reusable, accessible components for a consistent experience.
+ */
+
+/* ------------------- */
+/* C.S.S. Custom Properties */
+/* ------------------- */
+:root {
+    --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    /* Color Palette - Light Mode */
+    --primary-color: #D93444; /* Strong Red */
+    --primary-color-dark: #b52b39;
+    --secondary-color: #3498DB; /* Calming Blue */
+    --accent-gradient: linear-gradient(90deg, var(--primary-color), #E74C3C);
+    --text-color: #333333;
+    --text-color-muted: #6c757d;
+    --text-on-primary: #FFFFFF;
+    --surface-color: #FFFFFF;
+    --surface-color-alt: #f8f9fa;
+    --border-color: #dee2e6;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+
+    /* Spacing (8pt Grid) */
+    --space-1: 0.25rem; /* 4px */
+    --space-2: 0.5rem;  /* 8px */
+    --space-3: 1rem;    /* 16px */
+    --space-4: 1.5rem;  /* 24px */
+    --space-5: 2rem;    /* 32px */
+    --space-6: 3rem;    /* 48px */
+
+    /* Typography */
+    --fs-display: 3.5rem;
+    --fs-h1: 2.5rem;
+    --fs-h2: 2rem;
+    --fs-h3: 1.75rem;
+    --fs-h4: 1.5rem;
+    --fs-body: 1rem;
+    --fs-small: 0.875rem;
+    --fs-caption: 0.75rem;
+    --fw-light: 300;
+    --fw-normal: 400;
+    --fw-bold: 700;
+    --letter-spacing-tight: -0.05em;
+
+    /* Borders & Radius */
+    --border-width: 1px;
+    --radius-sm: 0.25rem; /* 4px */
+    --radius-md: 0.5rem;  /* 8px */
+    --radius-lg: 1rem;   /* 16px */
+    --radius-pill: 9999px;
+    --focus-ring: 0 0 0 3px rgba(52, 152, 219, 0.4);
+
+    /* Shadows (Elevation) */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+
+    /* Transitions */
+    --transition-base: all 0.2s ease-in-out;
+}
+
+[data-theme="dark"] {
+    --text-color: #e9ecef;
+    --text-color-muted: #adb5bd;
+    --surface-color: #121212;
+    --surface-color-alt: #1e1e1e;
+    --border-color: #495057;
+
+    /* Shadows (Elevation) */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.25);
+}
+
+
+/* ------------------- */
+/* C. Global Styles & Resets */
+/* ------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-family-sans);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-normal);
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--surface-color-alt);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    margin-bottom: 0.5em;
+    font-weight: var(--fw-bold);
+    line-height: 1.2;
+}
+
+.display { font-size: var(--fs-display); letter-spacing: var(--letter-spacing-tight); }
+h1, .h1 { font-size: var(--fs-h1); }
+h2, .h2 { font-size: var(--fs-h2); }
+h3, .h3 { font-size: var(--fs-h3); }
+h4, .h4 { font-size: var(--fs-h4); }
+p { margin-top: 0; margin-bottom: 1em; }
+a { color: var(--primary-color); text-decoration: none; transition: var(--transition-base); }
+a:hover { color: var(--primary-color-dark); text-decoration: underline; }
+img, svg { max-width: 100%; height: auto; }
+.gradient-text {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+
+/* ------------------- */
+/* A. Reusable Components */
+/* ------------------- */
+
+/* A1. Buttons */
+.btn {
+    display: inline-block;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-bold);
+    line-height: 1.5;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+}
+.btn:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+.btn-primary {
+    color: var(--text-on-primary);
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.btn-primary:hover {
+    background-color: var(--primary-color-dark);
+    border-color: var(--primary-color-dark);
+    color: var(--text-on-primary);
+    text-decoration: none;
+}
+.btn-secondary {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-color: var(--primary-color);
+}
+.btn-secondary:hover {
+    color: var(--text-on-primary);
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    text-decoration: none;
+}
+.btn-block {
+    display: block;
+    width: 100%;
+}
+.btn-lg {
+    padding: var(--space-3) var(--space-4);
+    font-size: 1.25rem;
+}
+.btn-group {
+    display: flex;
+    gap: var(--space-2);
+}
+
+/* A2. Cards */
+.card {
+    background-color: var(--surface-color);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-4);
+    transition: var(--transition-base);
+    height: 100%;
+}
+.card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+.card-header {
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: var(--border-width) solid var(--border-color);
+}
+.card-title {
+    font-size: var(--fs-h3);
+    margin: 0;
+}
+
+/* A3. Forms */
+.form-group {
+    margin-bottom: var(--space-3);
+}
+.form-label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: var(--fw-bold);
+}
+.form-control {
+    display: block;
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-body);
+    line-height: 1.5;
+    color: var(--text-color);
+    background-color: var(--surface-color);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: var(--focus-ring);
+}
+.form-control::placeholder {
+    color: var(--text-color-muted);
+}
+.upload-drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+.upload-drop-zone:hover {
+    border-color: var(--primary-color);
+    background-color: var(--surface-color-alt);
+}
+.oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+.oauth-buttons .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+}
+.oauth-buttons svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* A4. Badges / Pills */
+.badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.8em;
+    font-weight: var(--fw-bold);
+    line-height: 1;
+    color: var(--text-on-primary);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--radius-pill);
+}
+.badge-success { background-color: var(--success-color); }
+.badge-warning { background-color: var(--warning-color); color: #333; }
+.badge-danger { background-color: var(--danger-color); }
+.badge-primary { background-color: var(--primary-color); }
+.badge-secondary { background-color: var(--secondary-color); }
+.badge-light { background-color: var(--surface-color-alt); color: #333; border: 1px solid var(--border-color);}
+
+/* ------------------- */
+/* B. Layout & Sections */
+/* ------------------- */
+
+.container {
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+}
+
+.skip-to-content {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    z-index: -999;
+}
+.skip-to-content:focus {
+    left: 10px;
+    top: 10px;
+    width: auto;
+    height: auto;
+    padding: 10px;
+    background: var(--surface-color);
+    color: var(--primary-color);
+    z-index: 9999;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--primary-color);
+}
+
+/* Simulate Mobile App View */
+.mobile-wrapper {
+    max-width: 414px; /* iPhone 11 Pro Max width */
+    min-height: 800px;
+    margin: var(--space-5) auto;
+    border: 8px solid #333;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.app-screen {
+    display: none; /* Hidden by default */
+    flex-grow: 1;
+    flex-direction: column;
+    background-color: var(--surface-color);
+}
+.app-screen.active {
+    display: flex;
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--surface-color);
+    border-bottom: var(--border-width) solid var(--border-color);
+    flex-shrink: 0;
+}
+.app-header .logo {
+    font-weight: var(--fw-bold);
+    font-size: 1.25rem;
+    color: var(--primary-color);
+}
+.app-header .logo-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.app-content {
+    padding: var(--space-4);
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.app-footer {
+    display: flex;
+    justify-content: space-around;
+    padding: var(--space-2) 0;
+    background-color: var(--surface-color);
+    border-top: var(--border-width) solid var(--border-color);
+    flex-shrink: 0;
+}
+.app-footer-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-color-muted);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--fs-caption);
+    text-align: center;
+}
+.app-footer-link.active, .app-footer-link:hover {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.app-footer-link svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 4px;
+}
+
+/* Admin Portal Layout */
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+}
+.admin-sidebar {
+    width: 260px;
+    background-color: #212529;
+    color: #fff;
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+.admin-sidebar .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: var(--space-5);
+    text-align: center;
+}
+.admin-nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+.admin-nav a {
+    color: #adb5bd;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+.admin-nav a:hover, .admin-nav a.active {
+    background-color: #343a40;
+    color: #fff;
+    text-decoration: none;
+}
+.admin-main {
+    flex-grow: 1;
+    padding: var(--space-5);
+    background-color: var(--surface-color-alt);
+}
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-5);
+}
+.admin-header h1 {
+    margin: 0;
+}
+.admin-user-profile {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+.admin-user-profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+/* ------------------- */
+/* C. Screen-specific Styles */
+/* ------------------- */
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: var(--space-6) 0;
+}
+.hero .eyebrow {
+    text-transform: uppercase;
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-small);
+    color: var(--text-color-muted);
+    margin-bottom: var(--space-3);
+}
+
+/* Notifications List */
+.notification-list-item {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.notification-list-item .icon {
+    font-size: 24px;
+    color: var(--secondary-color);
+}
+.notification-list-item .content {
+    flex-grow: 1;
+}
+.notification-list-item .timestamp {
+    font-size: var(--fs-small);
+    color: var(--text-color-muted);
+}
+
+/* Status Tracker */
+.status-tracker {
+    list-style: none;
+    padding-left: var(--space-3);
+    border-left: 3px solid var(--border-color);
+}
+.status-step {
+    position: relative;
+    padding-left: var(--space-4);
+    padding-bottom: var(--space-4);
+}
+.status-step::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 5px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    border: 3px solid var(--surface-color-alt);
+}
+.status-step.completed::before {
+    background-color: var(--success-color);
+}
+.status-step.active::before {
+    background-color: var(--primary-color);
+}
+.status-step:last-child {
+    padding-bottom: 0;
+}
+
+/* Badges Gallery */
+.badges-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--space-4);
+    text-align: center;
+}
+.badge-item img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: var(--space-2);
+}
+
+/* Admin Table */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--surface-color);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.admin-table th, .admin-table td {
+    padding: var(--space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+.admin-table thead {
+    background-color: var(--surface-color-alt);
+}
+.admin-table th {
+    font-weight: var(--fw-bold);
+}
+.admin-table tbody tr:hover {
+    background-color: #f1f3f5;
+}
+[data-theme="dark"] .admin-table tbody tr:hover {
+    background-color: #2c3034;
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.mt-1 { margin-top: var(--space-2); }
+.mt-2 { margin-top: var(--space-3); }
+.mt-3 { margin-top: var(--space-4); }
+.mt-4 { margin-top: var(--space-5); }
+.mb-1 { margin-bottom: var(--space-2); }
+.mb-2 { margin-bottom: var(--space-3); }
+.mb-3 { margin-bottom: var(--space-4); }
+.mb-4 { margin-bottom: var(--space-5); }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .admin-layout {
+        flex-direction: column;
+    }
+    .admin-sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .admin-nav {
+        flex-direction: row;
+    }
+    .admin-main {
+        padding: var(--space-4);
+    }
+    .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+    .hide-on-mobile {
+        display: none;
+    }
+}
+
+</style>
+</head>
+<body>
+    <a href="#main" class="skip-to-content">Skip to main content</a>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div>
+                <div class="logo">BDCN Admin</div>
+                <nav class="admin-nav">
+                    <a href="adjudication-dashboard.html" class="active" aria-current="page">Dashboard</a>
+                    <a href="audit-log-viewer.html">Audit Log</a>
+                    <a href="#">Settings</a>
+                </nav>
+            </div>
+            <div style="margin-top: auto;">
+                <a href="admin-login.html" class="admin-nav-link">Logout</a>
+            </div>
+        </aside>
+        <main id="main" class="admin-main">
+            <header class="admin-header">
+                <h1>Adjudication Dashboard</h1>
+                 <div class="admin-user-profile">
+                    <span>Pat Miller (District Admin)</span>
+                    <img src="https://i.pravatar.cc/40?u=pat" alt="Admin avatar">
+                </div>
+            </header>
+            
+            <div class="card">
+                 <h2 class="h3 mb-3">Pending Review Queue (REQ-F-008)</h2>
+                 <p class="text-color-muted">Requests requiring action, sorted by urgency. SLA: 10 mins (REQ-N-003).</p>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table mt-4">
+                        <thead>
+                            <tr>
+                                <th>Case ID</th>
+                                <th>Submitted</th>
+                                <th>Blood Type</th>
+                                <th>Urgency</th>
+                                <th>Time in Queue</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>REQ-781A</td>
+                                <td>10:45 AM</td>
+                                <td>A+</td>
+                                <td><span class="badge badge-danger">Urgent</span></td>
+                                <td>8 mins</td>
+                                <td><a href="request-adjudication-view.html" class="btn btn-secondary">Review</a></td>
+                            </tr>
+                            <tr>
+                                <td>REQ-780B</td>
+                                <td>10:42 AM</td>
+                                <td>O-</td>
+                                <td><span class="badge badge-warning">Standard</span></td>
+                                <td>11 mins</td>
+                                <td><a href="request-adjudication-view.html" class="btn btn-secondary">Review</a></td>
+                            </tr>
+                             <tr>
+                                <td>REQ-779C</td>
+                                <td>10:31 AM</td>
+                                <td>B+</td>
+                                <td><span class="badge badge-warning">Standard</span></td>
+                                <td>22 mins</td>
+                                <td><a href="request-adjudication-view.html" class="btn btn-secondary">Review</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+</body>
+</html>
