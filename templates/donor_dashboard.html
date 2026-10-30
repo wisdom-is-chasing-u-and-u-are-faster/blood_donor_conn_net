@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Donor Dashboard — Blood Donor Connection Network{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="hero-section text-white rounded-3 p-4 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #dc3545, #b02a37);">
+            <div>
+                <h2 class="fw-bold mb-1">Welcome, {{ donor.name if donor else session.get('username') }}!</h2>
+                <p class="mb-0 text-white-50">Your Blood Group: <span class="badge bg-light text-danger fs-6 fw-bold">{{ donor.blood_group if donor else 'Universal Donor' }}</span> | Matching Requests</p>
+            </div>
+            <div>
+                <a href="/donor/profile" class="btn btn-outline-light me-2">Profile & Badges</a>
+                <a href="/map/hotspots" class="btn btn-light text-danger fw-bold">Live Donor Map</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Summary Metrics -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted fw-bold">Compatible Requests</h5>
+                <h2 class="display-5 text-danger fw-bold">{{ compatible_requests|length }}</h2>
+                <p class="text-muted small mb-0">Demands compatible with your blood group ready for voluntary response.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted fw-bold">Total Donations</h5>
+                <h2 class="display-5 text-success fw-bold">{{ donor.donation_count if donor else 1 }}</h2>
+                <p class="text-muted small mb-0">Lives touched through voluntary blood donations.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted fw-bold">Eligibility Status</h5>
+                <h2 class="display-6 text-primary fw-bold">Eligible</h2>
+                <p class="text-muted small mb-0">Cool-off period clear (FDA 21 CFR Part 606 compliant).</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compatible Requests Table -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h4 class="mb-0 fw-bold text-dark">Compatible Blood Demands</h4>
+        <span class="badge bg-danger px-3 py-2">Role: Donor View</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Demand ID</th>
+                        <th>Hospital / Facility</th>
+                        <th>Blood Group</th>
+                        <th>Units Needed</th>
+                        <th>Urgency</th>
+                        <th>District</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if compatible_requests %}
+                        {% for req in compatible_requests %}
+                        <tr>
+                            <td class="ps-4 fw-bold">#{{ req.id }}</td>
+                            <td>{{ req.hospital }}</td>
+                            <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">{{ req.blood_type }}</span></td>
+                            <td>{{ req.units }} Units</td>
+                            <td>
+                                {% if req.urgency == 'Emergency' %}
+                                    <span class="badge bg-danger">Emergency</span>
+                                {% elif req.urgency == 'Urgent' %}
+                                    <span class="badge bg-warning text-dark">Urgent</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Routine</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ req.district }}</td>
+                            <td>
+                                <span class="badge bg-success-subtle text-success">{{ req.status }}</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-danger respond-btn" data-id="{{ req.id }}" onclick="alert('Thank you for offering to donate for Request #{{ req.id }}! Hospital coordinator notified.')">Respond</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">No pending blood demands currently match your blood group. Thank you for standing by!</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

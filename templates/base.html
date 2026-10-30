@@ -9,7 +9,7 @@
     <style>
         body { background-color: #f8f9fa; }
         .navbar-brand { font-weight: bold; color: #dc3545 !important; }
-        .hero-section { background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 4rem 2rem; border-radius: 10px; margin-bottom: 2rem; }
+        .hero-section { background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 3rem 2rem; border-radius: 10px; margin-bottom: 2rem; }
     </style>
 </head>
 <body>
@@ -22,23 +22,31 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     {% if session.get('role') == 'hospital' %}
-                        <li class="nav-item"><a class="nav-link" href="/hospital/dashboard">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/hospital/dashboard">Hospital Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/hospital/admin-dashboard">Supply Chain</a></li>
                         <li class="nav-item"><a class="nav-link" href="/hospital/create-demand">Create Demand</a></li>
                         <li class="nav-item"><a class="nav-link" href="/map/hotspots">Donor Map</a></li>
                         <li class="nav-item"><a class="nav-link btn btn-outline-danger btn-sm text-white px-3 ms-2" href="/logout">Logout (Hospital)</a></li>
                     {% elif session.get('role') == 'admin' %}
+                        <li class="nav-item"><a class="nav-link" href="/admin/dashboard">Admin Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="/admin/queue">Verification Queue</a></li>
                         <li class="nav-item"><a class="nav-link" href="/admin/alerts">Alerts</a></li>
                         <li class="nav-item"><a class="nav-link" href="/admin/audit-log">Audit Log</a></li>
                         <li class="nav-item"><a class="nav-link btn btn-outline-warning btn-sm text-white px-3 ms-2" href="/logout">Logout (Admin)</a></li>
                     {% elif session.get('role') == 'donor' %}
+                        <li class="nav-item"><a class="nav-link" href="/donor/dashboard">Donor Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="/donor/profile">My Profile</a></li>
                         <li class="nav-item"><a class="nav-link" href="/map/hotspots">Donor Map</a></li>
                         <li class="nav-item"><a class="nav-link btn btn-outline-success btn-sm text-white px-3 ms-2" href="/logout">Logout ({{ session.get('username') }})</a></li>
+                    {% elif session.get('role') == 'recipient' %}
+                        <li class="nav-item"><a class="nav-link" href="/recipient/dashboard">Recipient Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/map/hotspots">Donor Map</a></li>
+                        <li class="nav-item"><a class="nav-link btn btn-outline-primary btn-sm text-white px-3 ms-2" href="/logout">Logout ({{ session.get('username') }})</a></li>
                     {% else %}
-                        <li class="nav-item"><a class="nav-link" href="/login/hospital">Hospital Login</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/login/donor">Donor Login</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/login/admin">Admin Login</a></li>
+                        <li class="nav-item"><a class="nav-link btn btn-danger btn-sm text-white px-3 me-2" href="/login">Sign In</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/login/hospital">Hospital</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/login/donor">Donor</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/login/admin">Admin</a></li>
                     {% endif %}
                 </ul>
             </div>
