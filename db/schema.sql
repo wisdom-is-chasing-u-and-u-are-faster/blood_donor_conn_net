@@ -1,0 +1,55 @@
+-- ANSI SQL Relational Schema for BDCN
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS recipients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    name VARCHAR(100) NOT NULL,
+    hospital_name VARCHAR(150),
+    physician_name VARCHAR(150),
+    is_verified BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS verification_documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    recipient_id INTEGER,
+    document_name VARCHAR(255) NOT NULL,
+    document_type VARCHAR(100),
+    status VARCHAR(50) DEFAULT 'pending',
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (recipient_id) REFERENCES recipients(id)
+);
+
+CREATE TABLE IF NOT EXISTS donor_hotspots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    city VARCHAR(100) NOT NULL,
+    district VARCHAR(100) NOT NULL,
+    centroid_lat DECIMAL(6, 2) NOT NULL,
+    centroid_lng DECIMAL(6, 2) NOT NULL,
+    donor_count INTEGER DEFAULT 1,
+    blood_types VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender VARCHAR(100) NOT NULL,
+    recipient VARCHAR(100) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action VARCHAR(100) NOT NULL,
+    details TEXT NOT NULL,
+    user VARCHAR(100),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
