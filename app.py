@@ -5,7 +5,7 @@
 # demonstration purposes.
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
 
 app = Flask(__name__)
 app.secret_key = os.environ.get(
@@ -207,10 +207,7 @@ def social_login(provider):
         "user": username,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
-    flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
-        "success")
+    flash(f"Successfully authenticated via {provider.capitalize()}!", "success")
     return redirect(url_for("donor_profile"))
 
 
@@ -533,3 +530,260 @@ def map_hotspots():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+# -------------------------------------------------------------
+# ARCH-6803 New REST APIs & BDCN Variant A Endpoints
+# -------------------------------------------------------------
+
+# Verification records storage
+verifications = [
+    {
+        "id": "1",
+        "recipient_name": "Jane Doe",
+        "hospital_name": "St. Jude Memorial",
+        "physician_name": "Dr. Emily Watson",
+        "document_type": "Physician Request",
+        "document_name": "physician_request_jane_doe.pdf",
+        "status": "pending",
+        "submitted_at": "2026-11-02 10:15:00"
+    }
+]
+
+# Secure messages storage
+messages_store = [
+    {
+        "id": "1",
+        "sender": "System",
+        "recipient": "all",
+        "content": "Welcome to the Blood Donor Connection Network.",
+        "timestamp": "2026-11-02 09:00:00"
+    }
+]
+
+# Verified recipients tracker
+verified_recipients = set()
+
+
+@app.route("/health", methods=["GET"])
+def health_probe():
+    """Container readiness and liveness probe."""
+    return jsonify({"status": "healthy"}), 200
+
+
+@app.route("/api/v1/auth/social", methods=["POST"])
+def api_social_login():
+    """REQ-F-007: Support user login via Google, Apple, and Facebook OAuth."""
+    data = request.get_json() or {}
+    provider = data.get("provider", "google").lower()
+    username = data.get("username", f"user_{provider}")
+    role = data.get("role", "donor")
+
+    if provider not in ["google", "apple", "facebook"]:
+        return jsonify({"error": "Unsupported provider. Must be google, apple, or facebook."}), 400
+
+    session["username"] = username
+    session["role"] = role
+
+    audit_logs.append({
+        "action": "API SOCIAL LOGIN",
+        "details": f"User {username} authenticated via {provider.capitalize()} with role {role}.",
+        "user": username,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "success": True,
+        "username": username,
+        "role": role,
+        "message": f"Successfully authenticated via {provider.capitalize()}"
+    }), 200
+
+
+@app.route("/api/v1/verifications/upload", methods=["POST"])
+def api_upload_verification():
+    """REQ-F-003, REQ-F-014: Digital upload of documents for recipient verification."""
+    data = request.get_json() or {}
+    recipient_name = data.get("recipient_name") or session.get("username", "Anonymous Recipient")
+    hospital_name = data.get("hospital_name", "General Hospital")
+    physician_name = data.get("physician_name", "Attending Physician")
+    document_type = data.get("document_type", "Hospital Letter")
+    document_name = data.get("document_name", "verification_doc.pdf")
+
+    verif_id = str(len(verifications) + 1)
+    record = {
+        "id": verif_id,
+        "recipient_name": recipient_name,
+        "hospital_name": hospital_name,
+        "physician_name": physician_name,
+        "document_type": document_type,
+        "document_name": document_name,
+        "status": "pending",
+        "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    verifications.append(record)
+
+    audit_logs.append({
+        "action": "VERIFICATION DOCUMENT UPLOAD",
+        "details": f"Uploaded {document_type} ({document_name}) for recipient {recipient_name}.",
+        "user": session.get("username", recipient_name),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "verification_id": verif_id,
+        "status": "pending",
+        "message": "Document uploaded and submitted for administrator verification."
+    }), 201
+
+
+@app.route("/api/v1/admin/verifications", methods=["GET"])
+def api_admin_verifications():
+    """List verification queue records for administrators."""
+    return jsonify({"verifications": verifications}), 200
+
+
+@app.route("/api/v1/admin/verifications/<id>/action", methods=["POST"])
+def api_admin_verification_action(id):
+    """REQ-F-013: District admin approve/reject pending recipient verification."""
+    data = request.get_json() or {}
+    action = data.get("action", "").lower()
+    notes = data.get("notes", "")
+
+    target = next((v for v in verifications if v["id"] == str(id)), None)
+    if not target:
+        return jsonify({"error": "Verification record not found"}), 404
+
+    if action not in ["approve", "reject"]:
+        return jsonify({"error": "Invalid action. Must be 'approve' or 'reject'."}), 400
+
+    target["status"] = "approved" if action == "approve" else "rejected"
+    if action == "approve":
+        verified_recipients.add(target["recipient_name"])
+
+    audit_logs.append({
+        "action": f"RECIPIENT VERIFICATION {action.upper()}",
+        "details": f"{action.capitalize()} verification #{id} for {target['recipient_name']}. Notes: {notes}",
+        "user": session.get("username", "District Admin"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "id": str(id),
+        "status": target["status"],
+        "message": f"Verification successfully {target['status']}."
+    }), 200
+
+
+@app.route("/api/v1/donors/hotspots", methods=["GET"])
+def api_donor_hotspots():
+    """REQ-F-005, REQ-F-011: Donor hotspot density clustering with coarse coordinates, locked for unverified recipients."""
+    username = session.get("username", "")
+    role = session.get("role", "")
+
+    # AC: Unverified recipient cannot view or access unlocked map details
+    if role == "recipient" and username not in verified_recipients:
+        return jsonify({
+            "error": "Access restricted. Recipient must be verified by district admin to view donor hotspots.",
+            "verified": False,
+            "hotspots": []
+        }), 403
+
+    # Coarse centroid clustering obfuscation (rounded coordinates, no exact residential addresses)
+    hotspots = [
+        {
+            "cluster_id": "cluster_north",
+            "city": "Springfield",
+            "district": "District North",
+            "lat": 39.78,
+            "lng": -89.65,
+            "donor_count": 14,
+            "blood_types": ["O+", "A+", "B+"]
+        },
+        {
+            "cluster_id": "cluster_metro",
+            "city": "Metropolis",
+            "district": "Downtown Metro",
+            "lat": 37.15,
+            "lng": -88.73,
+            "donor_count": 22,
+            "blood_types": ["O-", "AB+", "B-"]
+        },
+        {
+            "cluster_id": "cluster_east",
+            "city": "Gotham",
+            "district": "Gotham Harbor",
+            "lat": 40.71,
+            "lng": -74.00,
+            "donor_count": 8,
+            "blood_types": ["A-", "O+", "AB-"]
+        }
+    ]
+    return jsonify({"hotspots": hotspots, "verified": True}), 200
+
+
+@app.route("/api/v1/messages", methods=["GET"])
+def api_get_messages():
+    """Fetch secure in-system notification messages."""
+    return jsonify({"messages": messages_store}), 200
+
+
+@app.route("/api/v1/messages/send", methods=["POST"])
+def api_send_message():
+    """REQ-F-012, REQ-F-013: Contact initiation locked until recipient approved."""
+    username = session.get("username", "anonymous")
+    role = session.get("role", "")
+
+    # Lock contact initiation if unverified recipient
+    if role == "recipient" and username not in verified_recipients:
+        return jsonify({
+            "error": "Contact initiation is locked until your recipient profile is verified by an administrator."
+        }), 403
+
+    data = request.get_json() or {}
+    recipient = data.get("recipient", "all")
+    content = data.get("content", "")
+
+    if not content:
+        return jsonify({"error": "Message content cannot be empty."}), 400
+
+    msg_id = str(len(messages_store) + 1)
+    msg = {
+        "id": msg_id,
+        "sender": username,
+        "recipient": recipient,
+        "content": content,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    messages_store.append(msg)
+
+    return jsonify({
+        "success": True,
+        "message_id": msg_id,
+        "message": "Secure message sent successfully."
+    }), 201
+
+
+@app.route("/api/v1/achievements/share", methods=["POST"])
+def api_share_achievement():
+    """REQ-F-009: API for social sharing of badges and milestones."""
+    data = request.get_json() or {}
+    badge_id = data.get("badge_id", "hero_tier")
+    platform = data.get("platform", "twitter").lower()
+
+    share_url = f"https://{platform}.com/intent/tweet?text=Proud%20to%20be%20a%20Blood%20Donor%20Hero%20on%20BDCN!"
+    return jsonify({
+        "badge_id": badge_id,
+        "platform": platform,
+        "share_url": share_url,
+        "status": "shared"
+    }), 200
+
+
+@app.route("/pages/<page_name>")
+def render_page(page_name):
+    """Render Variant A self-contained UI pages."""
+    if not page_name.endswith(".html"):
+        page_name += ".html"
+    return render_template(f"pages/{page_name}")
+
+
