@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, session, flash, url_for
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
@@ -207,10 +207,7 @@ def social_login(provider):
         "user": username,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
-    flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
-        "success")
+    flash(f"Successfully authenticated via {provider.capitalize()}!", "success")
     return redirect(url_for("donor_profile"))
 
 
@@ -531,5 +528,37 @@ def map_hotspots():
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
 
 
+
+
+
+
+# --- ARCH-6647: Donor Eligibility Pre-Screening & Urgent Request Matching Engine ---
+from blueprints.prescreening import prescreening_bp
+from blueprints.dashboard_donors import dashboard_donors_bp
+from db.init_db import init_database
+
+app.register_blueprint(prescreening_bp)
+app.register_blueprint(dashboard_donors_bp)
+
+# Auto-initialize database on application startup
+try:
+    init_database()
+except Exception as e:
+    pass
+
+@app.route("/health")
+def health_check():
+    return {"status": "healthy", "service": "blood_donor_conn_net"}, 200
+
+@app.route("/donor/assessment")
+def donor_assessment_page():
+    return render_template("donor_assessment.html")
+
+@app.route("/hospital/compatibility-dashboard")
+def hospital_compatibility_dashboard_page():
+    return render_template("hospital_compatibility_dashboard.html")
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

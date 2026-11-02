@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Donor Eligibility Assessment - BloodConnect{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-danger text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-heartbeat me-2"></i>Donor Eligibility Self-Assessment</h4>
+                <small class="text-white-50">Quick clinical pre-screening before booking an appointment</small>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted mb-4">
+                    Please answer the clinical pre-screening questions below truthfully to assess your readiness to donate whole blood.
+                </p>
+
+                <form id="eligibility-form">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="age" class="form-label fw-bold">Age (Years) <span class="text-danger">*</span></label>
+                            <input type="number" id="age" name="age" class="form-control" placeholder="e.g. 25" min="1" max="120" required>
+                            <div class="form-text">Must be at least 18 years old.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="weight" class="form-label fw-bold">Weight (kg) <span class="text-danger">*</span></label>
+                            <input type="number" id="weight" name="weight" class="form-control" step="0.1" placeholder="e.g. 68.5" min="1" required>
+                            <div class="form-text">Must be at least 50.0 kg.</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="last_donation" class="form-label fw-bold">Days Since Last Donation <span class="text-danger">*</span></label>
+                            <input type="number" id="last_donation" name="last_donation_days" class="form-control" placeholder="e.g. 90 (or 365 if first time)" min="0" required>
+                            <div class="form-text">Whole blood requires at least 56 days between donations.</div>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <div class="form-check p-3 border rounded bg-light">
+                                <input class="form-check-input" type="checkbox" id="chronic_conditions" name="chronic_conditions">
+                                <label class="form-check-label fw-semibold" for="chronic_conditions">
+                                    I currently have active chronic conditions (e.g. uncontrolled cardiovascular disease, active infectious hepatitis, or HIV)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check p-3 border rounded bg-light">
+                                <input class="form-check-input" type="checkbox" id="recent_travel" name="recent_travel">
+                                <label class="form-check-label fw-semibold" for="recent_travel">
+                                    I have traveled to high-risk endemic areas (e.g. active malaria zone) in the last 28 days
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-4 text-end">
+                            <button type="submit" class="btn btn-danger btn-lg px-4" id="submit-btn">
+                                <i class="fas fa-clipboard-check me-2"></i>Evaluate Eligibility
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Result Container -->
+                <div id="result-container" class="mt-4" style="display: none;">
+                    <div id="eligible-alert" class="alert alert-success d-flex align-items-center p-3 shadow-sm" style="display: none;">
+                        <i class="fas fa-check-circle fa-2x me-3 text-success"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1 fw-bold">Status: Eligible</h5>
+                            <p class="mb-0">You meet all basic clinical pre-screening criteria! Please proceed to schedule your voluntary blood donation.</p>
+                        </div>
+                    </div>
+
+                    <div id="deferred-alert" class="alert alert-warning d-flex align-items-center p-3 shadow-sm" style="display: none;">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1 fw-bold">Status: Deferred</h5>
+                            <p class="mb-0"><span id="deferral-reason" class="fw-semibold"></span></p>
+                            <small class="text-muted d-block mt-1">For your safety and the safety of recipients, we recommend waiting. Please consult with our clinic staff for more detailed information.</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script>
+document.getElementById('eligibility-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const age = parseInt(document.getElementById('age').value, 10);
+    const weight = parseFloat(document.getElementById('weight').value);
+    const lastDonation = parseInt(document.getElementById('last_donation').value, 10);
+    const chronicConditions = document.getElementById('chronic_conditions').checked;
+    const recentTravel = document.getElementById('recent_travel').checked;
+
+    const resultContainer = document.getElementById('result-container');
+    const eligibleAlert = document.getElementById('eligible-alert');
+    const deferredAlert = document.getElementById('deferred-alert');
+    const deferralReason = document.getElementById('deferral-reason');
+
+    resultContainer.style.display = 'block';
+    eligibleAlert.style.display = 'none';
+    deferredAlert.style.display = 'none';
+
+    try {
+        const payload = {
+            age: age,
+            weight: weight,
+            last_donation_days: lastDonation,
+            chronic_conditions: chronicConditions,
+            recent_travel: recentTravel
+        };
+        
+        let result;
+        if (window.BloodConnectAPI) {
+            result = await window.BloodConnectAPI.evaluatePrescreening(payload);
+        } else {
+            const resp = await fetch('/api/v1/prescreening/evaluate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            result = await resp.json();
+        }
+
+        if (result.status === 'Eligible') {
+            eligibleAlert.style.display = 'flex';
+        } else {
+            const reasonsText = (result.reasons && result.reasons.length > 0)
+                ? result.reasons.join(', and ')
+                : 'standard clinical deferral criteria';
+            deferralReason.textContent = "Deferral is necessary because " + reasonsText + ".";
+            deferredAlert.style.display = 'flex';
+        }
+    } catch (e) {
+        // Fallback local evaluation if backend offline
+        let reasons = [];
+        if (age < 18) { reasons.push("you must be at least 18 years old"); }
+        if (weight < 50) { reasons.push("your weight must be at least 50kg"); }
+        if (lastDonation < 56) { reasons.push("you must wait at least 56 days between donations"); }
+        if (chronicConditions) { reasons.push("of your answer regarding chronic conditions"); }
+        if (recentTravel) { reasons.push("of your answer regarding recent travel"); }
+
+        if (reasons.length > 0) {
+            deferralReason.textContent = "Deferral is necessary because " + reasons.join(', and ') + ".";
+            deferredAlert.style.display = 'flex';
+        } else {
+            eligibleAlert.style.display = 'flex';
+        }
+    }
+});
+</script>
+{% endblock %}

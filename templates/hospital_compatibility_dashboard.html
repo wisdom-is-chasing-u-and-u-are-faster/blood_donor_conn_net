@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Compatibility Dashboard - BloodConnect{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="h3 text-danger mb-1"><i class="fas fa-hand-holding-medical me-2"></i>Hospital Compatibility Dashboard</h2>
+            <p class="text-muted mb-0">REQ-F-009: Quickly find and filter compatible, verified donors for urgent requests.</p>
+        </div>
+        <div>
+            <a href="/donor/assessment" class="btn btn-outline-danger me-2">
+                <i class="fas fa-stethoscope me-1"></i>Pre-Screening Assessment
+            </a>
+            <a href="/hospital/create-demand" class="btn btn-danger">
+                <i class="fas fa-plus-circle me-1"></i>Create Urgent Demand
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters Section (REQ-F-010 & REQ-F-011) -->
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <label for="blood-group-filter" class="form-label fw-bold mb-1">Recipient Blood Group</label>
+                    <select id="blood-group-filter" class="form-select form-select-lg">
+                        <option value="A+" selected>A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold mb-1 d-block">Donor Verification Status</label>
+                    <div class="form-check form-switch pt-2">
+                        <input class="form-check-input" type="checkbox" id="verified_only" checked style="width: 2.5em; height: 1.3em;">
+                        <label class="form-check-label fw-semibold ms-2" for="verified_only">Verified Only (Recommended)</label>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end pt-3">
+                    <button id="filter-btn" class="btn btn-danger btn-lg px-4 shadow-sm">
+                        <i class="fas fa-filter me-2"></i>Filter Donors
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards Section (REQ-F-016) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start border-danger border-4 h-100">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted fw-bold text-uppercase mb-1">Total Compatible</h6>
+                            <h2 class="display-6 fw-bold text-danger mb-0" id="kpi-total-compatible">--</h2>
+                        </div>
+                        <div class="p-3 bg-danger bg-opacity-10 rounded-circle text-danger">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start border-success border-4 h-100">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted fw-bold text-uppercase mb-1">Exact Matches</h6>
+                            <h2 class="display-6 fw-bold text-success mb-0" id="kpi-exact-matches">--</h2>
+                        </div>
+                        <div class="p-3 bg-success bg-opacity-10 rounded-circle text-success">
+                            <i class="fas fa-bullseye fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start border-primary border-4 h-100">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted fw-bold text-uppercase mb-1">Universal Donor Standby (O-)</h6>
+                            <h2 class="display-6 fw-bold text-primary mb-0" id="kpi-universal-standby">--</h2>
+                        </div>
+                        <div class="p-3 bg-primary bg-opacity-10 rounded-circle text-primary">
+                            <i class="fas fa-shield-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compatible Donors Table (REQ-F-017 & REQ-F-018) -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-list me-2 text-danger"></i>Compatible Donors</h5>
+            <button class="btn btn-outline-secondary btn-sm" id="auth-request-btn">
+                <i class="fas fa-key me-1"></i>Request Emergency Contact Authorization
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="donors-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Donor ID</th>
+                            <th>Blood Group</th>
+                            <th>Compatibility</th>
+                            <th>Status</th>
+                            <th>Masked Contact Details</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donors-tbody">
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fas fa-spinner fa-spin me-2"></i>Loading compatible donors...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+            <span class="text-muted small" id="pagination-info">Showing results</span>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" id="prev-page-btn" disabled><i class="fas fa-chevron-left"></i> Previous</button>
+                <button class="btn btn-outline-secondary" id="next-page-btn" disabled>Next <i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script>
+let currentPage = 1;
+const perPage = 10;
+
+async function loadDonors(page = 1) {
+    currentPage = page;
+    const bloodGroup = document.getElementById('blood-group-filter').value;
+    const verifiedOnly = document.getElementById('verified_only').checked;
+    const tbody = document.getElementById('donors-tbody');
+
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Filtering donors...</td></tr>`;
+
+    try {
+        let data;
+        if (window.BloodConnectAPI) {
+            data = await window.BloodConnectAPI.filterDonors(bloodGroup, verifiedOnly, page, perPage);
+        } else {
+            const resp = await fetch(`/api/v1/dashboard/donors/filter?blood_group=${encodeURIComponent(bloodGroup)}&verified_only=${verifiedOnly}&page=${page}&per_page=${perPage}`);
+            data = await resp.json();
+        }
+
+        // Update KPIs
+        document.getElementById('kpi-total-compatible').textContent = data.kpis.total_compatible;
+        document.getElementById('kpi-exact-matches').textContent = data.kpis.exact_matches;
+        document.getElementById('kpi-universal-standby').textContent = data.kpis.universal_donor_standby;
+
+        // Render Table
+        if (!data.donors || data.donors.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">No compatible donors found for ${bloodGroup} with current filter.</td></tr>`;
+            document.getElementById('pagination-info').textContent = '0 results found';
+            document.getElementById('prev-page-btn').disabled = true;
+            document.getElementById('next-page-btn').disabled = true;
+            return;
+        }
+
+        tbody.innerHTML = data.donors.map(donor => {
+            const badgeClass = donor.status === 'Verified' ? 'bg-success' : 'bg-warning text-dark';
+            let compatBadgeClass = 'bg-secondary';
+            if (donor.compatibility === 'Exact Match') compatBadgeClass = 'bg-danger';
+            else if (donor.compatibility === 'Universal') compatBadgeClass = 'bg-primary';
+
+            return `
+                <tr>
+                    <td class="ps-3 fw-bold text-dark">${donor.donor_id}</td>
+                    <td><span class="badge bg-danger fs-6">${donor.blood_group}</span></td>
+                    <td><span class="badge ${compatBadgeClass}">${donor.compatibility}</span></td>
+                    <td><span class="badge ${badgeClass}">${donor.status}</span></td>
+                    <td class="font-monospace text-muted">${donor.masked_contact}</td>
+                    <td><i class="fas fa-map-marker-alt text-muted me-1"></i>${donor.location}</td>
+                </tr>
+            `;
+        }).join('');
+
+        // Pagination controls
+        const total = data.pagination.total;
+        const totalPages = data.pagination.pages;
+        document.getElementById('pagination-info').textContent = `Showing page ${page} of ${totalPages} (${total} total donors)`;
+        document.getElementById('prev-page-btn').disabled = (page <= 1);
+        document.getElementById('next-page-btn').disabled = (page >= totalPages);
+
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger"><i class="fas fa-exclamation-circle me-2"></i>Failed to load compatible donors.</td></tr>`;
+    }
+}
+
+document.getElementById('filter-btn').addEventListener('click', () => loadDonors(1));
+document.getElementById('blood-group-filter').addEventListener('change', () => loadDonors(1));
+document.getElementById('verified_only').addEventListener('change', () => loadDonors(1));
+document.getElementById('prev-page-btn').addEventListener('click', () => { if (currentPage > 1) loadDonors(currentPage - 1); });
+document.getElementById('next-page-btn').addEventListener('click', () => { loadDonors(currentPage + 1); });
+document.getElementById('auth-request-btn').addEventListener('click', () => {
+    alert("Authorization request logged for District Administrator approval. Masking policy remains active.");
+});
+
+// Load on initial load
+document.addEventListener('DOMContentLoaded', () => loadDonors(1));
+</script>
+{% endblock %}

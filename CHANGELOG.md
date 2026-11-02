@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- **[ARCH-6647]** UI Pages + Requirements: Donor Eligibility Pre-Screening & Urgent Request Matching Engine
+  - *Key modifications:*
+    - `db/schema.sql`
+    - `db/seed.sql`
+    - `db/init_db.py`
+    - `.env.example`
+    - `docker-compose.yml`
+    - `blueprints/prescreening.py`
+    - `blueprints/dashboard_donors.py`
+    - `templates/donor_assessment.html`
+### Added
 
 - **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
 
