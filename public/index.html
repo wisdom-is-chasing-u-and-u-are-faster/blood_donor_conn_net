@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DonorMatch UI Preview</title>
+    <style>
+
+/* ==========================================================================
+   1. DESIGN TOKENS (Art Direction)
+   ========================================================================== */
+:root {
+    /* Color Palette */
+    --primary-color: #005A9C; /* Professional Blue */
+    --accent-color: #007A7A; /* Teal/Green */
+    --primary-gradient: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+    --surface-background: #F9FAFB;
+    --surface-card: #FFFFFF;
+    --border-color: #E5E7EB;
+    --status-ok: #10B981;      /* Green-500 */
+    --status-warn: #F59E0B;     /* Amber-500 */
+    --status-danger: #EF4444;   /* Red-500 */
+    --status-ok-bg: #F0FDF4;
+    --status-warn-bg: #FFFBEB;
+    --status-danger-bg: #FEF2F2;
+    --focus-ring-color: rgba(0, 90, 156, 0.3);
+
+    /* Typography */
+    --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-size-base: 16px;
+    --line-height-base: 1.5;
+
+    /* Spacing (8pt Grid) */
+    --space-1: 0.25rem; /* 4px */
+    --space-2: 0.5rem;  /* 8px */
+    --space-3: 0.75rem; /* 12px */
+    --space-4: 1rem;    /* 16px */
+    --space-5: 1.25rem; /* 20px */
+    --space-6: 1.5rem;  /* 24px */
+    --space-8: 2rem;    /* 32px */
+    --space-12: 3rem;   /* 48px */
+    --space-16: 4rem;   /* 64px */
+
+    /* Radius */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-full: 9999px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    /* Transitions */
+    --transition-property: all;
+    --transition-duration: 200ms;
+    --transition-timing: ease-in-out;
+}
+
+[data-theme="dark"] {
+    --primary-color: #388bfd;
+    --accent-color: #2cb67d;
+    --text-primary: #F9FAFB;
+    --text-secondary: #D1D5DB;
+    --surface-background: #111827;
+    --surface-card: #1F2937;
+    --border-color: #374151;
+    --status-ok-bg: #1F2937;
+    --status-warn-bg: #1F2937;
+    --status-danger-bg: #1F2937;
+    --focus-ring-color: rgba(56, 139, 253, 0.4);
+}
+
+
+/* ==========================================================================
+   2. BASE & GLOBAL STYLES
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    background-color: var(--surface-background);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+main {
+    flex-grow: 1;
+}
+
+.screen-section { display: none; }
+.screen-section.active { display: block; }
+.skip-to-content {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+.skip-to-content:focus {
+    position: static;
+    width: auto;
+    height: auto;
+}
+
+/* ==========================================================================
+   3. TYPOGRAPHY SCALE
+   ========================================================================== */
+h1, .h1 { font-size: 2.25rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 var(--space-4) 0; }
+h2, .h2 { font-size: 1.5rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 var(--space-4) 0; }
+h3, .h3 { font-size: 1.25rem; font-weight: 600; line-height: 1.4; margin: 0 0 var(--space-3) 0; }
+p, .p { margin: 0 0 var(--space-4) 0; max-width: 65ch; }
+.text-secondary { color: var(--text-secondary); }
+.text-gradient { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+/* ==========================================================================
+   4. COMPONENT: HEADER / NAV
+   ========================================================================== */
+.header {
+    background-color: var(--surface-card);
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--space-4) var(--space-8);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+.header-logo svg {
+    width: 32px;
+    height: 32px;
+    color: var(--primary-color);
+}
+.nav-links {
+    display: flex;
+    gap: var(--space-6);
+}
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: var(--space-2) 0;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition-duration) var(--transition-timing);
+}
+.nav-links a:hover, .nav-links a.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+}
+.theme-toggle:hover { color: var(--text-primary); }
+#theme-icon { width: 20px; height: 20px; }
+
+/* ==========================================================================
+   5. COMPONENT: FOOTER
+   ========================================================================== */
+.footer {
+    background-color: var(--surface-card);
+    border-top: 1px solid var(--border-color);
+    padding: var(--space-6) var(--space-8);
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-top: var(--space-12);
+}
+
+/* ==========================================================================
+   6. COMPONENT: BUTTONS
+   ========================================================================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    text-decoration: none;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: var(--transition-duration) var(--transition-timing);
+    font-size: 1rem;
+}
+.btn:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-sm), var(--focus-ring-color);
+}
+.btn-primary {
+    background-color: var(--primary-color);
+    color: #FFF;
+}
+.btn-primary:hover {
+    opacity: 0.9;
+}
+.btn-secondary {
+    background-color: var(--surface-card);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.btn-secondary:hover {
+    background-color: var(--surface-background);
+}
+.btn-sm {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   7. COMPONENT: FORMS & INPUTS
+   ========================================================================== */
+.form-group {
+    margin-bottom: var(--space-6);
+}
+.form-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+    color: var(--text-secondary);
+}
+.form-input, .form-select {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--surface-card);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: var(--transition-duration) var(--transition-timing);
+}
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: var(--focus-ring-color);
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-6);
+}
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+}
+.form-section-header {
+    margin-top: var(--space-8);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* ==========================================================================
+   8. COMPONENT: CARDS & CONTAINERS
+   ========================================================================== */
+.card {
+    background-color: var(--surface-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+.card-header {
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--border-color);
+}
+.card-header h2, .card-header h3 {
+    margin: 0;
+}
+.card-body {
+    padding: var(--space-6);
+}
+.page-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: var(--space-8);
+}
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-8);
+}
+
+/* ==========================================================================
+   9. COMPONENT: TABLES
+   ========================================================================== */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.875rem;
+}
+.table th, .table td {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+.table th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: var(--surface-background);
+}
+.table tbody tr:hover {
+    background-color: var(--surface-background);
+}
+
+/* ==========================================================================
+   10. COMPONENT: BADGES / PILLS
+   ========================================================================== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: var(--space-1) var(--space-3);
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--radius-full);
+}
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.badge-green {
+    color: var(--status-ok);
+    background-color: var(--status-ok-bg);
+}
+.badge-green .badge-dot { background-color: var(--status-ok); }
+
+.badge-amber {
+    color: var(--status-warn);
+    background-color: var(--status-warn-bg);
+}
+.badge-amber .badge-dot { background-color: var(--status-warn); }
+
+.badge-red {
+    color: var(--status-danger);
+    background-color: var(--status-danger-bg);
+}
+.badge-red .badge-dot { background-color: var(--status-danger); }
+
+.badge-gray {
+    color: var(--text-secondary);
+    background-color: #F3F4F6;
+}
+[data-theme="dark"] .badge-gray {
+    background-color: #374151;
+}
+
+/* ==========================================================================
+   11. UTILITY CLASSES
+   ========================================================================== */
+.d-flex { display: flex; }
+.align-items-center { align-items: center; }
+.justify-content-between { justify-content: space-between; }
+.gap-4 { gap: var(--space-4); }
+.w-100 { width: 100%; }
+.mt-8 { margin-top: var(--space-8); }
+.mb-8 { margin-bottom: var(--space-8); }
+
+/* ==========================================================================
+   12. RESPONSIVENESS
+   ========================================================================== */
+@media (max-width: 768px) {
+    .header {
+        padding: var(--space-4);
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+    .nav-links {
+        gap: var(--space-4);
+        width: 100%;
+        justify-content: center;
+        overflow-x: auto;
+    }
+    .page-container {
+        padding: var(--space-4);
+    }
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-4);
+    }
+    h1, .h1 { font-size: 1.875rem; }
+    h2, .h2 { font-size: 1.25rem; }
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 375px) {
+    .header {
+        padding: var(--space-3) var(--space-4);
+    }
+    .page-container {
+        padding: var(--space-4) var(--space-2);
+    }
+}
+
+</style>
+</head>
+<body>
+    <div class="main-container">
+        <a href="#main-content" class="skip-to-content">Skip to main content</a>
+        <header class="header">
+            <a href="#urgent-request-dashboard" class="header-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.93 5.5c.23-.23.53-.35.85-.35h2.17c.32 0 .61.12.85.35.23.23.35.53.35.85v1.3c0 .32-.12.61-.35.85-.23.23-.53.35-.85.35h-2.17c-.32 0-.61-.12-.85-.35-.23-.23-.35-.53-.35-.85V8.35c0-.32.12-.61.35-.85zm1.08 6.15h1.7v5h-1.7v-5zm-3.21-2.92c.23-.23.53-.35.85-.35H10.1c.32 0 .61.12.85.35.23.23.35.53.35.85v1.3c0 .32-.12.61-.35.85-.23.23-.53.35-.85.35H8.79c-.32 0-.61-.12-.85-.35-.23-.23-.35-.53-.35-.85v-1.3c0-.32.12-.61.35-.85zm6.42 0c.23-.23.53-.35.85-.35h1.3c.32 0 .61.12.85.35.23.23.35.53.35.85v1.3c0 .32-.12.61-.35.85-.23.23-.53.35-.85.35h-1.3c-.32 0-.61-.12-.85-.35-.23-.23-.35-.53-.35-.85v-1.3c0-.32.12-.61.35-.85z"></path></svg>
+                <span>DonorMatch</span>
+            </a>
+            <nav class="nav-links">
+                <a href="#urgent-request-dashboard" class="active">Urgent Requests</a>
+                <a href="#donor-directory">Donor Directory</a>
+                <a href="#donor-pre-screening-form">Add New Donor</a>
+            </nav>
+            <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle light and dark theme">
+                <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            </button>
+        </header>
+
+        <main id="main-content">
+
+            <!-- Screen 1: Urgent Request Dashboard -->
+            <section id="urgent-request-dashboard" class="screen-section page-container active">
+                <div class="page-header">
+                    <h1 class="h1">Urgent Request Dashboard</h1>
+                </div>
+                <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h2 class="h3">Find Compatible Donors</h2>
+                        <div class="form-group" style="margin-bottom: 0; min-width: 250px;">
+                            <label for="blood-type-filter" class="form-label" style="margin-bottom: 0; font-size: 0.875rem;">Required Blood Type:</label>
+                            <select id="blood-type-filter" class="form-select">
+                                <option value="all">All Compatible</option>
+                                <option value="A+">A+</option><option value="O-">O-</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-wrapper">
+                            <table class="table"><thead><tr><th>Donor Name</th><th>Blood Type</th><th>Verification Status</th><th></th></tr></thead>
+                                <tbody>
+                                    <tr><td>Elena Rodriguez</td><td>O-</td><td><span class="badge badge-green"><span class="badge-dot"></span>Verified</span></td><td style="text-align: right;"><a href="#" class="btn btn-primary btn-sm">Contact</a></td></tr>
+                                    <tr><td>Ben Carter</td><td>A-</td><td><span class="badge badge-green"><span class="badge-dot"></span>Verified</span></td><td style="text-align: right;"><a href="#" class="btn btn-primary btn-sm">Contact</a></td></tr>
+                                    <tr><td>Olivia Williams</td><td>O+</td><td><span class="badge badge-green"><span class="badge-dot"></span>Verified</span></td><td style="text-align: right;"><a href="#" class="btn btn-primary btn-sm">Contact</a></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 2: Donor Directory -->
+            <section id="donor-directory" class="screen-section page-container">
+                 <div class="page-header">
+                    <h1 class="h1">Donor Directory</h1>
+                    <a href="#donor-pre-screening-form" class="btn btn-primary nav-link-btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        <span>Add New Donor</span>
+                    </a>
+                </div>
+                <div class="card">
+                    <div class="card-header"><input type="search" class="form-input" placeholder="Search by name, blood type, or status..."></div>
+                    <div class="card-body">
+                        <div class="table-wrapper">
+                            <table class="table"><thead><tr><th>Donor Name</th><th>Blood Type</th><th>Contact Info</th><th>Eligibility Status</th><th>Verification Status</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Elena Rodriguez</td><td>O-</td><td>e.rodriguez@example.com</td><td><span class="badge badge-green"><span class="badge-dot"></span>Eligible</span></td><td><span class="badge badge-green"><span class="badge-dot"></span>Verified</span></td></tr>
+                                    <tr><td>Ben Carter</td><td>A-</td><td>b.carter@example.com</td><td><span class="badge badge-green"><span class="badge-dot"></span>Eligible</span></td><td><span class="badge badge-green"><span class="badge-dot"></span>Verified</span></td></tr>
+                                    <tr><td>Aisha Khan</td><td>B+</td><td>a.khan@example.com</td><td><span class="badge badge-amber"><span class="badge-dot"></span>Deferred</span></td><td><span class="badge badge-green"><span class="badge-dot"></span>Verified</span></td></tr>
+                                    <tr><td>Marcus Chen</td><td>AB+</td><td>m.chen@example.com</td><td><span class="badge badge-green"><span class="badge-dot"></span>Eligible</span></td><td><span class="badge badge-amber"><span class="badge-dot"></span>Pending</span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 3: Donor Pre-Screening Form -->
+            <section id="donor-pre-screening-form" class="screen-section page-container">
+                <div class="page-header"><h1 class="h1">Add New Donor / Pre-Screening</h1></div>
+                <div class="card"><form>
+                    <div class="card-body">
+                        <h2 class="h3 form-section-header">Personal Information</h2>
+                        <div class="form-grid">
+                            <div class="form-group"><label for="full-name" class="form-label">Full Name</label><input type="text" id="full-name-idx" class="form-input" required></div>
+                            <div class="form-group"><label for="dob" class="form-label">Date of Birth (REQ-F-003)</label><input type="date" id="dob-idx" class="form-input" required></div>
+                            <div class="form-group"><label for="gender" class="form-label">Gender (REQ-F-005)</label><select id="gender-idx" class="form-select" required><option value="">Select...</option><option value="male">Male</option><option value="female">Female</option></select></div>
+                        </div>
+                        <h2 class="h3 form-section-header">Physical & Contact Information</h2>
+                        <div class="form-grid">
+                            <div class="form-group"><label for="weight" class="form-label">Weight (kg) (REQ-F-004)</label><input type="number" id="weight-idx" class="form-input" min="50" required></div>
+                            <div class="form-group"><label for="email" class="form-label">Email Address</label><input type="email" id="email-idx" class="form-input" required></div>
+                            <div class="form-group"><label for="last-donation" class="form-label">Last Donation Date (REQ-F-005)</label><input type="date" id="last-donation-idx" class="form-input"></div>
+                        </div>
+                        <h2 class="h3 form-section-header">Health Questionnaire (REQ-F-006)</h2>
+                        <div class="form-group"><label class="form-label">I declare that the information provided is true and accurate.</label><div><input type="checkbox" id="declaration-idx" required><label for="declaration-idx"> I Agree</label></div></div>
+                    </div>
+                    <div class="card-header form-actions" style="border-top: 1px solid var(--border-color);">
+                        <button type="button" class="btn btn-secondary">Check Eligibility</button>
+                        <button type="submit" class="btn btn-primary">Save Donor Record</button>
+                    </div>
+                </form></div>
+            </section>
+
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 DonorMatch. All rights reserved.</p>
+        </footer>
+    </div>
+    <script>
+        // --- THEME TOGGLE SCRIPT ---
+        const themeToggle = document.getElementById('theme-toggle-btn');
+        const sunIcon = \`<svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-3.536a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM4.95 14.536L4.243 15.243a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM2.757 8.464a1 1 0 011.414 0l.707.707a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 010-1.414zM15.05 4.95l.707-.707a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414z" clip-rule="evenodd"></path></svg>\`;
+        const moonIcon = \`<svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>\`;
+        const setTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeToggle.innerHTML = theme === 'dark' ? sunIcon : moonIcon;
+        };
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        setTheme(savedTheme);
+
+        // --- SPA ROUTING SCRIPT ---
+        const navLinks = document.querySelectorAll('.nav-links a, .nav-link-btn');
+        const sections = document.querySelectorAll('.screen-section');
+
+        const showSection = (hash) => {
+            const targetId = hash.substring(1);
+            sections.forEach(section => {
+                if (section.id === targetId) {
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === hash) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+            window.scrollTo(0, 0);
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const hash = e.currentTarget.getAttribute('href');
+                window.location.hash = hash;
+            });
+        });
+
+        window.addEventListener('hashchange', () => showSection(window.location.hash));
+        
+        // Initial load
+        if (window.location.hash) {
+            showSection(window.location.hash);
+        } else {
+             showSection('#urgent-request-dashboard');
+        }
+
+    </script>
+</body>
+</html>
