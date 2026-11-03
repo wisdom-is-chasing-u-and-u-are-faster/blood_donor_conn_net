@@ -255,8 +255,7 @@ def social_login(provider):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
     flash(
-        f"Successfully authenticated via {
-            provider.capitalize()}!",
+        f"Successfully authenticated via {provider.capitalize()}!",
         "success")
     return redirect(url_for("donor_profile"))
 
