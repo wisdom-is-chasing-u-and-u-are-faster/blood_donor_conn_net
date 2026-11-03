@@ -1,3 +1,8 @@
+
+from services.eligibility_service import evaluate_eligibility
+from services.matching_service import filter_compatible_verified_donors
+from services.transaction_service import process_transaction
+
 # This is a Flask web application for a Blood Donor Connection Network.
 # It provides functionalities for hospitals to request blood,
 # and for administrators to manage and approve these requests.
@@ -7,7 +12,7 @@ import os
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, session, flash, url_for
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="public", static_url_path="/public")
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
@@ -68,11 +73,26 @@ audit_logs = [
 # Registered donors
 donors = [
     {
+        "name": "Elena Rodriguez",
+        "username": "elena_r",
+        "age": 29,
+        "gender": "Female",
+        "blood_group": "O-",
+        "weight": 58.5,
+        "is_verified": True,
+        "current_status": "active",
+        "last_donation": "2025-08-01",
+        "donation_count": 7
+    },
+    {
         "name": "Jane Smith",
         "username": "janesmith",
         "age": 28,
         "gender": "Female",
         "blood_group": "O-",
+        "weight": 60.0,
+        "is_verified": True,
+        "current_status": "active",
         "last_donation": "2025-11-15",
         "donation_count": 5
     },
@@ -82,8 +102,35 @@ donors = [
         "age": 34,
         "gender": "Male",
         "blood_group": "A+",
+        "weight": 75.0,
+        "is_verified": True,
+        "current_status": "active",
         "last_donation": "2025-08-20",
         "donation_count": 2
+    },
+    {
+        "name": "Marcus Chen",
+        "username": "mchen",
+        "age": 35,
+        "gender": "Male",
+        "blood_group": "O+",
+        "weight": 74.0,
+        "is_verified": True,
+        "current_status": "active",
+        "last_donation": "2025-07-15",
+        "donation_count": 4
+    },
+    {
+        "name": "Unverified Tester",
+        "username": "unverified_user",
+        "age": 25,
+        "gender": "Male",
+        "blood_group": "O-",
+        "weight": 70.0,
+        "is_verified": False,
+        "current_status": "pending_verification",
+        "last_donation": "2025-01-01",
+        "donation_count": 0
     }
 ]
 
@@ -528,6 +575,84 @@ def map_hotspots():
 
     return render_template(
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
+
+
+
+# ============================================================================
+# ARCH-6805: Donor Pre-Screening, Urgent Request Matching & Transactions
+# ============================================================================
+
+@app.route("/health")
+def health():
+    return {"status": "healthy", "service": "blood_donor_conn_net"}, 200
+
+
+@app.route("/api/v1/prescreening/evaluate", methods=["POST"])
+def api_prescreening_evaluate():
+    data = request.get_json(silent=True) or request.form.to_dict()
+    result = evaluate_eligibility(data)
+    return result, 200
+
+
+@app.route("/api/v1/donors/urgent-match", methods=["GET"])
+def api_urgent_match():
+    blood_type = request.args.get("blood_type", "all")
+    result = filter_compatible_verified_donors(donors, blood_type)
+    return result, 200
+
+
+@app.route("/api/v1/transactions", methods=["POST"])
+def api_transactions():
+    idempotency_key = request.headers.get("Idempotency-Key") or request.headers.get("idempotency-key")
+    user_role = request.headers.get("X-User-Role") or session.get("role") or "Operator"
+    data = request.get_json(silent=True) or {}
+
+    try:
+        tx_result = process_transaction(
+            idempotency_key=idempotency_key,
+            user_role=user_role,
+            payload=data,
+            user_id=session.get("username", "operator_user")
+        )
+        audit_logs.append({
+            "action": "TRANSACTION COMMITTED",
+            "details": f"Transaction {tx_result['transaction_id']} processed (Idempotent: {tx_result['idempotent_replayed']}).",
+            "user": session.get("username", "operator_user"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        return tx_result, 201
+    except ValueError as ve:
+        return {"error": str(ve)}, 400
+    except PermissionError as pe:
+        return {"error": str(pe)}, 403
+
+
+@app.route("/api/v1/donors", methods=["GET"])
+def api_donors():
+    return {"donors": donors, "total": len(donors)}, 200
+
+
+@app.route("/urgent-dashboard")
+@app.route("/urgent_request_dashboard.html")
+def urgent_dashboard_view():
+    return render_template("urgent_request_dashboard.html")
+
+
+@app.route("/prescreening-form")
+@app.route("/donor_pre_screening_form.html")
+def prescreening_form_view():
+    return render_template("donor_pre_screening_form.html")
+
+
+@app.route("/donor-directory")
+@app.route("/donor_directory.html")
+def donor_directory_view():
+    return render_template("donor_directory.html")
+
+
+@app.route("/pages/<path:filename>")
+def serve_public_pages(filename):
+    return render_template(filename)
 
 
 if __name__ == "__main__":
