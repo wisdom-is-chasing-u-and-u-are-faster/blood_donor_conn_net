@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Donor Pre-Screening - BDCN{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0">Donor Eligibility Pre-Screening</h4>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-secondary mb-4">
+                    Please complete this quick pre-screening form to verify if you meet the clinical criteria to donate blood today. (REQ-F-001)
+                </p>
+
+                <div id="eligibilityResult" class="alert d-none" role="alert"></div>
+
+                <form id="eligibilityForm">
+                    <div class="mb-3">
+                        <label for="donorAge" class="form-label font-weight-bold">Age (Years)</label>
+                        <input type="number" id="donorAge" name="age" class="form-control" min="1" max="120" placeholder="e.g. 25" required>
+                        <small class="form-text text-muted">Eligible donors must be between 18 and 65 years old.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="donorWeight" class="form-label font-weight-bold">Weight (kg)</label>
+                        <input type="number" id="donorWeight" name="weight" step="0.5" class="form-control" min="1" max="300" placeholder="e.g. 68" required>
+                        <small class="form-text text-muted">Minimum weight requirement is 50kg.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="lastDonationDate" class="form-label font-weight-bold">Last Donation Date</label>
+                        <input type="date" id="lastDonationDate" name="last_donation_date" class="form-control">
+                        <small class="form-text text-muted">Leave empty if this is your first time donating. Minimum 90 days required between donations.</small>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <button type="submit" id="checkEligibilityBtn" class="btn btn-primary px-4 py-2">
+                            Check Eligibility
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('eligibilityForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const resultDiv = document.getElementById('eligibilityResult');
+    const ageVal = parseInt(document.getElementById('donorAge').value, 10);
+    const weightVal = parseFloat(document.getElementById('donorWeight').value);
+    const dateVal = document.getElementById('lastDonationDate').value;
+
+    resultDiv.className = 'alert alert-info';
+    resultDiv.textContent = 'Evaluating your eligibility...';
+    resultDiv.classList.remove('d-none');
+
+    try {
+        const response = await fetch('/api/v1/prescreening/evaluate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                age: ageVal,
+                weight: weightVal,
+                last_donation_date: dateVal
+            })
+        });
+
+        const data = await response.json();
+        resultDiv.textContent = data.message;
+        if (data.is_eligible) {
+            resultDiv.className = 'alert alert-success';
+        } else {
+            resultDiv.className = 'alert alert-danger';
+        }
+    } catch (err) {
+        // Fallback local evaluation if offline
+        const today = new Date();
+        let isEligible = true;
+        let message = '';
+
+        let daysSinceDonation = 999;
+        if (dateVal) {
+            const lastDonationDate = new Date(dateVal);
+            daysSinceDonation = (today - lastDonationDate) / (1000 * 60 * 60 * 24);
+        }
+
+        if (ageVal < 18 || ageVal > 65) {
+            isEligible = false;
+            message = 'You are not eligible to donate. Donors must be between 18 and 65 years old.';
+        } else if (weightVal < 50) {
+            isEligible = false;
+            message = 'You are not eligible to donate. Minimum weight requirement is 50kg.';
+        } else if (dateVal && daysSinceDonation < 90) {
+            isEligible = false;
+            message = `You are not eligible to donate. You must wait at least 90 days between donations. Your last donation was ${Math.floor(daysSinceDonation)} days ago.`;
+        } else {
+            message = 'Congratulations! You are eligible to donate blood.';
+        }
+
+        resultDiv.textContent = message;
+        if (isEligible) {
+            resultDiv.className = 'alert alert-success';
+        } else {
+            resultDiv.className = 'alert alert-danger';
+        }
+    }
+});
+</script>
+{% endblock %}

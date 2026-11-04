@@ -5,9 +5,12 @@
 # demonstration purposes.
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
+from services.eligibility_service import evaluate_donor_eligibility
+from services.matching_service import filter_compatible_donors, get_compatible_donor_types
 
-app = Flask(__name__)
+
+app = Flask(__name__, static_folder="public", static_url_path="")
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
@@ -370,9 +373,19 @@ def hospital_dashboard():
         flash("Unauthorized. Please log in first.", "danger")
         return redirect(url_for("login_hospital"))
 
+    blood_group = (request.args.get("blood_group", "A+") or "A+").replace(" ", "+")
+    compatible_donors = filter_compatible_donors(donors, blood_group)
+    compatible_groups = get_compatible_donor_types(blood_group)
+
     h_demands = [d for d in demands]
-    return render_template("dashboard.html", demands=h_demands,
-                           scheduled_donors=scheduled_donors)
+    return render_template(
+        "dashboard.html",
+        demands=h_demands,
+        scheduled_donors=scheduled_donors,
+        selected_blood_group=blood_group,
+        compatible_donors=compatible_donors,
+        compatible_groups=compatible_groups
+    )
 
 
 @app.route("/hospital/create-demand", methods=["GET", "POST"])
@@ -530,5 +543,79 @@ def map_hotspots():
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
 
 
+
+
+# ----------------------------------------------------------------------
+# ARCH-7105: Donor Pre-Screening & Urgent Matching Endpoints
+# ----------------------------------------------------------------------
+
+@app.route("/health")
+def health():
+    """Container health and readiness probe."""
+    return jsonify({"status": "healthy", "service": "blood_donor_conn_net"}), 200
+
+
+@app.route("/prescreening")
+@app.route("/pre_screening.html")
+def prescreening():
+    """Donor eligibility pre-screening page."""
+    return render_template("pre_screening.html")
+
+
+@app.route("/dashboard.html")
+def urgent_dashboard_direct():
+    """Direct dashboard route matching design mockup specification."""
+    blood_group = (request.args.get("blood_group", "A+") or "A+").replace(" ", "+")
+    compatible_donors = filter_compatible_donors(donors, blood_group)
+    compatible_groups = get_compatible_donor_types(blood_group)
+    return render_template(
+        "dashboard.html",
+        demands=demands,
+        scheduled_donors=scheduled_donors,
+        selected_blood_group=blood_group,
+        compatible_donors=compatible_donors,
+        compatible_groups=compatible_groups
+    )
+
+
+@app.route("/api/v1/prescreening/evaluate", methods=["POST"])
+def api_prescreening_evaluate():
+    """
+    Evaluates donor eligibility based on age, weight, and donation interval criteria.
+    """
+    data = request.get_json(silent=True) or request.form or {}
+    try:
+        age = int(data.get("age", 0))
+        weight = float(data.get("weight", 0))
+    except (ValueError, TypeError):
+        return jsonify({
+            "is_eligible": False,
+            "message": "Invalid input: age and weight must be numeric values.",
+            "reasons": ["Invalid numeric values for age or weight."]
+        }), 400
+
+    last_donation_date = data.get("last_donation_date")
+    result = evaluate_donor_eligibility(age, weight, last_donation_date)
+    return jsonify(result), 200
+
+
+@app.route("/api/v1/dashboard/donors/filter", methods=["GET"])
+def api_dashboard_donors_filter():
+    """
+    Filters compatible registered donors for urgent requests within < 500 ms SLA.
+    """
+    blood_group = (request.args.get("blood_group", "A+") or "A+").replace(" ", "+")
+    compatible_donors = filter_compatible_donors(donors, blood_group)
+    compatible_groups = list(get_compatible_donor_types(blood_group))
+
+    return jsonify({
+        "requested_blood_group": blood_group,
+        "compatible_blood_groups": compatible_groups,
+        "total_compatible": len(compatible_donors),
+        "donors": compatible_donors
+    }), 200
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

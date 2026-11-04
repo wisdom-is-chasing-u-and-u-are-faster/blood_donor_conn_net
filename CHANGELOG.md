@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- **[ARCH-7105]** UI Pages + Requirements: Donor Eligibility and Urgent Matching UI
+  - *Key modifications:*
+    - `requirements.txt`
+    - `services/__init__.py`
+    - `services/eligibility_service.py`
+    - `services/matching_service.py`
+    - `templates/pre_screening.html`
+    - `templates/dashboard.html`
+    - `templates/base.html`
+    - `app.py`
+### Added
 
 - **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
 
