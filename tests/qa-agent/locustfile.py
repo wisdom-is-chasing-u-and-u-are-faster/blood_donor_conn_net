@@ -1,0 +1,55 @@
+"""
+QA Persona v2 -- auto-generated tests
+Service: cloned_repo
+Suite:   performance
+Source:  test_strategy/plans/cloned_repo__performance.json
+Generated: 2026-11-04T14:18:00Z
+"""
+import os
+import time
+from locust import HttpUser, events, task, between
+
+SERVICE_URL = os.environ.get("SERVICE_URL", "").strip()
+P95_MS_THRESHOLD = float(os.environ.get("PERF_P95_MS_THRESHOLD", "500"))
+FAIL_RATIO_THRESHOLD = 0.01
+
+
+class TargetUser(HttpUser):
+    host = SERVICE_URL
+    wait_time = between(0.5, 1.5)
+
+    @task(3)
+    def get_home(self):
+        self.client.get("/")
+
+    @task(3)
+    def get_spatial_candidates(self):
+        self.client.get("/v1/spatial/candidates?latitude=37.7749&longitude=-122.4194&radius_km=15")
+
+    @task(2)
+    def get_donor_eligibility(self):
+        self.client.get("/v1/donors/marcus_vance/eligibility?donation_type=WHOLE_BLOOD")
+
+    @task(1)
+    def post_emergency_dispatch(self):
+        self.client.post(
+            "/v1/emergency/dispatch",
+            json={
+                "hospital_id": "hosp-1",
+                "severity": "LEVEL_1_CATASTROPHIC",
+                "required_abo": "O",
+                "required_rh": "NEGATIVE",
+                "units_requested": 2
+            }
+        )
+
+
+@events.test_stop.add_listener
+def enforce_thresholds(environment, **kwargs):
+    stats = environment.stats.total
+    fail_ratio = stats.fail_ratio
+    p95_ms = stats.get_response_time_percentile(0.95)
+    if fail_ratio > FAIL_RATIO_THRESHOLD:
+        environment.process_exit_code = 1
+    if p95_ms and p95_ms >= P95_MS_THRESHOLD:
+        environment.process_exit_code = 1
