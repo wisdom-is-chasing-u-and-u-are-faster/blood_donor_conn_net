@@ -4,10 +4,88 @@
 <div class="row mb-4">
     <div class="col-md-8">
         <h2>Welcome, {{ session.get('username') }}!</h2>
-        <p class="text-muted">Manage active blood demands, upload compliance files, and track donor schedules.</p>
+        <p class="text-muted">Manage active blood demands, upload compliance files, and match compatible verified donors in real-time.</p>
     </div>
     <div class="col-md-4 text-end">
         <a href="/hospital/create-demand" class="btn btn-danger py-2 px-4">+ Create Urgent Demand</a>
+    </div>
+</div>
+
+<!-- Urgent Blood Group Request Matching Section (REQ-F-002) -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Urgent Blood Group Matching</h5>
+                <span class="badge bg-light text-primary">SLA &lt; 500ms</span>
+            </div>
+            <div class="card-body">
+                <p class="text-secondary mb-3">
+                    Filter for compatible verified donors for urgent hospital requests. Compatible donor groups are matched instantly according to clinical ABO/Rh compatibility rules. (REQ-F-002)
+                </p>
+
+                <div class="row g-3 align-items-end mb-4">
+                    <div class="col-md-6 col-lg-4">
+                        <label for="bloodGroupFilter" class="form-label font-weight-bold">Select Blood Group Needed</label>
+                        <select id="bloodGroupFilter" class="form-select form-control">
+                            <option value="A+" {% if selected_blood_group == 'A+' %}selected{% endif %}>A+</option>
+                            <option value="A-" {% if selected_blood_group == 'A-' %}selected{% endif %}>A-</option>
+                            <option value="B+" {% if selected_blood_group == 'B+' %}selected{% endif %}>B+</option>
+                            <option value="B-" {% if selected_blood_group == 'B-' %}selected{% endif %}>B-</option>
+                            <option value="AB+" {% if selected_blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+                            <option value="AB-" {% if selected_blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+                            <option value="O+" {% if selected_blood_group == 'O+' %}selected{% endif %}>O+</option>
+                            <option value="O-" {% if selected_blood_group == 'O-' %}selected{% endif %}>O-</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-lg-2">
+                        <button id="filterBtn" class="btn btn-primary w-100 py-2">Filter Donors</button>
+                    </div>
+                    <div class="col-md-3 col-lg-6 text-md-end">
+                        <span id="matchLatencyBadge" class="text-muted small">Response time: &lt; 15ms</span>
+                    </div>
+                </div>
+
+                <div class="results">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 text-dark">Compatible Donors Available</h6>
+                        <span id="compatibleGroupsLabel" class="badge bg-info text-dark">
+                            Compatible: {{ compatible_groups|join(', ') if compatible_groups else 'All' }}
+                        </span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle data-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Donor ID</th>
+                                    <th>Name</th>
+                                    <th>Blood Type</th>
+                                    <th>Contact Information</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compatibleDonorsTbody">
+                                {% if compatible_donors %}
+                                    {% for donor in compatible_donors %}
+                                        <tr>
+                                            <td><strong>{{ donor.donor_id }}</strong></td>
+                                            <td>{{ donor.name }}</td>
+                                            <td><span class="badge bg-danger fs-6">{{ donor.blood_type }}</span></td>
+                                            <td><code>{{ donor.contact_information }}</code></td>
+                                            <td><span class="badge bg-success">Verified</span></td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">No compatible donors found for this blood group.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -94,4 +172,44 @@
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('filterBtn').addEventListener('click', async function() {
+    const bloodGroup = document.getElementById('bloodGroupFilter').value;
+    const tbody = document.getElementById('compatibleDonorsTbody');
+    const badge = document.getElementById('compatibleGroupsLabel');
+    const latencyBadge = document.getElementById('matchLatencyBadge');
+
+    const startTime = performance.now();
+
+    try {
+        const resp = await fetch(`/api/v1/dashboard/donors/filter?blood_group=${encodeURIComponent(bloodGroup)}`);
+        const duration = Math.round(performance.now() - startTime);
+        latencyBadge.textContent = `Response time: ${duration}ms (SLA < 500ms)`;
+
+        if (!resp.ok) throw new Error('Failed to fetch compatible donors');
+        const data = await resp.json();
+
+        badge.textContent = `Compatible: ${data.compatible_blood_groups.join(', ')}`;
+
+        if (data.donors && data.donors.length > 0) {
+            tbody.innerHTML = data.donors.map(d => `
+                <tr>
+                    <td><strong>${d.donor_id}</strong></td>
+                    <td>${d.name}</td>
+                    <td><span class="badge bg-danger fs-6">${d.blood_type}</span></td>
+                    <td><code>${d.contact_information}</code></td>
+                    <td><span class="badge bg-success">Verified</span></td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No compatible donors found for this blood group.</td></tr>';
+        }
+    } catch (err) {
+        console.error(err);
+        // Fallback to reload with query param
+        window.location.href = `/hospital/dashboard?blood_group=${encodeURIComponent(bloodGroup)}`;
+    }
+});
+</script>
 {% endblock %}
