@@ -532,3 +532,84 @@ def map_hotspots():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+# --- ARCH-7525 Donor Eligibility & Biological Cooldown Verification ---
+@app.route("/api/donors/<donor_id>/eligibility", methods=["GET"])
+def flask_get_donor_eligibility(donor_id):
+    """REST endpoint in Flask router for donor eligibility and biological cooldown checking."""
+    import re
+    from datetime import date, datetime, timedelta, timezone
+    from flask import jsonify
+
+    # Parameter validation
+    if not str(donor_id).isdigit() or int(donor_id) <= 0:
+        return jsonify({"detail": [{"loc": ["path", "donor_id"], "msg": "Input should be a valid integer, unable to parse string as an integer", "type": "int_parsing"}]}), 422
+
+    did = int(donor_id)
+    from app.routers.donors import DONOR_REGISTRY, compute_donor_eligibility
+
+    donor = DONOR_REGISTRY.get(did)
+    if not donor:
+        return jsonify({
+            "type": "https://api.blooddonorconn.net/errors/not-found",
+            "title": "Donor Profile Not Found",
+            "status": 404,
+            "detail": f"Donor with identifier {did} does not exist in the master registry.",
+            "code": "DONOR_NOT_FOUND",
+            "instance": f"/api/donors/{did}/eligibility"
+        }), 404
+
+    # Check for optional override query param
+    current_date_param = request.args.get("current_date")
+    ref_date = None
+    if current_date_param:
+        try:
+            ref_date = datetime.strptime(current_date_param, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+
+    last_date = donor.get("last_donation_date")
+    result = compute_donor_eligibility(did, last_date, ref_date)
+
+    if hasattr(result, "status_code") and result.status_code != 200:
+        import json
+        body = json.loads(result.body.decode("utf-8"))
+        return jsonify(body), result.status_code
+
+    return jsonify(result.model_dump(mode="json")), 200
+
+
+@app.route("/api/match-donor", methods=["POST"])
+def flask_match_donor_to_request():
+    """Matches a donor to a blood demand, enforcing 56-day cooldown wait period."""
+    from flask import jsonify
+    data = request.get_json() or {}
+    donor_id = data.get("donor_id")
+    request_id = data.get("request_id")
+
+    if not donor_id or not request_id:
+        return jsonify({"error": "donor_id and request_id are required"}), 400
+
+    from app.routers.donors import DONOR_REGISTRY, compute_donor_eligibility
+    donor = DONOR_REGISTRY.get(donor_id)
+    if not donor:
+        return jsonify({"error": "Donor not found"}), 404
+
+    eligibility = compute_donor_eligibility(donor_id, donor.get("last_donation_date"))
+    if hasattr(eligibility, "status_code"):
+        import json
+        return jsonify(json.loads(eligibility.body.decode("utf-8"))), eligibility.status_code
+
+    if not eligibility.eligible:
+        return jsonify({
+            "error": "Donor is ineligible due to 56-day cooldown period",
+            "days_remaining": eligibility.days_remaining,
+            "next_eligible_date": eligibility.next_eligible_date.isoformat()
+        }), 400
+
+    return jsonify({
+        "status": "matched",
+        "donor_id": donor_id,
+        "request_id": request_id
+    }), 200
