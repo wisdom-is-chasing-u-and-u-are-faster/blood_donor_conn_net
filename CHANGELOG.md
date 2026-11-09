@@ -4,6 +4,16 @@
 
 ### Added
 
+- **feat(ARCH-7525): Donor Eligibility & Biological Cooldown Verification Engine**
+  - Implemented high-throughput REST endpoint `GET /api/donors/{donor_id}/eligibility` in `app/routers/donors.py` enforcing statutory 56-day whole-blood biological cooldown period.
+  - Architected Pydantic V2 schema `DonorEligibilityResponse` in `app/models.py` with immutable serialization and zero PII leakage.
+  - Implemented defensive boundary validation guarding against future-dated donation records (HTTP 400 `TEMPORAL_ANOMALY_FUTURE_DATE`).
+  - Added support for first-time donors with null historical donation dates (`last_donation_date is None`).
+  - Added donation cooldown check in matching flow before assigning donors to blood requests.
+  - Added 18 comprehensive automated Gherkin test scenarios in `tests/test_eligibility.py` achieving 100% test pass rate.
+
+### Added
+
 - **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
 
   This change introduces the initial front-end implementation of the Blood Donor Connection Network (BDCN) Core Platform. The key deliverables of this PR are:
