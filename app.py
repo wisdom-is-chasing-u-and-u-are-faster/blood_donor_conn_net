@@ -530,10 +530,6 @@ def map_hotspots():
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
-
 # --- ARCH-7525 Donor Eligibility & Biological Cooldown Verification ---
 @app.route("/api/donors/<donor_id>/eligibility", methods=["GET"])
 def flask_get_donor_eligibility(donor_id):
@@ -613,3 +609,7 @@ def flask_match_donor_to_request():
         "donor_id": donor_id,
         "request_id": request_id
     }), 200
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)

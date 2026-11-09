@@ -3,26 +3,32 @@
 Exposes backward-compatible symbols for Flask app.py imports as well as FastAPI components.
 """
 
-from typing import Any
+import os
+import sys
+import importlib.util
 
-# Expose Flask globals dynamically if app.py is loaded in sys.modules or from local module
-try:
-    import sys
-    # If app.py at root is loaded, make symbols available here
-    import importlib.util
-    import os
-    app_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app.py"))
-    if os.path.exists(app_py_path):
-        spec = importlib.util.spec_from_file_location("root_app", app_py_path)
-        if spec and spec.loader:
-            root_app = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(root_app)
-            app = getattr(root_app, "app", None)
-            demands = getattr(root_app, "demands", None)
-            alerts = getattr(root_app, "alerts", None)
-            donors = getattr(root_app, "donors", None)
-            scheduled_donors = getattr(root_app, "scheduled_donors", None)
-            audit_logs = getattr(root_app, "audit_logs", None)
-            raw_hotspots = getattr(root_app, "raw_hotspots", None)
-except Exception:
-    pass
+# Forward declarations so linters and static analysis tools recognize them
+app = None
+demands = None
+alerts = None
+donors = None
+scheduled_donors = None
+audit_logs = None
+raw_hotspots = None
+
+# Dynamically bind symbols from root app.py if present
+_app_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app.py"))
+if os.path.exists(_app_py_path):
+    _spec = importlib.util.spec_from_file_location("root_app", _app_py_path)
+    if _spec and _spec.loader:
+        _root_app = importlib.util.module_from_spec(_spec)
+        # Register in sys.modules so recursive imports inside app.py resolve cleanly
+        sys.modules["root_app"] = _root_app
+        _spec.loader.exec_module(_root_app)
+        app = getattr(_root_app, "app", None)
+        demands = getattr(_root_app, "demands", None)
+        alerts = getattr(_root_app, "alerts", None)
+        donors = getattr(_root_app, "donors", None)
+        scheduled_donors = getattr(_root_app, "scheduled_donors", None)
+        audit_logs = getattr(_root_app, "audit_logs", None)
+        raw_hotspots = getattr(_root_app, "raw_hotspots", None)
