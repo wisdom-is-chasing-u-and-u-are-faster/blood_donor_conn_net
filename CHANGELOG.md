@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- **[ARCH-7789]** UI Pages + Requirements: Blood Donor Connection Network (BDCN)
+  - *Key modifications:*
+    - `/app/.jtc/ARCH-7789/cloned_repo/.env.example`
+    - `/app/.jtc/ARCH-7789/cloned_repo/docker-compose.yml`
+    - `/app/.jtc/ARCH-7789/cloned_repo/db/schema.sql`
+    - `/app/.jtc/ARCH-7789/cloned_repo/db/seed.sql`
+    - `/app/.jtc/ARCH-7789/cloned_repo/db/init_db.py`
+    - `/app/.jtc/ARCH-7789/cloned_repo/public/index.html`
+    - `/app/.jtc/ARCH-7789/cloned_repo/public/js/api.js`
+    - `/app/.jtc/ARCH-7789/cloned_repo/public/pages/welcome-login.html`
+### Added
 
 - **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
 

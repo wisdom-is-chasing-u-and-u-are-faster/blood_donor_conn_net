@@ -5,9 +5,9 @@
 # demonstration purposes.
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify, send_from_directory
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="public", static_url_path="")
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
@@ -530,5 +530,170 @@ def map_hotspots():
         "map_hotspots.html", hotspots=filtered, radius=radius, blood_type=blood_type)
 
 
+
+# -------------------------------------------------------------
+# REST API & Static Serving Layer (ARCH-7789)
+# -------------------------------------------------------------
+
+@app.route("/health")
+def health():
+    """Health and readiness probe."""
+    return jsonify({"status": "ok", "service": "BDCN Modular Monolith"}), 200
+
+
+@app.route("/pages/<path:filename>")
+def serve_page(filename):
+    """Serve self-contained Variant-A UI pages."""
+    pages_dir = os.path.join(app.static_folder, "pages")
+    return send_from_directory(pages_dir, filename)
+
+
+@app.route("/api/v1/auth/social", methods=["POST"])
+def api_social_login():
+    """Social OAuth login endpoint for Google, Apple, and Facebook."""
+    data = request.get_json() or {}
+    provider = data.get("provider", "google").lower()
+    username = f"social_{provider}_user"
+    name = f"Social {provider.capitalize()} User"
+
+    target_donor = next((d for d in donors if d["username"] == username), None)
+    if not target_donor:
+        target_donor = {
+            "name": name,
+            "username": username,
+            "age": 25,
+            "gender": "Other",
+            "blood_group": "O+",
+            "last_donation": None,
+            "donation_count": 1
+        }
+        donors.append(target_donor)
+
+    session["username"] = username
+    session["role"] = "donor"
+
+    audit_logs.append({
+        "action": "SOCIAL LOGIN (API)",
+        "details": f"User authenticated via {provider.capitalize()} OAuth.",
+        "user": username,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "status": "success",
+        "user": {
+            "username": username,
+            "name": name,
+            "role": "donor",
+            "provider": provider
+        }
+    }), 200
+
+
+@app.route("/api/v1/donors/hotspots", methods=["GET"])
+def api_donor_hotspots():
+    """Fetch privacy-first aggregated donor density hotspots."""
+    try:
+        radius = int(request.args.get("radius", 50))
+    except ValueError:
+        radius = 50
+    blood_type = request.args.get("blood_type", "All")
+
+    filtered = [h for h in raw_hotspots if h["distance"] <= radius]
+    if blood_type != "All":
+        filtered = [h for h in filtered if h["blood_type"] == blood_type]
+
+    return jsonify({
+        "status": "success",
+        "radius": radius,
+        "blood_type": blood_type,
+        "hotspots": filtered,
+        "total": len(filtered)
+    }), 200
+
+
+@app.route("/api/v1/requests", methods=["POST"])
+def api_submit_request():
+    """Submit recipient blood requisition with medical documentation audit."""
+    data = request.get_json() or {}
+    blood_type = data.get("blood_type")
+    units = data.get("units", 1)
+    urgency = data.get("urgency", "Emergency")
+    district = data.get("district", "Downtown")
+    notes = data.get("notes", "")
+    filename = data.get("filename", "medical_requisition_doc.pdf")
+
+    if not blood_type:
+        return jsonify({"status": "error", "message": "Blood type is required"}), 400
+
+    new_id = len(demands) + 1
+    new_demand = {
+        "id": new_id,
+        "hospital": session.get("username", "General Hospital"),
+        "blood_type": blood_type,
+        "units": int(units),
+        "filename": filename,
+        "status": "Pending",
+        "urgency": urgency,
+        "district": district,
+        "notes": notes
+    }
+    demands.append(new_demand)
+
+    audit_logs.append({
+        "action": "BLOOD DEMAND CREATED (API)",
+        "details": f"Demand #{new_id} ({blood_type}, {units} units) submitted for {district}.",
+        "user": session.get("username", "Anonymous"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "status": "success",
+        "request_id": new_id,
+        "demand": new_demand
+    }), 201
+
+
+@app.route("/api/v1/admin/requests/<int:demand_id>/verify", methods=["POST"])
+def api_verify_request(demand_id):
+    """Admin verify/adjudicate blood demand request."""
+    data = request.get_json() or {}
+    action = data.get("action", "approve").lower()
+
+    target_demand = next((d for d in demands if d["id"] == demand_id), None)
+    if not target_demand:
+        return jsonify({"status": "error", "message": "Demand not found"}), 404
+
+    if action == "approve":
+        target_demand["status"] = "Approved"
+        new_alert_id = len(alerts) + 1
+        alerts.append({
+            "id": new_alert_id,
+            "hospital": target_demand["hospital"],
+            "blood_type": target_demand["blood_type"],
+            "status": "Active",
+            "district": target_demand.get("district", "Downtown")
+        })
+        decision = "Approved"
+    else:
+        target_demand["status"] = "Rejected"
+        decision = "Rejected"
+
+    audit_logs.append({
+        "action": f"EMERGENCY DEMAND {decision.upper()} (API)",
+        "details": f"Admin resolved demand #{demand_id} as {decision}.",
+        "user": session.get("username", "admin_district"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "status": "success",
+        "request_id": demand_id,
+        "decision": decision,
+        "demand": target_demand
+    }), 200
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
