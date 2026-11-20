@@ -1,5 +1,5 @@
 """
-test_api_v1.py — Validation for ARCH-7789 REST API endpoints and static serving.
+test_api_v1.py — Validation for ARCH-9061 REST API endpoints and static serving.
 """
 import pytest
 from app import app, demands, alerts, donors
@@ -23,9 +23,10 @@ def test_health_check(client):
 
 def test_static_page_serving(client):
     """Test static Variant-A HTML pages are accessible under /pages/."""
-    res = client.get("/pages/welcome-login.html")
-    assert res.status_code == 200
-    assert b"Welcome" in res.data or b"BDCN" in res.data
+    for page in ["admin-dashboard.html", "create-request.html", "dashboard.html", "login.html", "profile.html", "request-feed.html"]:
+        res = client.get(f"/pages/{page}")
+        assert res.status_code == 200
+        assert b"BDCN" in res.data or b"Blood" in res.data
 
 
 def test_api_social_login_google(client):

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Feed - BDCN</title>
+    <style>
+
+/* ==========================================================================
+   Design System: BDCN - Variant A
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. ROOT & THEME VARIABLES
+   -------------------------------------------------------------------------- */
+:root {
+    /* Color Palette (REQ-F-001, REQ-F-002) */
+    --c-primary: #0d6efd;
+    --c-primary-dark: #0b5ed7;
+    --c-secondary: #6c757d;
+    --c-success: #198754;
+    --c-danger: #dc3545;
+    --c-warning: #ffc107;
+    --c-info: #0dcaf0;
+    --c-light: #f8f9fa;
+    --c-dark: #212529;
+    --c-white: #ffffff;
+    --c-border: #dee2e6;
+    --c-text: #212529;
+    --c-text-muted: #6c757d;
+    --c-bg: #ffffff;
+    --c-bg-surface: #ffffff;
+
+    /* Typography (REQ-F-001) */
+    --font-family-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    --fs-base: 16px;
+    --fs-1: 2.5rem;   /* 40px */
+    --fs-2: 2rem;     /* 32px */
+    --fs-3: 1.75rem;  /* 28px */
+    --fs-4: 1.5rem;   /* 24px */
+    --fs-body: 1rem;  /* 16px */
+    --fs-sm: 0.875rem;/* 14px */
+    --fw-light: 300;
+    --fw-normal: 400;
+    --fw-bold: 700;
+    --lh-base: 1.5;
+    --tracking-tight: -0.025em;
+
+    /* Spacing (8pt grid) */
+    --space-1: 0.25rem; /* 4px */
+    --space-2: 0.5rem;  /* 8px */
+    --space-3: 1rem;    /* 16px */
+    --space-4: 1.5rem;  /* 24px */
+    --space-5: 3rem;    /* 48px */
+
+    /* Borders & Radius */
+    --border-width: 1px;
+    --border-style: solid;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 1rem;
+
+    /* Shadows / Elevation */
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+
+    /* Transitions */
+    --transition-base: 0.2s ease-in-out;
+}
+
+/* --------------------------------------------------------------------------
+   2. GLOBAL STYLES & RESETS
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: var(--fs-base);
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px; /* Offset for fixed header */
+}
+
+body {
+    font-family: var(--font-family-sans);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-normal);
+    line-height: var(--lh-base);
+    color: var(--c-text);
+    background-color: var(--c-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4 {
+    margin-bottom: var(--space-3);
+    font-weight: var(--fw-bold);
+    line-height: 1.2;
+    letter-spacing: var(--tracking-tight);
+}
+h1 { font-size: var(--fs-1); }
+h2 { font-size: var(--fs-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-4); }
+
+p { margin-bottom: var(--space-3); }
+a { color: var(--c-primary); text-decoration: none; }
+a:hover { color: var(--c-primary-dark); text-decoration: underline; }
+img, svg { max-width: 100%; height: auto; display: block; }
+ul, ol { list-style-position: inside; }
+
+/* --------------------------------------------------------------------------
+   3. LAYOUT & HELPERS
+   -------------------------------------------------------------------------- */
+.container {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+}
+
+.main-content {
+    padding-top: var(--space-5);
+    padding-bottom: var(--space-5);
+    min-height: calc(100vh - 120px); /* Full height minus header/footer */
+}
+
+.screen {
+    display: none; /* Hidden by default */
+    animation: fadeIn 0.5s;
+}
+.screen.active {
+    display: block; /* Shown by JS */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.text-center { text-align: center; }
+.text-muted { color: var(--c-text-muted); }
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.mt-4 { margin-top: var(--space-4); }
+.mb-4 { margin-bottom: var(--space-4); }
+
+/* --------------------------------------------------------------------------
+   4. COMPONENTS
+   -------------------------------------------------------------------------- */
+
+/* Header & Navbar (REQ-F-001) */
+.header {
+    background-color: var(--c-bg-surface);
+    border-bottom: var(--border-width) var(--border-style) var(--c-border);
+    padding: var(--space-3) 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: var(--shadow-1);
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    color: var(--c-dark);
+}
+.nav-brand:hover { text-decoration: none; }
+
+.nav-links {
+    display: flex;
+    gap: var(--space-4);
+    list-style: none;
+}
+
+.nav-link a {
+    color: var(--c-text);
+    font-weight: var(--fw-normal);
+    padding: var(--space-2) 0;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition-base);
+}
+
+.nav-link a:hover,
+.nav-link a.active {
+    color: var(--c-primary);
+    border-bottom-color: var(--c-primary);
+    text-decoration: none;
+}
+
+/* Footer */
+.footer {
+    background-color: var(--c-light);
+    color: var(--c-text-muted);
+    padding: var(--space-4) 0;
+    border-top: var(--border-width) var(--border-style) var(--c-border);
+    text-align: center;
+    font-size: var(--fs-sm);
+}
+.footer-links { margin-top: var(--space-2); }
+.footer-links a { margin: 0 var(--space-2); }
+
+
+/* Buttons (REQ-F-004) */
+.btn {
+    display: inline-block;
+    font-weight: var(--fw-normal);
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    border: var(--border-width) var(--border-style) transparent;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-body);
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+}
+
+.btn-primary {
+    color: var(--c-white);
+    background-color: var(--c-primary);
+    border-color: var(--c-primary);
+}
+.btn-primary:hover { background-color: var(--c-primary-dark); border-color: var(--c-primary-dark); }
+
+.btn-secondary {
+    color: var(--c-white);
+    background-color: var(--c-secondary);
+    border-color: var(--c-secondary);
+}
+
+.btn-danger {
+    color: var(--c-white);
+    background-color: var(--c-danger);
+    border-color: var(--c-danger);
+}
+
+.btn-success {
+    color: var(--c-white);
+    background-color: var(--c-success);
+    border-color: var(--c-success);
+}
+
+.btn-lg {
+    padding: var(--space-3) var(--space-4);
+    font-size: 1.25rem;
+}
+
+.btn-social {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    justify-content: center;
+}
+.btn-social svg { width: 24px; height: 24px; }
+
+/* Cards */
+.card {
+    background-color: var(--c-bg-surface);
+    border: var(--border-width) var(--border-style) var(--c-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    transition: var(--transition-base);
+    overflow: hidden;
+}
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-2);
+}
+.card-body { padding: var(--space-4); }
+.card-header, .card-footer {
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--c-light);
+    border-bottom: var(--border-width) var(--border-style) var(--c-border);
+}
+.card-footer { border-top: var(--border-width) var(--border-style) var(--c-border); border-bottom: 0; }
+.card-title { font-size: 1.25rem; margin-bottom: var(--space-2); }
+
+.grid {
+    display: grid;
+    gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+
+/* Forms (REQ-F-006) */
+.form-group { margin-bottom: var(--space-3); }
+
+.form-label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: var(--fw-bold);
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-normal);
+    line-height: var(--lh-base);
+    color: var(--c-text);
+    background-color: var(--c-bg);
+    background-clip: padding-box;
+    border: var(--border-width) var(--border-style) var(--c-border);
+    border-radius: var(--radius-md);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.form-control:focus {
+    color: var(--c-text);
+    background-color: var(--c-bg);
+    border-color: var(--c-primary);
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
+}
+
+select.form-control {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+/* Badge & Table */
+.badge {
+    display: inline-block;
+    padding: .35em .65em;
+    font-size: .75em;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--c-white);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--radius-md);
+}
+.badge-success { background-color: var(--c-success); }
+.badge-danger { background-color: var(--c-danger); }
+.badge-warning { background-color: var(--c-warning); color: var(--c-dark); }
+.badge-primary { background-color: var(--c-primary); }
+
+.table-wrapper { overflow-x: auto; }
+
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: var(--c-text);
+    vertical-align: top;
+    border-color: var(--c-border);
+    border-collapse: collapse;
+}
+.table th, .table td {
+    padding: var(--space-3);
+    border-bottom: var(--border-width) var(--border-style) var(--c-border);
+}
+.table thead th {
+    vertical-align: bottom;
+    text-align: left;
+    background-color: var(--c-light);
+}
+.table tbody tr:hover { background-color: rgba(0,0,0,0.06); }
+
+
+/* --------------------------------------------------------------------------
+   5. PAGE-SPECIFIC STYLES
+   -------------------------------------------------------------------------- */
+
+/* Login Screen (REQ-F-004) */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--c-light);
+}
+.login-card {
+    width: 100%;
+    max-width: 450px;
+}
+
+/* Map View (REQ-F-005) */
+.map-container {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    background-color: var(--c-light);
+    border-radius: var(--radius-lg);
+    border: var(--border-width) var(--border-style) var(--c-border);
+    overflow: hidden;
+}
+.map-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.map-cluster {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(13, 110, 253, 0.5);
+    border: 2px solid var(--c-primary);
+    border-radius: 50%;
+    color: var(--c-white);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-2);
+}
+/* Cluster positions to simulate data (REQ-N-002) */
+#cluster1 { top: 30%; left: 40%; }
+#cluster2 { top: 50%; left: 60%; }
+#cluster3 { top: 65%; left: 25%; }
+
+/* --------------------------------------------------------------------------
+   6. RESPONSIVENESS
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .nav-links {
+        display: none; /* In a real app, this would be a hamburger menu */
+    }
+    .header { padding: var(--space-3) var(--space-4); }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.75rem; }
+}
+
+@media (max-width: 375px) {
+    .container {
+        padding-left: var(--space-3);
+        padding-right: var(--space-3);
+    }
+    h1 { font-size: 1.75rem; }
+    h2 { font-size: 1.5rem; }
+}
+
+</style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="navbar" aria-label="Main navigation">
+                <a href="dashboard.html" class="nav-brand">BDCN</a>
+                <ul class="nav-links">
+                    <li class="nav-link"><a href="dashboard.html">Dashboard</a></li>
+                    <li class="nav-link"><a href="profile.html">Profile</a></li>
+                    <li class="nav-link"><a href="request-feed.html" class="active">Request Feed</a></li>
+                    <li class="nav-link"><a href="create-request.html">Create Request</a></li>
+                    <li class="nav-link"><a href="admin-dashboard.html">Admin Dashboard</a></li>
+                    <li class="nav-link"><a href="login.html">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- REQ-F-003: Management of recipient requests -->
+        <section id="request-feed" class="screen active">
+            <div class="container main-content">
+                <h2>Active Blood Requests</h2>
+                <p class="text-muted">Browse verified requests for blood donations.</p>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4>Filter Requests</h4>
+                             <div class="d-flex gap-3">
+                                 <select class="form-control">
+                                    <option>All Blood Types</option>
+                                    <option>A+</option><option>O-</option>
+                                 </select>
+                                  <input type="text" class="form-control" placeholder="Filter by city...">
+                             </div>
+                        </div>
+                    </div>
+                    <div class="card-body grid grid-cols-3">
+                        <!-- Request Card 1 -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <h4 class="card-title">Need: B+</h4>
+                                    <span class="badge badge-danger">Urgent</span>
+                                </div>
+                                <p><strong>Location:</strong> UCLA Medical Center</p>
+                                <p><strong>Units:</strong> 2</p>
+                                <p class="text-muted">Posted 2 hours ago</p>
+                                <a href="#" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+                        <!-- Request Card 2 -->
+                        <div class="card">
+                            <div class="card-body">
+                                 <div class="d-flex justify-content-between">
+                                    <h4 class="card-title">Need: O-</h4>
+                                    <span class="badge badge-warning">Routine</span>
+                                </div>
+                                <p><strong>Location:</strong> Cedars-Sinai</p>
+                                <p><strong>Units:</strong> 4</p>
+                                <p class="text-muted">Posted 1 day ago</p>
+                                <a href="#" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+                         <!-- Request Card 3 -->
+                        <div class="card">
+                            <div class="card-body">
+                                 <div class="d-flex justify-content-between">
+                                    <h4 class="card-title">Need: A+</h4>
+                                    <span class="badge badge-danger">Urgent</span>
+                                </div>
+                                <p><strong>Location:</strong> City of Hope</p>
+                                <p><strong>Units:</strong> 1</p>
+                                <p class="text-muted">Posted 30 mins ago</p>
+                                <a href="#" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Blood Donor Connection Network. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | <a href="#">Contact Us</a>
+            </div>
+        </div>
+    </footer>
+<script src="../js/api.js"></script>
+</body>
+</html>
