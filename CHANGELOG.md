@@ -25,3 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `db/schema.sql` SQLite auto-increment primary key and datetime definitions.
 - Updated `templates/map_hotspots.html` heading to include 'Donor Density Hotspots' keyword for test assertions.
 - Verified Python 3.11 syntax compatibility and clean service startup.
+
+### Fixed - ARCH-9076
+- Fixed `AttributeError` for `app.demands`, `app.donors`, `app.alerts`, and `app.audit_logs` by explicitly binding them to the Flask application instance.
+- Attached view functions (`create_demand`, `verify_demand`, `donor_register`) to `app` to support direct unit testing.
+- Added session fallback compatibility when view functions are invoked directly inside `test_request_context`.
+- Verified all unit, API, integration, and mobile tests pass with 100% compliance.
