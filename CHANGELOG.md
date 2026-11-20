@@ -1,30 +1,27 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [Unreleased]
 
-### Added
-- **[ARCH-7789]** UI Pages + Requirements: Blood Donor Connection Network (BDCN)
-  - *Key modifications:*
-    - `/app/.jtc/ARCH-7789/cloned_repo/.env.example`
-    - `/app/.jtc/ARCH-7789/cloned_repo/docker-compose.yml`
-    - `/app/.jtc/ARCH-7789/cloned_repo/db/schema.sql`
-    - `/app/.jtc/ARCH-7789/cloned_repo/db/seed.sql`
-    - `/app/.jtc/ARCH-7789/cloned_repo/db/init_db.py`
-    - `/app/.jtc/ARCH-7789/cloned_repo/public/index.html`
-    - `/app/.jtc/ARCH-7789/cloned_repo/public/js/api.js`
-    - `/app/.jtc/ARCH-7789/cloned_repo/public/pages/welcome-login.html`
-### Added
+### Added - ARCH-9061
+- Mounted Variant-A self-contained HTML pages: `admin-dashboard.html`, `create-request.html`, `dashboard.html`, `login.html`, `profile.html`, and `request-feed.html` under `public/pages/`.
+- Integrated full Variant-A showcase preview into `public/index.html` with responsive theme styling.
+- Added client-side API helper in `public/js/api.js` wired with active event listeners for blood requisition submissions and admin verification approval/rejections.
+- Scaffolded cross-platform mobile shells for iOS (`ios/BDCN/Info.plist`, `ios/BDCN/AppDelegate.swift`) and Android (`android/app/src/main/AndroidManifest.xml`, `android/app/src/main/java/com/bdcn/MainActivity.kt`).
+- Added comprehensive unit tests in `tests/test_mobile_shells.py` and updated `tests/test_api_v1.py`.
 
-- **feat(ARCH-3357): UI Pages + Requirements: Blood Donor Connection Network (BDCN) Core Platform**
+## [1.0.0] - 2026-11-16
+### Added - ARCH-7789
+- Mounted 9 self-contained Variant-A UI pages under `/pages/` and `public/index.html`.
+- Implemented RESTful API endpoints (`/health`, `/api/v1/auth/social`, `/api/v1/donors/hotspots`, `/api/v1/requests`, `/api/v1/admin/requests/<id>/verify`).
+- Scaffolded 12-factor configuration (`.env.example`, `docker-compose.yml`, `db/schema.sql`, `db/seed.sql`, `db/init_db.py`).
 
-  This change introduces the initial front-end implementation of the Blood Donor Connection Network (BDCN) Core Platform. The key deliverables of this PR are:
-
-  - A Flask-based Python application (`app.py`) to handle routing, session management, and the core application logic.
-  - A set of HTML templates using Bootstrap 5 for various user interfaces, including:
-    - Hospital and administrator login portals.
-    - A dashboard for hospital staff to view and manage blood demands.
-    - A form for creating new blood demand requests.
-    - An administrative queue for verifying and processing pending requests.
-    - Pages for managing alerts and viewing audit logs.
-  - The `requirements.txt` file, specifying the project's dependencies (Flask and pytest).
-  - A suite of verification tests (`tests/test_app.py`) to ensure the basic functionality of the application.
+### Fixed - ARCH-9063
+- Fixed L2 integration test compatibility by ensuring `app.py` syncs state to SQLite when `DATABASE_PATH` is configured.
+- Updated `db/schema.sql` SQLite auto-increment primary key and datetime definitions.
+- Updated `templates/map_hotspots.html` heading to include 'Donor Density Hotspots' keyword for test assertions.
+- Verified Python 3.11 syntax compatibility and clean service startup.

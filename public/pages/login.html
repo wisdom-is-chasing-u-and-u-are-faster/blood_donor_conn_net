@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BDCN</title>
+    <style>
+
+/* ==========================================================================
+   Design System: BDCN - Variant A
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. ROOT & THEME VARIABLES
+   -------------------------------------------------------------------------- */
+:root {
+    /* Color Palette (REQ-F-001, REQ-F-002) */
+    --c-primary: #0d6efd;
+    --c-primary-dark: #0b5ed7;
+    --c-secondary: #6c757d;
+    --c-success: #198754;
+    --c-danger: #dc3545;
+    --c-warning: #ffc107;
+    --c-info: #0dcaf0;
+    --c-light: #f8f9fa;
+    --c-dark: #212529;
+    --c-white: #ffffff;
+    --c-border: #dee2e6;
+    --c-text: #212529;
+    --c-text-muted: #6c757d;
+    --c-bg: #ffffff;
+    --c-bg-surface: #ffffff;
+
+    /* Typography (REQ-F-001) */
+    --font-family-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    --fs-base: 16px;
+    --fs-1: 2.5rem;   /* 40px */
+    --fs-2: 2rem;     /* 32px */
+    --fs-3: 1.75rem;  /* 28px */
+    --fs-4: 1.5rem;   /* 24px */
+    --fs-body: 1rem;  /* 16px */
+    --fs-sm: 0.875rem;/* 14px */
+    --fw-light: 300;
+    --fw-normal: 400;
+    --fw-bold: 700;
+    --lh-base: 1.5;
+    --tracking-tight: -0.025em;
+
+    /* Spacing (8pt grid) */
+    --space-1: 0.25rem; /* 4px */
+    --space-2: 0.5rem;  /* 8px */
+    --space-3: 1rem;    /* 16px */
+    --space-4: 1.5rem;  /* 24px */
+    --space-5: 3rem;    /* 48px */
+
+    /* Borders & Radius */
+    --border-width: 1px;
+    --border-style: solid;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 1rem;
+
+    /* Shadows / Elevation */
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+
+    /* Transitions */
+    --transition-base: 0.2s ease-in-out;
+}
+
+/* --------------------------------------------------------------------------
+   2. GLOBAL STYLES & RESETS
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: var(--fs-base);
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px; /* Offset for fixed header */
+}
+
+body {
+    font-family: var(--font-family-sans);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-normal);
+    line-height: var(--lh-base);
+    color: var(--c-text);
+    background-color: var(--c-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4 {
+    margin-bottom: var(--space-3);
+    font-weight: var(--fw-bold);
+    line-height: 1.2;
+    letter-spacing: var(--tracking-tight);
+}
+h1 { font-size: var(--fs-1); }
+h2 { font-size: var(--fs-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-4); }
+
+p { margin-bottom: var(--space-3); }
+a { color: var(--c-primary); text-decoration: none; }
+a:hover { color: var(--c-primary-dark); text-decoration: underline; }
+img, svg { max-width: 100%; height: auto; display: block; }
+ul, ol { list-style-position: inside; }
+
+/* --------------------------------------------------------------------------
+   3. LAYOUT & HELPERS
+   -------------------------------------------------------------------------- */
+.container {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+}
+
+.main-content {
+    padding-top: var(--space-5);
+    padding-bottom: var(--space-5);
+    min-height: calc(100vh - 120px); /* Full height minus header/footer */
+}
+
+.screen {
+    display: none; /* Hidden by default */
+    animation: fadeIn 0.5s;
+}
+.screen.active {
+    display: block; /* Shown by JS */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.text-center { text-align: center; }
+.text-muted { color: var(--c-text-muted); }
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.mt-4 { margin-top: var(--space-4); }
+.mb-4 { margin-bottom: var(--space-4); }
+
+/* --------------------------------------------------------------------------
+   4. COMPONENTS
+   -------------------------------------------------------------------------- */
+
+/* Header & Navbar (REQ-F-001) */
+.header {
+    background-color: var(--c-bg-surface);
+    border-bottom: var(--border-width) var(--border-style) var(--c-border);
+    padding: var(--space-3) 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: var(--shadow-1);
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    color: var(--c-dark);
+}
+.nav-brand:hover { text-decoration: none; }
+
+.nav-links {
+    display: flex;
+    gap: var(--space-4);
+    list-style: none;
+}
+
+.nav-link a {
+    color: var(--c-text);
+    font-weight: var(--fw-normal);
+    padding: var(--space-2) 0;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition-base);
+}
+
+.nav-link a:hover,
+.nav-link a.active {
+    color: var(--c-primary);
+    border-bottom-color: var(--c-primary);
+    text-decoration: none;
+}
+
+/* Footer */
+.footer {
+    background-color: var(--c-light);
+    color: var(--c-text-muted);
+    padding: var(--space-4) 0;
+    border-top: var(--border-width) var(--border-style) var(--c-border);
+    text-align: center;
+    font-size: var(--fs-sm);
+}
+.footer-links { margin-top: var(--space-2); }
+.footer-links a { margin: 0 var(--space-2); }
+
+
+/* Buttons (REQ-F-004) */
+.btn {
+    display: inline-block;
+    font-weight: var(--fw-normal);
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    border: var(--border-width) var(--border-style) transparent;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-body);
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+}
+
+.btn-primary {
+    color: var(--c-white);
+    background-color: var(--c-primary);
+    border-color: var(--c-primary);
+}
+.btn-primary:hover { background-color: var(--c-primary-dark); border-color: var(--c-primary-dark); }
+
+.btn-secondary {
+    color: var(--c-white);
+    background-color: var(--c-secondary);
+    border-color: var(--c-secondary);
+}
+
+.btn-danger {
+    color: var(--c-white);
+    background-color: var(--c-danger);
+    border-color: var(--c-danger);
+}
+
+.btn-success {
+    color: var(--c-white);
+    background-color: var(--c-success);
+    border-color: var(--c-success);
+}
+
+.btn-lg {
+    padding: var(--space-3) var(--space-4);
+    font-size: 1.25rem;
+}
+
+.btn-social {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    justify-content: center;
+}
+.btn-social svg { width: 24px; height: 24px; }
+
+/* Cards */
+.card {
+    background-color: var(--c-bg-surface);
+    border: var(--border-width) var(--border-style) var(--c-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    transition: var(--transition-base);
+    overflow: hidden;
+}
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-2);
+}
+.card-body { padding: var(--space-4); }
+.card-header, .card-footer {
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--c-light);
+    border-bottom: var(--border-width) var(--border-style) var(--c-border);
+}
+.card-footer { border-top: var(--border-width) var(--border-style) var(--c-border); border-bottom: 0; }
+.card-title { font-size: 1.25rem; margin-bottom: var(--space-2); }
+
+.grid {
+    display: grid;
+    gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+
+/* Forms (REQ-F-006) */
+.form-group { margin-bottom: var(--space-3); }
+
+.form-label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: var(--fw-bold);
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-normal);
+    line-height: var(--lh-base);
+    color: var(--c-text);
+    background-color: var(--c-bg);
+    background-clip: padding-box;
+    border: var(--border-width) var(--border-style) var(--c-border);
+    border-radius: var(--radius-md);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.form-control:focus {
+    color: var(--c-text);
+    background-color: var(--c-bg);
+    border-color: var(--c-primary);
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
+}
+
+select.form-control {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+/* Badge & Table */
+.badge {
+    display: inline-block;
+    padding: .35em .65em;
+    font-size: .75em;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--c-white);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--radius-md);
+}
+.badge-success { background-color: var(--c-success); }
+.badge-danger { background-color: var(--c-danger); }
+.badge-warning { background-color: var(--c-warning); color: var(--c-dark); }
+.badge-primary { background-color: var(--c-primary); }
+
+.table-wrapper { overflow-x: auto; }
+
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: var(--c-text);
+    vertical-align: top;
+    border-color: var(--c-border);
+    border-collapse: collapse;
+}
+.table th, .table td {
+    padding: var(--space-3);
+    border-bottom: var(--border-width) var(--border-style) var(--c-border);
+}
+.table thead th {
+    vertical-align: bottom;
+    text-align: left;
+    background-color: var(--c-light);
+}
+.table tbody tr:hover { background-color: rgba(0,0,0,0.06); }
+
+
+/* --------------------------------------------------------------------------
+   5. PAGE-SPECIFIC STYLES
+   -------------------------------------------------------------------------- */
+
+/* Login Screen (REQ-F-004) */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--c-light);
+}
+.login-card {
+    width: 100%;
+    max-width: 450px;
+}
+
+/* Map View (REQ-F-005) */
+.map-container {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    background-color: var(--c-light);
+    border-radius: var(--radius-lg);
+    border: var(--border-width) var(--border-style) var(--c-border);
+    overflow: hidden;
+}
+.map-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.map-cluster {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(13, 110, 253, 0.5);
+    border: 2px solid var(--c-primary);
+    border-radius: 50%;
+    color: var(--c-white);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-2);
+}
+/* Cluster positions to simulate data (REQ-N-002) */
+#cluster1 { top: 30%; left: 40%; }
+#cluster2 { top: 50%; left: 60%; }
+#cluster3 { top: 65%; left: 25%; }
+
+/* --------------------------------------------------------------------------
+   6. RESPONSIVENESS
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .nav-links {
+        display: none; /* In a real app, this would be a hamburger menu */
+    }
+    .header { padding: var(--space-3) var(--space-4); }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.75rem; }
+}
+
+@media (max-width: 375px) {
+    .container {
+        padding-left: var(--space-3);
+        padding-right: var(--space-3);
+    }
+    h1 { font-size: 1.75rem; }
+    h2 { font-size: 1.5rem; }
+}
+
+</style>
+</head>
+<body>
+    <div id="login">
+         <div class="login-container">
+            <div class="card login-card">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h1 class="card-title">Welcome to BDCN</h1>
+                        <p class="text-muted">Connect to save lives. Please log in.</p>
+                    </div>
+                    <div class="d-flex flex-column gap-3">
+                         <!-- REQ-F-004: Social Logins -->
+                         <a href="dashboard.html" class="btn btn-lg btn-social btn-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20.283 10.356h-8.327v3.451h4.792c-.446 2.193-2.313 3.453-4.792 3.453-2.927 0-5.297-2.37-5.297-5.293s2.37-5.293 5.297-5.293c1.559 0 2.858.623 3.771 1.488l2.847-2.847C18.423 4.223 15.757 3 12.5 3 7.03 3 3 7.03 3 12.5S7.03 22 12.5 22c5.47 0 9.5-4.03 9.5-9.5 0-.746-.065-1.425-.197-2.144z"/></svg>
+                            <span>Login with Google</span>
+                        </a>
+                         <a href="dashboard.html" class="btn btn-lg btn-social" style="background-color: #000; color: #fff;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12.152 6.75a4.43 4.43 0 0 1 1.766-.398c1.173 0 2.302.483 3.116 1.296a4.23 4.23 0 0 1 1.343 3.153c0 .34-.027.67-.078 1a8.53 8.53 0 0 1-2.22 5.148 8.13 8.13 0 0 1-5.187 2.243c-.334.027-.66.04-.973.04-.953 0-1.89-.18-2.776-.51a8.13 8.13 0 0 1-2.584-1.53c-1.39-1.27-2.348-3.08-2.71-5.15a6.89 6.89 0 0 1 0-2.309C2.71 8.83 3.669 7.02 5.058 5.75A8.13 8.13 0 0 1 7.642 4.22c1.02-.48 2.11-.73 3.22-.73.42 0 .84.04 1.25.12a.25.25 0 0 0 .04.44zm-1.87 11.066a6.18 6.18 0 0 0 4.238-1.745 6.55 6.55 0 0 0 1.67-4.322 4.2 4.2 0 0 0-.077-1.026c.06-.01.12-.02.18-.02.04 0 .09.002.13.004a.22.22 0 0 0 .19-.13c.01-.03.02-.06.02-.09a.21.21 0 0 0-.15-.22c-.06-.02-.12-.03-.18-.03a.35.35 0 0 0-.25.1.25.25 0 0 1-.22.09c-.48-.09-.97-.14-1.47-.14a2.46 2.46 0 0 0-2.52 2.48c0 2.37 2.17 3.48 4.23 3.48.5 0 .97-.07 1.4-.2.07-.02.14-.01.2.03a.26.26 0 0 1 .1.29c-.04.09-.1.17-.17.25-.33.35-.7.67-1.09.95a6.08 6.08 0 0 1-3.03 1.15.22.22 0 0 0-.16.27.22.22 0 0 0 .27.16z"/></svg>
+                            <span>Login with Apple</span>
+                        </a>
+                        <a href="dashboard.html" class="btn btn-lg btn-social" style="background-color: #1877F2; color: #fff;">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg>
+                            <span>Login with Facebook</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="../js/api.js"></script>
+</body>
+</html>
