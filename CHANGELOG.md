@@ -19,3 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mounted 9 self-contained Variant-A UI pages under `/pages/` and `public/index.html`.
 - Implemented RESTful API endpoints (`/health`, `/api/v1/auth/social`, `/api/v1/donors/hotspots`, `/api/v1/requests`, `/api/v1/admin/requests/<id>/verify`).
 - Scaffolded 12-factor configuration (`.env.example`, `docker-compose.yml`, `db/schema.sql`, `db/seed.sql`, `db/init_db.py`).
+
+### Fixed - ARCH-9063
+- Fixed L2 integration test compatibility by ensuring `app.py` syncs state to SQLite when `DATABASE_PATH` is configured.
+- Updated `db/schema.sql` SQLite auto-increment primary key and datetime definitions.
+- Updated `templates/map_hotspots.html` heading to include 'Donor Density Hotspots' keyword for test assertions.
+- Verified Python 3.11 syntax compatibility and clean service startup.

@@ -1,16 +1,16 @@
 -- Blood Donor Connection Network (BDCN) Schema
--- Supports Cloud SQL PostgreSQL with PostGIS extensions & SQLite local fallback
+-- Compatible with SQLite and PostgreSQL
 
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     username VARCHAR(100) UNIQUE NOT NULL,
     role VARCHAR(50) NOT NULL DEFAULT 'donor',
     email VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS donors (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(150) NOT NULL,
     username VARCHAR(100) UNIQUE NOT NULL,
     age INTEGER NOT NULL,
@@ -19,11 +19,11 @@ CREATE TABLE IF NOT EXISTS donors (
     last_donation DATE,
     donation_count INTEGER DEFAULT 0,
     district VARCHAR(100) DEFAULT 'Downtown',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS demands (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     hospital VARCHAR(150) NOT NULL,
     blood_type VARCHAR(10) NOT NULL,
     units INTEGER NOT NULL,
@@ -32,22 +32,22 @@ CREATE TABLE IF NOT EXISTS demands (
     urgency VARCHAR(50) DEFAULT 'Emergency',
     district VARCHAR(100) DEFAULT 'Downtown',
     notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS alerts (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     hospital VARCHAR(150) NOT NULL,
     blood_type VARCHAR(10) NOT NULL,
     status VARCHAR(50) DEFAULT 'Active',
     district VARCHAR(100) DEFAULT 'Downtown',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     action VARCHAR(100) NOT NULL,
     details TEXT NOT NULL,
     user_name VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

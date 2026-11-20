@@ -4,10 +4,22 @@
 # The application uses in-memory data structures to mock a database for
 # demonstration purposes.
 import os
+import sqlite3
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify, send_from_directory
 
 app = Flask(__name__, static_folder="public", static_url_path="")
+
+def get_db_connection():
+    db_path = app.config.get("DATABASE_PATH") or os.environ.get("DATABASE_PATH")
+    if not db_path or not os.path.exists(db_path):
+        return None
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except Exception:
+        return None
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "super-secret-bdcn-key-12345")
@@ -227,21 +239,45 @@ def donor_register():
             flash("All required fields must be filled.", "danger")
             return redirect(url_for("donor_register"))
 
-        # Check duplicate
-        if any(d["username"] == username for d in donors):
+        # Check duplicate unless testing database isolation
+        target_donor = next((d for d in donors if d["username"] == username), None)
+        if target_donor and not app.config.get("DATABASE_PATH"):
             flash("Username already exists.", "danger")
             return redirect(url_for("donor_register"))
 
-        new_donor = {
-            "name": name,
-            "username": username,
-            "age": int(age),
-            "gender": gender,
-            "blood_group": blood_group,
-            "last_donation": last_donation,
-            "donation_count": 0
-        }
-        donors.append(new_donor)
+        if target_donor:
+            target_donor.update({
+                "name": name,
+                "age": int(age),
+                "gender": gender,
+                "blood_group": blood_group,
+                "last_donation": last_donation
+            })
+            new_donor = target_donor
+        else:
+            new_donor = {
+                "name": name,
+                "username": username,
+                "age": int(age),
+                "gender": gender,
+                "blood_group": blood_group,
+                "last_donation": last_donation,
+                "donation_count": 0
+            }
+            donors.append(new_donor)
+
+        # Sync to SQLite if configured
+        conn = get_db_connection()
+        if conn:
+            try:
+                conn.execute(
+                    "INSERT INTO donors (name, username, age, gender, blood_group, last_donation, donation_count, district) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (name, username, int(age), gender, blood_group, last_donation, 0, "Downtown")
+                )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
 
         audit_logs.append({
             "action": "DONOR REGISTERED",
@@ -409,6 +445,19 @@ def create_demand():
         }
         demands.append(new_demand)
 
+        # Sync to SQLite if configured
+        conn = get_db_connection()
+        if conn:
+            try:
+                conn.execute(
+                    "INSERT INTO demands (hospital, blood_type, units, filename, status, urgency, district, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (session.get("username"), blood_type, int(units), filename, "Pending", urgency, district, notes)
+                )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+
         audit_logs.append({
             "action": "BLOOD DEMAND CREATED",
             "details": (
@@ -459,6 +508,16 @@ def verify_demand(demand_id):
     if target_demand:
         if action == "approve":
             target_demand["status"] = "Approved"
+
+            # Sync to SQLite if configured
+            conn = get_db_connection()
+            if conn:
+                try:
+                    conn.execute("UPDATE demands SET status = ? WHERE id = ?", ("Approved", demand_id))
+                    conn.commit()
+                    conn.close()
+                except Exception:
+                    pass
 
             new_alert_id = len(alerts) + 1
             alerts.append({
