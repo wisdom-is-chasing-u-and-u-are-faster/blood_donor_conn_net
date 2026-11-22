@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demand Details - EDART</title>
+    <style>
+/*
+* =================================================================================================
+* DESIGN SYSTEM (shared/app.css)
+* EDART - Emergency Donor Availability & Response Tracking
+* =================================================================================================
+*/
+
+:root {
+    /* Color Palette (Clinical & Professional) */
+    --primary: #005A9C; /* Deep Blue */
+    --primary-light: #007BFF; /* Lighter Blue for accents/hovers */
+    --success: #28A745; /* Green for 'Available' */
+    --warning: #FFC107; /* Amber for 'Cooldown' */
+    --danger: #DC3545; /* Red for 'Unavailable' and errors */
+    --light: #F8F9FA;
+    --dark: #343A40;
+
+    /* Neutral Color Ramp */
+    --white: #FFFFFF;
+    --gray-100: #F8F9FA;
+    --gray-200: #E9ECEF;
+    --gray-300: #DEE2E6;
+    --gray-400: #CED4DA;
+    --gray-500: #ADB5BD;
+    --gray-600: #6C757D; /* Body Text */
+    --gray-700: #495057;
+    --gray-800: #343A40; /* Headings */
+    --gray-900: #212529;
+
+    /* Semantic Colors */
+    --surface: var(--white);
+    --surface-alt: var(--gray-100);
+    --text-primary: var(--gray-800);
+    --text-secondary: var(--gray-600);
+    --border-color: var(--gray-300);
+    --link-color: var(--primary);
+    --focus-ring-color: hsl(211, 100%, 75%);
+
+    /* Typography */
+    --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-size-base: 16px;
+    --line-height-base: 1.5;
+
+    /* Spacing (8pt Grid) */
+    --space-1: 0.5rem; /* 8px */
+    --space-2: 1rem;   /* 16px */
+    --space-3: 1.5rem; /* 24px */
+    --space-4: 2rem;   /* 32px */
+    --space-5: 2.5rem; /* 40px */
+    --space-6: 3rem;   /* 48px */
+
+    /* Sizing */
+    --container-width: 1140px;
+    --header-height: 70px;
+
+    /* Borders & Radius */
+    --border-width: 1px;
+    --border-radius-sm: 0.25rem; /* 4px */
+    --border-radius-md: 0.5rem;  /* 8px */
+    --border-radius-lg: 1rem;   /* 16px */
+    --border-radius-pill: 50rem;
+
+    /* Elevation (Shadows) */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    /* Transitions */
+    --transition-base: all 0.2s ease-in-out;
+}
+
+/* Dark Theme */
+body.dark-theme {
+    --primary: #4A90E2;
+    --primary-light: #6CACF8;
+    --success: #50B83C;
+    --warning: #F5A623;
+    --danger: #E14C4C;
+
+    --surface: #212529;
+    --surface-alt: #343A40;
+    --text-primary: var(--gray-100);
+    --text-secondary: var(--gray-400);
+    --border-color: var(--gray-700);
+    --link-color: var(--primary);
+}
+
+
+/*
+* =================================================================================================
+* BASE & RESET
+* =================================================================================================
+*/
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    font-size: var(--font-size-base);
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-family-sans);
+    line-height: var(--line-height-base);
+    background-color: var(--surface-alt);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    margin-bottom: var(--space-2);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+h1 { font-size: 2.25rem; } /* 36px */
+h2 { font-size: 1.75rem; } /* 28px */
+h3 { font-size: 1.5rem; }  /* 24px */
+h4 { font-size: 1.25rem; } /* 20px */
+
+p {
+    margin-top: 0;
+    margin-bottom: var(--space-2);
+}
+
+a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: var(--transition-base);
+}
+
+a:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+}
+
+.skip-to-content {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.skip-to-content:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+}
+
+/*
+* =================================================================================================
+* LAYOUT & HELPERS
+* =================================================================================================
+*/
+.container {
+    width: 100%;
+    max-width: var(--container-width);
+    margin-right: auto;
+    margin-left: auto;
+    padding-right: var(--space-3);
+    padding-left: var(--space-3);
+}
+
+.main-content {
+    padding-top: calc(var(--header-height) + var(--space-4));
+    padding-bottom: var(--space-5);
+    min-height: calc(100vh - var(--header-height));
+}
+
+.screen {
+    display: none; /* Hidden by default, shown by JS */
+}
+
+.screen.active {
+    display: block;
+}
+
+.d-flex { display: flex !important; }
+.align-items-center { align-items: center !important; }
+.justify-content-between { justify-content: space-between !important; }
+.justify-content-center { justify-content: center !important; }
+.text-center { text-align: center !important; }
+.mb-0 { margin-bottom: 0 !important; }
+.mb-1 { margin-bottom: var(--space-1) !important; }
+.mb-2 { margin-bottom: var(--space-2) !important; }
+.mb-3 { margin-bottom: var(--space-3) !important; }
+.mb-4 { margin-bottom: var(--space-4) !important; }
+.mt-4 { margin-top: var(--space-4) !important; }
+.fw-bold { font-weight: 600 !important; }
+
+/*
+* =================================================================================================
+* REUSABLE COMPONENTS
+* =================================================================================================
+*/
+
+/* App Header */
+.app-header {
+    background-color: var(--surface);
+    box-shadow: var(--shadow-md);
+    padding: 0 var(--space-3);
+    height: var(--header-height);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.app-header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.logo .logo-icon {
+    color: var(--danger);
+    margin-right: var(--space-1);
+}
+
+.logo:hover {
+    text-decoration: none;
+}
+
+.main-nav ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    align-items: center;
+}
+
+.main-nav li {
+    margin-left: var(--space-3);
+}
+
+.main-nav a {
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: var(--space-1) 0;
+    border-bottom: 2px solid transparent;
+}
+
+.main-nav a.active,
+.main-nav a:hover {
+    color: var(--text-primary);
+    border-bottom-color: var(--primary);
+    text-decoration: none;
+}
+
+/* App Footer */
+.app-footer {
+    background-color: var(--surface);
+    border-top: var(--border-width) solid var(--border-color);
+    padding: var(--space-3) 0;
+    color: var(--text-secondary);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    font-weight: 500;
+    line-height: var(--line-height-base);
+    color: var(--text-primary);
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    border: var(--border-width) solid transparent;
+    padding: 0.625rem 1.25rem; /* 10px 20px */
+    font-size: 1rem;
+    border-radius: var(--border-radius-md);
+    transition: var(--transition-base);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+}
+
+.btn:disabled, .btn.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    color: var(--white);
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+.btn-primary:hover {
+    background-color: var(--primary-light);
+    border-color: var(--primary-light);
+    color: var(--white);
+    text-decoration: none;
+}
+
+.btn-success {
+    color: var(--white);
+    background-color: var(--success);
+    border-color: var(--success);
+}
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    color: var(--white);
+    text-decoration: none;
+}
+
+.btn-outline-secondary {
+    color: var(--text-secondary);
+    border-color: var(--gray-400);
+}
+.btn-outline-secondary:hover {
+    background-color: var(--gray-200);
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+/* Cards */
+.card {
+    background-color: var(--surface);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+    margin-bottom: var(--space-3);
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-header, .card-body, .card-footer {
+    padding: var(--space-3);
+}
+
+.card-header {
+    border-bottom: var(--border-width) solid var(--border-color);
+    background-color: var(--surface-alt);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-title {
+    margin-bottom: 0;
+    font-size: 1.25rem;
+}
+
+/* Pills / Badges */
+.badge {
+    display: inline-block;
+    padding: .35em .65em;
+    font-size: .75em;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--white);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--border-radius-pill);
+}
+
+.badge-success { background-color: var(--success); }
+.badge-danger { background-color: var(--danger); }
+.badge-warning { background-color: var(--warning); color: var(--dark); }
+.badge-secondary { background-color: var(--gray-500); }
+
+/* Availability Toggle Switch */
+.availability-toggle {
+    display: flex;
+    align-items: center;
+}
+.availability-toggle .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    margin: 0 var(--space-2);
+}
+.availability-toggle .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.availability-toggle .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--danger);
+    transition: .4s;
+    border-radius: 34px;
+}
+.availability-toggle .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+.availability-toggle input:checked + .slider {
+    background-color: var(--success);
+}
+.availability-toggle input:checked + .slider:before {
+    transform: translateX(26px);
+}
+.availability-toggle input:disabled + .slider {
+    cursor: not-allowed;
+    background-color: var(--gray-400);
+}
+.availability-toggle-label {
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.modal-content {
+    background-color: var(--surface);
+    margin: auto;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 500px;
+    animation: fadeIn 0.3s;
+}
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-title {
+    margin-bottom: 0;
+    line-height: 1.5;
+    font-size: 1.5rem;
+}
+.modal-body {
+    position: relative;
+    padding: var(--space-3);
+}
+.modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    padding: var(--space-2);
+    border-top: 1px solid var(--border-color);
+}
+.modal-footer > * {
+    margin: var(--space-1);
+}
+.btn-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: .5;
+    cursor: pointer;
+}
+body.dark-theme .btn-close {
+    color: var(--white);
+    text-shadow: none;
+}
+.btn-close:hover {
+    opacity: .75;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Form Controls */
+.form-group {
+    margin-bottom: var(--space-3);
+}
+.form-label {
+    display: inline-block;
+    margin-bottom: var(--space-1);
+    font-weight: 500;
+}
+.form-select {
+    display: block;
+    width: 100%;
+    padding: .75rem 1rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background-color: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 16px 12px;
+}
+.form-select:focus {
+    border-color: var(--primary-light);
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem var(--focus-ring-color);
+}
+
+/* Alert / Feedback */
+.alert {
+    position: relative;
+    padding: 1rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-md);
+}
+.alert-warning {
+    color: #664d03;
+    background-color: #fff3cd;
+    border-color: #ffc107;
+}
+.alert-info {
+    color: #055160;
+    background-color: #cff4fc;
+    border-color: #b6effb;
+}
+.alert-success {
+    color: #0f5132;
+    background-color: #d1e7dd;
+    border-color: #badbcc;
+}
+
+/* Utility for icons */
+.icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    stroke-width: 0;
+    stroke: currentColor;
+    fill: currentColor;
+    vertical-align: middle;
+}
+
+</style>
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content">Skip to main content</a>
+
+    <header class="app-header">
+        <div class="container">
+            <a href="requester_dashboard.html" class="logo" aria-label="EDART Home">
+                 <span class="logo-icon">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2v-6zm0 8h2v2h-2v-2z" fill="currentColor"/></svg>
+                </span>
+                EDART
+            </a>
+            <nav class="main-nav" aria-label="Main navigation">
+                <ul>
+                    <li><a href="requester_dashboard.html" class="active">My Demands</a></li>
+                    <li><a href="#">Create Demand</a></li>
+                    <li><a href="#">Logout (Requester)</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="main-content">
+        <div class="container">
+            <div class="mb-4">
+                <a href="#" class="text-secondary">&larr; Back to All Demands</a>
+                <h1 class="mt-2">Demand Details: Urgent A+</h1>
+            </div>
+            
+            <!-- REQ-F-010, REQ-F-011, REQ-F-012, REQ-F-013 -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Live Commitment Status</h2>
+                    <div class="text-right">
+                        <span class="text-secondary d-block">Last Updated: Just now</span>
+                        <span class="fw-bold d-block" style="font-size: 1.2rem;">City General Hospital</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- REQ-F-010: Live tally -->
+                    <div class="text-center mb-4">
+                        <h3 class="text-secondary mb-1">Commitments Received</h3>
+                        <p class="display-4 fw-bold mb-0" style="font-size: 3.5rem; color: var(--primary);">3 / 5</p>
+                        <p class="text-secondary">(Committed / Units Requested)</p>
+                    </div>
+
+                    <!-- REQ-F-011 & REQ-F-012: Anonymized list -->
+                    <h3 class="mb-3">Committed Donors</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Donor ID (Anonymized)</th>
+                                <th>ETA Specified</th>
+                                <th>Committed At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <!-- REQ-F-012: Name anonymized -->
+                                <td>J. Doe</td>
+                                <td>Within 1 hour</td>
+                                <td>10:32 AM</td>
+                            </tr>
+                             <tr>
+                                <td>A. Smith</td>
+                                <td>Unspecified</td>
+                                <td>10:28 AM</td>
+                            </tr>
+                             <tr>
+                                <td>M. Jones</td>
+                                <td>Today</td>
+                                <td>9:55 AM</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <style>
+                        .table { width: 100%; border-collapse: collapse; }
+                        .table th, .table td { 
+                            padding: var(--space-2); 
+                            border-bottom: 1px solid var(--border-color); 
+                            text-align: left; 
+                        }
+                        .table th { 
+                            font-weight: 600; 
+                            color: var(--text-secondary); 
+                            background-color: var(--surface-alt);
+                        }
+                        .table tbody tr:last-child td { border-bottom: 0; }
+                        .table tbody tr:hover { background-color: var(--gray-100); }
+                        body.dark-theme .table tbody tr:hover { background-color: var(--gray-800); }
+                    </style>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container">
+            <p class="mb-0">&copy; 2024 Blood Donor Connection Network (BDCN). All Rights Reserved.</p>
+        </div>
+    </footer>
+<script src="../js/api.js"></script></body>
+</html>
