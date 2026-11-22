@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **[ARCH-9275]** UI Pages + Requirements: Emergency Donor Availability & Response Tracking
+  - *Key modifications:*
+    - `db/schema.sql`
+    - `db/seed.sql`
+    - `app.py`
+    - `public/js/api.js`
+    - `public/pages/donor-dashboard.html`
+    - `public/pages/donor-requests.html`
+    - `public/pages/requester-dashboard.html`
+    - `tests/test_donor_availability_and_response.py`
 ### Added - ARCH-9061
 - Mounted Variant-A self-contained HTML pages: `admin-dashboard.html`, `create-request.html`, `dashboard.html`, `login.html`, `profile.html`, and `request-feed.html` under `public/pages/`.
 - Integrated full Variant-A showcase preview into `public/index.html` with responsive theme styling.

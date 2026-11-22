@@ -1,21 +1,21 @@
 -- Blood Donor Connection Network (BDCN) Seed Data
+-- Compatible with SQLite and PostgreSQL
 
-INSERT INTO users (username, role, email) VALUES
-('Mercy Hospital', 'hospital', 'coordinator@mercyhospital.org'),
-('admin_district', 'admin', 'admin.central@bdcn-health.gov'),
-('johndoe', 'donor', 'johndoe@example.com'),
-('janedoe', 'donor', 'janedoe@example.com')
-ON CONFLICT (username) DO NOTHING;
+INSERT OR IGNORE INTO users (id, username, role, email) VALUES
+(1, 'donor_john', 'donor', 'john@example.com'),
+(2, 'donor_jane', 'donor', 'jane@example.com'),
+(3, 'hospital_admin', 'hospital', 'admin@generalhospital.com'),
+(4, 'district_admin', 'admin', 'district.admin@bdcn.org');
 
-INSERT INTO donors (name, username, age, gender, blood_group, last_donation, donation_count, district) VALUES
-('John Doe', 'johndoe', 29, 'Male', 'A+', '2025-11-15', 3, 'Downtown'),
-('Jane Smith', 'janesmith', 34, 'Female', 'O-', '2025-08-20', 5, 'North District'),
-('Alice Brown', 'aliceb', 22, 'Female', 'B+', '2026-01-10', 1, 'West Hills')
-ON CONFLICT (username) DO NOTHING;
+INSERT OR IGNORE INTO donors (id, name, username, age, gender, blood_group, last_donation, donation_count, district, availability_status) VALUES
+(1, 'John Doe', 'donor_john', 28, 'Male', 'A+', '2026-08-15', 3, 'Downtown', 'Available'),
+(2, 'Jane Smith', 'donor_jane', 32, 'Female', 'O-', '2026-10-01', 5, 'North District', 'Available');
 
-INSERT INTO demands (hospital, blood_type, units, filename, status, urgency, district, notes) VALUES
-('General Hospital', 'A+', 10, 'compliance_doc_A.pdf', 'Approved', 'Emergency', 'Downtown', 'Acute trauma unit requirement'),
-('General Hospital', 'O-', 4, 'compliance_doc_B.pdf', 'Pending', 'Urgent', 'North District', 'Scheduled pediatric surgery');
+INSERT OR IGNORE INTO demands (id, hospital, blood_type, units, filename, status, urgency, district, notes) VALUES
+(1, 'General Hospital', 'A+', 10, 'compliance_doc_A.pdf', 'Approved', 'Emergency', 'Downtown', 'Immediate trauma response needed'),
+(2, 'General Hospital', 'O-', 4, 'compliance_doc_B.pdf', 'Pending', 'Urgent', 'North District', 'Routine surgical backup units'),
+(3, 'City Medical Center', 'B+', 6, 'compliance_doc_C.pdf', 'Approved', 'Emergency', 'East District', 'NICU blood replacement unit');
 
-INSERT INTO alerts (hospital, blood_type, status, district) VALUES
-('General Hospital', 'A+', 'Active', 'Downtown');
+INSERT OR IGNORE INTO alerts (id, hospital, blood_type, status, district) VALUES
+(1, 'General Hospital', 'A+', 'Active', 'Downtown'),
+(2, 'City Medical Center', 'O-', 'Active', 'North District');
