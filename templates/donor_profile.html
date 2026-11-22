@@ -24,6 +24,42 @@
                     <small class="text-muted">Last Donation Date:</small>
                     <span class="fw-bold">{{ donor.last_donation or "Never" }}</span>
                 </div>
+                <div class="border-top pt-3 text-start">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">Live Availability:</small>
+                        <span class="badge {% if cooldown_info.status == 'Available' %}bg-success{% elif cooldown_info.status == 'In Recovery Cooldown' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            {{ cooldown_info.status }}
+                        </span>
+                    </div>
+                    {% if cooldown_info.in_cooldown %}
+                        <div class="alert alert-warning py-1 px-2 mb-2 small">
+                            ⏳ Cooldown: <strong>{{ cooldown_info.remaining_days }} days</strong> remaining (until {{ cooldown_info.cooldown_until }}).
+                        </div>
+                    {% else %}
+                        <form method="POST" action="/api/v1/donors/availability" class="d-flex align-items-center justify-content-between">
+                            <span class="small text-muted">Toggle Status:</span>
+                            <div class="btn-group btn-group-sm">
+                                <a href="javascript:void(0)" onclick="updateStatus('Available')" class="btn btn-sm {% if cooldown_info.status == 'Available' %}btn-success{% else %}btn-outline-success{% endif %}">Available</a>
+                                <a href="javascript:void(0)" onclick="updateStatus('Unavailable')" class="btn btn-sm {% if cooldown_info.status == 'Unavailable' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">Unavailable</a>
+                            </div>
+                        </form>
+                        <script>
+                            async function updateStatus(st) {
+                                const res = await fetch('/api/v1/donors/availability', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ status: st })
+                                });
+                                const data = await res.json();
+                                if (data.status === 'success') {
+                                    window.location.reload();
+                                } else {
+                                    alert(data.message || 'Failed to update status');
+                                }
+                            }
+                        </script>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

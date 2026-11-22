@@ -228,3 +228,23 @@ def test_ui_pages_serving(client):
         res = client.get(f"/pages/{p}")
         assert res.status_code == 200
         assert b"api.js" in res.data
+
+
+def test_donor_profile_view_availability_cooldown(client):
+    """Verify live availability and cooldown status appear in donor profile HTML view."""
+    with client.session_transaction() as sess:
+        sess["username"] = "johndoe"
+        sess["role"] = "donor"
+
+    # Default available
+    res = client.get("/donor/profile")
+    assert res.status_code == 200
+    assert b"Live Availability:" in res.data
+    assert b"Available" in res.data
+
+    # Log donation -> in cooldown
+    client.post("/api/v1/donors/log-donation", json={"username": "johndoe"})
+    res = client.get("/donor/profile")
+    assert res.status_code == 200
+    assert b"In Recovery Cooldown" in res.data
+    assert b"56 days" in res.data

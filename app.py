@@ -412,8 +412,10 @@ def donor_profile():
             "units": 1
         })
 
+    cooldown_info = compute_donor_cooldown(target_donor)
     return render_template("donor_profile.html",
-                           donor=target_donor, badges=badges, history=history)
+                           donor=target_donor, badges=badges, history=history,
+                           cooldown_info=cooldown_info)
 
 
 @app.route("/donor/share/<badge_name>", methods=["POST"])
@@ -537,8 +539,7 @@ def create_demand():
         audit_logs.append({
             "action": "BLOOD DEMAND CREATED",
             "details": (
-                f"Demand #{new_id} ({blood_type}, {units} units) created for {district} "
-                f"with urgency {urgency}. File: {filename}. Notes: {notes}"
+                f"Demand #{new_id} ({blood_type}, {units} units) created for {district} with urgency {urgency}. File: {filename}. Notes: {notes}"
             ),
             "user": session.get("username"),
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -611,8 +612,7 @@ def verify_demand(demand_id):
             audit_logs.append({
                 "action": "EMERGENCY DEMAND APPROVED",
                 "details": (
-                    f"Approved demand #{demand_id} ({target_demand['blood_type']}) "
-                    f"for {target_demand.get('district', 'Downtown')}. Emitted event."
+                    f"Approved demand #{demand_id} ({target_demand['blood_type']}) for {target_demand.get('district', 'Downtown')}. Emitted event."
                 ),
                 "user": session.get("username"),
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
