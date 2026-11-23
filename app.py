@@ -1087,19 +1087,53 @@ def api_request_commitments(request_id):
 def api_urgent_requests():
     """List urgent requests with live committed counts (REQ-F-010)."""
     results = []
-    for d in demands:
-        req_id = d["id"]
-        commit_count = len([c for c in donor_commitments if c["request_id"] == req_id])
+    # Support in-memory demands and SQLite persistence
+    source_demands = list(demands)
+    conn = get_db_connection()
+    if conn and not source_demands:
+        try:
+            db_demands = conn.execute("SELECT * FROM demands").fetchall()
+            source_demands = [dict(r) for r in db_demands]
+            conn.close()
+        except Exception:
+            pass
+
+    for d in source_demands:
+        if isinstance(d, dict):
+            req_id = d.get("id")
+            hospital = d.get("hospital")
+            blood_type = d.get("blood_type")
+            units = d.get("units")
+            urgency = d.get("urgency", "Emergency")
+            status = d.get("status", "Pending")
+            district = d.get("district", "Downtown")
+            notes = d.get("notes", "")
+        else:
+            req_id = getattr(d, "id", None)
+            hospital = getattr(d, "hospital", None)
+            blood_type = getattr(d, "blood_type", None)
+            units = getattr(d, "units", None)
+            urgency = getattr(d, "urgency", "Emergency")
+            status = getattr(d, "status", "Pending")
+            district = getattr(d, "district", "Downtown")
+            notes = getattr(d, "notes", "")
+
+        commit_count = 0
+        for c in donor_commitments:
+            c_req_id = c.get("request_id") if isinstance(c, dict) else getattr(c, "request_id", None)
+            if c_req_id == req_id:
+                commit_count += 1
+
         results.append({
             "id": req_id,
-            "hospital": d.get("hospital"),
-            "blood_type": d.get("blood_type"),
-            "units": d.get("units"),
-            "urgency": d.get("urgency", "Emergency"),
-            "status": d.get("status", "Pending"),
-            "district": d.get("district", "Downtown"),
+            "hospital": hospital,
+            "blood_type": blood_type,
+            "units": units,
+            "urgency": urgency,
+            "status": status,
+            "district": district,
             "committed_count": commit_count,
-            "notes": d.get("notes", "")
+            "notes": notes
         })
     return jsonify({
         "status": "success",
