@@ -18,6 +18,14 @@ def init_database(db_path: str = "bdcn.db"):
             schema_sql = schema_sql.replace("TIMESTAMP DEFAULT CURRENT_TIMESTAMP", "DATETIME DEFAULT CURRENT_TIMESTAMP")
             cursor.executescript(schema_sql)
 
+    if os.path.exists(seed_path):
+        with open(seed_path, "r", encoding="utf-8") as f:
+            seed_sql = f.read()
+            try:
+                cursor.executescript(seed_sql)
+            except Exception as e:
+                print(f"Seed script notice: {e}")
+
     conn.commit()
     conn.close()
     print("Database initialized successfully.")

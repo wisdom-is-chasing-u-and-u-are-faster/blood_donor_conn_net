@@ -1,0 +1,475 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard - BloodTrackER</title>
+    <style>
+
+:root {
+    /* Color Palette */
+    --primary: #007bff;
+    --primary-dark: #0056b3;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --info: #17a2b8;
+    --light: #f8f9fa;
+    --dark: #212529;
+
+    /* Neutrals */
+    --text-primary-light: #212529;
+    --text-secondary-light: #6c757d;
+    --surface-0-light: #ffffff;
+    --surface-1-light: #f8f9fa;
+    --border-light: #dee2e6;
+
+    --text-primary-dark: #f8f9fa;
+    --text-secondary-dark: #adb5bd;
+    --surface-0-dark: #1c1c1e;
+    --surface-1-dark: #2c2c2e;
+    --border-dark: #495057;
+
+    /* Typography */
+    --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --fs-display: 3rem;
+    --fs-h1: 2.5rem;
+    --fs-h2: 2rem;
+    --fs-h3: 1.5rem;
+    --fs-body: 1rem;
+    --fs-caption: 0.875rem;
+    --fw-light: 300;
+    --fw-normal: 400;
+    --fw-bold: 700;
+
+    /* Spacing (8pt Grid) */
+    --space-1: 8px;
+    --space-2: 16px;
+    --space-3: 24px;
+    --space-4: 32px;
+    --space-5: 40px;
+    --space-6: 48px;
+
+    /* Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+
+    /* Elevation */
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-2: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --shadow-3: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+
+    /* Transitions */
+    --transition-fast: all 0.15s ease-in-out;
+    --transition-normal: all 0.3s ease-in-out;
+}
+
+/* Light Mode Defaults */
+body {
+    --text-primary: var(--text-primary-light);
+    --text-secondary: var(--text-secondary-light);
+    --surface-0: var(--surface-0-light);
+    --surface-1: var(--surface-1-light);
+    --border-color: var(--border-light);
+    background-color: var(--surface-1);
+    color: var(--text-primary);
+}
+
+/* Dark Mode */
+body.dark-mode {
+    --text-primary: var(--text-primary-dark);
+    --text-secondary: var(--text-secondary-dark);
+    --surface-0: var(--surface-0-dark);
+    --surface-1: var(--surface-1-dark);
+    --border-color: var(--border-dark);
+    background-color: var(--surface-1);
+    color: var(--text-primary);
+}
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    font-family: var(--font-family-sans);
+    line-height: 1.6;
+    font-size: var(--fs-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-4) 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--fw-bold);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-2);
+}
+h1 { font-size: var(--fs-h1); }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); }
+
+ a { color: var(--primary); text-decoration: none; } 
+a:hover { color: var(--primary-dark); text-decoration: underline; }
+
+/* Components */
+.btn {
+    display: inline-block;
+    font-weight: var(--fw-bold);
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    padding: 0.75rem 1.5rem;
+    font-size: var(--fs-body);
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: #fff;
+    text-decoration: none;
+}
+
+.btn-success {
+    color: #fff;
+    background-color: var(--success);
+    border-color: var(--success);
+}
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    color: #fff;
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.card {
+    background-color: var(--surface-0);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-1);
+    transition: var(--transition-normal);
+    margin-bottom: var(--space-3);
+}
+.card:hover { transform: translateY(-4px); box-shadow: var(--shadow-2); }
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--surface-0);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+}
+.table th, .table td {
+    padding: var(--space-2);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+.table thead th {
+    background-color: var(--surface-1);
+    font-weight: var(--fw-bold);
+}
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background-color: var(--surface-1); cursor: pointer; }
+
+.badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--radius-sm);
+}
+.badge-success { color: #fff; background-color: var(--success); }
+.badge-warning { color: var(--dark); background-color: var(--warning); }
+.badge-danger { color: #fff; background-color: var(--danger); }
+.badge-secondary { color: var(--text-primary); background-color: var(--border-color);}
+
+/* Header & Footer */
+.main-header, .main-footer {
+    background-color: var(--surface-0);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-1);
+}
+.main-header .container, .main-footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0; padding-bottom: 0;
+}
+.main-nav ul {
+    list-style: none;
+    display: flex;
+    gap: var(--space-3);
+}
+.main-nav a {
+    font-weight: var(--fw-bold);
+    padding: var(--space-1) 0;
+}
+.logo { font-size: 1.5rem; font-weight: var(--fw-bold); }
+.logo .highlight { color: var(--primary); }
+
+/* Availability Toggle */
+.availability-toggle {
+    position: relative;
+    display: inline-block;
+    width: 200px;
+    height: 50px;
+}
+.availability-toggle input { display: none; }
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: var(--danger);
+    transition: .4s;
+    border-radius: 50px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 40px; width: 40px;
+    left: 5px; bottom: 5px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: var(--success);
+}
+input:checked + .slider:before {
+    transform: translateX(150px);
+}
+input:disabled + .slider { background-color: var(--secondary); cursor: not-allowed; }
+
+/* Modal */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; 
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+.modal-content {
+    background-color: var(--surface-0);
+    margin: 15% auto;
+    padding: var(--space-4);
+    border: 1px solid var(--border-color);
+    width: 80%;
+    max-width: 500px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-3);
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: var(--space-2); margin-bottom: var(--space-3); }
+.modal-title { margin: 0; }
+.close-button { font-size: 1.5rem; font-weight: bold; cursor: pointer; background: none; border: none; color: var(--text-secondary); }
+
+/* Form Controls */
+.form-group { margin-bottom: var(--space-3); }
+.form-group label { display: block; font-weight: var(--fw-bold); margin-bottom: var(--space-1); }
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background-color: var(--surface-0);
+    background-clip: padding-box;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.form-control:focus {
+    outline: 0;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Utilities */
+.text-center { text-align: center; }
+.mt-4 { margin-top: var(--space-4); }
+.mb-4 { margin-bottom: var(--space-4); }
+
+/* Page-specific overrides */
+.status-card {
+    text-align: center;
+    padding: var(--space-5);
+}
+.status-card .status-text {
+    font-size: var(--fs-h2);
+    font-weight: var(--fw-bold);
+    margin: var(--space-3) 0;
+}
+.status-available { color: var(--success); }
+.status-unavailable { color: var(--danger); }
+.status-cooldown { color: var(--warning); }
+
+.cooldown-timer {
+    background-color: var(--surface-1);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+}
+.cooldown-timer .days {
+    font-size: var(--fs-h1);
+    font-weight: var(--fw-bold);
+    color: var(--primary);
+}
+
+.request-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--border-color);
+}
+.request-list-item:last-child { border-bottom: none; }
+
+[data-screen] {
+    display: none;
+}
+[data-screen].active {
+    display: block;
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-header .container { flex-direction: column; gap: var(--space-2); }
+    .main-nav ul { justify-content: center; width: 100%; }
+    .availability-toggle { width: 150px; height: 40px; }
+    .availability-toggle .slider:before { height: 30px; width: 30px; }
+    input:checked + .slider:before { transform: translateX(110px); }
+}
+
+@media (max-width: 375px) {
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.75rem; }
+    .container { width: 95%; }
+    .btn { width: 100%; padding: 1rem; }
+    .modal-content { margin: 10% auto; width: 95%; }
+}
+
+
+</style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="main-header">
+        <div class="container">
+            <a href="donor_dashboard.html" class="logo">BloodTrack<span class="highlight">ER</span></a>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="donor_dashboard.html">Donor View</a></li>
+                    <li><a href="admin_requester_dashboard.html">Admin View</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <div class="container">
+            <header class="mb-4">
+                <h1>Donor Dashboard</h1>
+                <p class="text-secondary">Welcome, Lifesaver Liam. Manage your availability and view urgent requests.</p>
+            </header>
+
+            <!-- Status Card: Available -->
+            <div class="card status-card">
+                <p class="text-secondary">Your Current Status</p>
+                <p class="status-text status-available">Available</p>
+                <p>You are ready to receive urgent donation requests. Thank you!</p>
+                <div class="mt-4">
+                    <label class="availability-toggle">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <h3 class="mb-4">Urgent Requests Nearby (REQ-F-010)</h3>
+                <div class="request-list">
+                    <div class="request-list-item">
+                        <div>
+                            <h4 class="mb-0">General Hospital</h4>
+                            <p class="text-secondary">Blood Type: O+</p>
+                        </div>
+                        <div class="text-center">
+                            <strong>5 Donors Committed</strong>
+                        </div>
+                        <a href="urgent_request_details_donor.html" class="btn btn-primary">View & Commit</a>
+                    </div>
+                    <div class="request-list-item">
+                        <div>
+                            <h4 class="mb-0">City Medical Center</h4>
+                            <p class="text-secondary">Blood Type: A-</p>
+                        </div>
+                        <div class="text-center">
+                            <strong>1 Donor Committed</strong>
+                        </div>
+                        <a href="urgent_request_details_donor.html" class="btn btn-primary">View & Commit</a>
+                    </div>
+                     <div class="request-list-item">
+                        <div>
+                            <h4 class="mb-0">St. Jude's Clinic</h4>
+                            <p class="text-secondary">Blood Type: B+</p>
+                        </div>
+                        <div class="text-center">
+                            <strong>0 Donors Committed</strong>
+                        </div>
+                        <a href="urgent_request_details_donor.html" class="btn btn-primary">View & Commit</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer mt-4">
+        <div class="container">
+            <p>&copy; 2024 BloodTrackER. All Rights Reserved.</p>
+            <p>Saving lives, one donation at a time.</p>
+        </div>
+    </footer>
+    <script src="../js/api.js"></script>
+</body>
+</html>
