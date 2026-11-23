@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - ARCH-9608
+- Fixed QA defect in `db/init_db.py` by ensuring database path defaults to `database.db` (or `DATABASE_PATH` env var) and creating `bdcn.db` compatibility copy.
+- Added cross-directory schema and seed file locator `find_schema_path()` / `find_seed_path()` supporting isolated test working directories.
+- Strengthened `/api/v1/requests/urgent` handler in `app.py` to support object and dictionary representations and SQLite persistence.
+- Added regression test `tests/test_unit.py` verifying `test_init_database_creates_tables`.
+
 ### Added
 - **[ARCH-9522]** UI Pages + Requirements: Emergency Donor Availability & Response Tracking
   - *Key modifications:*
