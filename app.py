@@ -5,7 +5,8 @@
 # demonstration purposes.
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+import hashlib
 from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify, send_from_directory
 
 app = Flask(__name__, static_folder="public", static_url_path="")
@@ -86,7 +87,9 @@ donors = [
         "gender": "Female",
         "blood_group": "O-",
         "last_donation": "2025-11-15",
-        "donation_count": 5
+        "donation_count": 5,
+        "availability_status": "Available",
+        "cooldown_until": None
     },
     {
         "name": "John Doe",
@@ -95,7 +98,34 @@ donors = [
         "gender": "Male",
         "blood_group": "A+",
         "last_donation": "2025-08-20",
-        "donation_count": 2
+        "donation_count": 2,
+        "availability_status": "Available",
+        "cooldown_until": None
+    },
+    {
+        "name": "Liam Lifesaver",
+        "username": "cooldonor",
+        "age": 26,
+        "gender": "Male",
+        "blood_group": "O+",
+        "last_donation": "2026-11-10",
+        "donation_count": 4,
+        "availability_status": "In Recovery Cooldown",
+        "cooldown_until": "2027-01-05 00:00:00"
+    }
+]
+
+# Donor commitments tracking
+donor_commitments = [
+    {
+        "id": 1,
+        "request_id": 1,
+        "donor_id": 2,
+        "donor_username": "janesmith",
+        "anonymized_id": "Donor #A1B2C3",
+        "eta": "Within 1 hour",
+        "status": "Committed",
+        "created_at": "2026-11-20 12:00:00"
     }
 ]
 
@@ -142,6 +172,7 @@ app.alerts = alerts
 app.audit_logs = audit_logs
 app.raw_hotspots = raw_hotspots
 app.scheduled_donors = scheduled_donors
+app.donor_commitments = donor_commitments
 app.get_db_connection = get_db_connection
 
 @app.route("/")
@@ -476,8 +507,9 @@ def create_demand():
         audit_logs.append({
             "action": "BLOOD DEMAND CREATED",
             "details": (
-                f"Demand #{new_id} ({blood_type}, {units} units) created for {district} "
-                f"with urgency {urgency}. File: {filename}. Notes: {notes}"
+                "Demand #{} ({}, {} units) created for {} with urgency {}. File: {}. Notes: {}".format(
+                    new_id, blood_type, units, district, urgency, filename, notes
+                )
             ),
             "user": session.get("username"),
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -550,8 +582,9 @@ def verify_demand(demand_id):
             audit_logs.append({
                 "action": "EMERGENCY DEMAND APPROVED",
                 "details": (
-                    f"Approved demand #{demand_id} ({target_demand['blood_type']}) "
-                    f"for {target_demand.get('district', 'Downtown')}. Emitted event."
+                    "Approved demand #{} ({}) for {}. Emitted event.".format(
+                        demand_id, target_demand['blood_type'], target_demand.get('district', 'Downtown')
+                    )
                 ),
                 "user": session.get("username"),
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -771,6 +804,342 @@ def api_verify_request(demand_id):
         "decision": decision,
         "demand": target_demand
     }), 200
+
+
+
+def calculate_cooldown(donor):
+    """Calculate server-side UTC 56-day cooldown for donor.
+    REQ-F-004: 56-day cooldown period.
+    REQ-F-005: On cooldown expiry, status becomes 'Unavailable'.
+    REQ-N-002: Server-side UTC timestamps.
+    """
+    now_utc = datetime.now(timezone.utc)
+    cooldown_until_str = donor.get("cooldown_until")
+    last_donation_str = donor.get("last_donation")
+    cooldown_end = None
+
+    if cooldown_until_str:
+        try:
+            if "T" in str(cooldown_until_str):
+                cooldown_end = datetime.fromisoformat(str(cooldown_until_str).replace("Z", "+00:00"))
+            else:
+                cooldown_end = datetime.strptime(str(cooldown_until_str)[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        except Exception:
+            pass
+
+    if not cooldown_end and last_donation_str:
+        try:
+            last_date = datetime.strptime(str(last_donation_str)[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            potential_end = last_date + timedelta(days=56)
+            if potential_end > now_utc:
+                cooldown_end = potential_end
+        except Exception:
+            pass
+
+    if cooldown_end and cooldown_end > now_utc:
+        remaining_seconds = (cooldown_end - now_utc).total_seconds()
+        remaining_days = max(1, int(remaining_seconds // 86400) + (1 if remaining_seconds % 86400 > 0 else 0))
+        return True, remaining_days, cooldown_end.strftime("%Y-%m-%d")
+
+    # If cooldown expired and previous status was 'In Recovery Cooldown', transition to 'Unavailable' (REQ-F-005)
+    if donor.get("availability_status") == "In Recovery Cooldown":
+        donor["availability_status"] = "Unavailable"
+        donor["cooldown_until"] = None
+
+    return False, 0, None
+
+
+def generate_anonymized_donor_id(donor_username, donor_id=None):
+    """Generate anonymized donor identifier (e.g. Donor #A1B2C3) (REQ-F-013)."""
+    seed = f"{donor_username}:{donor_id or ''}"
+    digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()[:6].upper()
+    return f"Donor #{digest}"
+
+
+@app.route("/api/v1/donors/availability", methods=["GET", "POST"])
+def api_donor_availability():
+    """Manage donor availability status ('Available' / 'Unavailable').
+    REQ-F-001, REQ-F-002, REQ-F-003, REQ-F-014.
+    """
+    username = session.get("username")
+    target_donor = None
+    if username:
+        target_donor = next((d for d in donors if d["username"] == username), None)
+    if not target_donor:
+        # Fallback to test donor or query param
+        req_user = request.args.get("username")
+        if req_user:
+            target_donor = next((d for d in donors if d["username"] == req_user), None)
+        if not target_donor:
+            target_donor = donors[0]
+
+    is_in_cooldown, remaining_days, cooldown_end = calculate_cooldown(target_donor)
+
+    if request.method == "POST":
+        data = request.get_json() or {}
+        new_status = data.get("status")
+
+        if not new_status or new_status not in ["Available", "Unavailable"]:
+            return jsonify({
+                "status": "error",
+                "message": "Status must be either 'Available' or 'Unavailable'"
+            }), 400
+
+        # REQ-F-002: The system must prevent status changes during the cooldown period.
+        if is_in_cooldown:
+            return jsonify({
+                "status": "error",
+                "message": f"Status changes are prevented during recovery cooldown ({remaining_days} days remaining)",
+                "is_in_cooldown": True,
+                "remaining_days": remaining_days
+            }), 403
+
+        target_donor["availability_status"] = new_status
+
+        # Synchronize with SQLite if available
+        conn = get_db_connection()
+        if conn:
+            try:
+                conn.execute(
+                    "UPDATE donors SET availability_status = ? WHERE username = ?",
+                    (new_status, target_donor.get("username"))
+                )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+
+        return jsonify({
+            "status": "success",
+            "donor_username": target_donor.get("username"),
+            "availability_status": target_donor["availability_status"],
+            "message": f"Availability status updated to {new_status}"
+        }), 200
+
+    # GET response (REQ-F-003)
+    curr_status = "In Recovery Cooldown" if is_in_cooldown else target_donor.get("availability_status", "Available")
+    return jsonify({
+        "status": "success",
+        "donor_username": target_donor.get("username"),
+        "availability_status": curr_status,
+        "is_in_cooldown": is_in_cooldown,
+        "remaining_cooldown_days": remaining_days,
+        "cooldown_end_date": cooldown_end
+    }), 200
+
+
+@app.route("/api/v1/requests/<int:request_id>/commit", methods=["POST"])
+def api_commit_request(request_id):
+    """Commit available donor to an open blood request.
+    REQ-F-006, REQ-F-007, REQ-F-008, REQ-F-009, REQ-F-015.
+    """
+    data = request.get_json() or {}
+    eta = data.get("eta", "Within 1 hour")
+    username = session.get("username") or data.get("username") or "janesmith"
+
+    target_demand = next((d for d in demands if d["id"] == request_id), None)
+    if not target_demand:
+        return jsonify({"status": "error", "message": "Request not found"}), 404
+
+    # REQ-F-009: Donors must only be able to commit to 'Open' / Active requests.
+    allowed_statuses = ["Pending", "Approved", "Active", "Open"]
+    if target_demand.get("status") not in allowed_statuses:
+        return jsonify({
+            "status": "error",
+            "message": f"Cannot commit to request with status '{target_demand.get('status')}'. Must be open."
+        }), 400
+
+    target_donor = next((d for d in donors if d["username"] == username), None)
+    if not target_donor:
+        # Create minimal donor entry if not found
+        target_donor = {
+            "name": username.capitalize(),
+            "username": username,
+            "age": 30,
+            "gender": "Other",
+            "blood_group": target_demand.get("blood_type", "O+"),
+            "availability_status": "Available",
+            "cooldown_until": None,
+            "donation_count": 1
+        }
+        donors.append(target_donor)
+
+    # REQ-F-002: Check cooldown
+    is_in_cooldown, remaining_days, _ = calculate_cooldown(target_donor)
+    if is_in_cooldown:
+        return jsonify({
+            "status": "error",
+            "message": f"Donors in recovery cooldown cannot commit to requests ({remaining_days} days remaining)"
+        }), 403
+
+    # REQ-F-006: Only 'Available' donors can commit
+    if target_donor.get("availability_status") != "Available":
+        return jsonify({
+            "status": "error",
+            "message": "Only available donors can commit to urgent requests. Please update your status first."
+        }), 400
+
+    # REQ-F-008: Prevent duplicate commitments from same donor to same request
+    existing_commit = next(
+        (c for c in donor_commitments if c["request_id"] == request_id and c["donor_username"] == username),
+        None
+    )
+    if existing_commit:
+        return jsonify({
+            "status": "error",
+            "message": "You have already committed to this urgent blood request. Duplicate commitments are rejected."
+        }), 409
+
+    donor_idx = next((i for i, d in enumerate(donors) if d.get("username") == username), 1) + 1
+    anonymized_id = generate_anonymized_donor_id(username, donor_idx)
+
+    new_commit_id = len(donor_commitments) + 1
+    new_commitment = {
+        "id": new_commit_id,
+        "request_id": request_id,
+        "donor_id": donor_idx,
+        "donor_username": username,
+        "anonymized_id": anonymized_id,
+        "eta": eta,
+        "status": "Committed",
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    donor_commitments.append(new_commitment)
+
+    # Persist to SQLite if available
+    conn = get_db_connection()
+    if conn:
+        try:
+            conn.execute(
+                "INSERT INTO donor_commitments (request_id, donor_id, donor_username, anonymized_id, eta, status) VALUES (?, ?, ?, ?, ?, ?)",
+                (request_id, donor_idx, username, anonymized_id, eta, "Committed")
+            )
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+    current_count = len([c for c in donor_commitments if c["request_id"] == request_id])
+
+    audit_logs.append({
+        "action": "DONOR COMMITMENT CONFIRMED (API)",
+        "details": f"{anonymized_id} committed to Request #{request_id} with ETA '{eta}'.",
+        "user": username,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({
+        "status": "success",
+        "request_id": request_id,
+        "commitment_id": new_commit_id,
+        "anonymized_id": anonymized_id,
+        "eta": eta,
+        "total_committed": current_count,
+        "message": "Commitment recorded successfully"
+    }), 201
+
+
+@app.route("/api/v1/requests/<int:request_id>/commitments", methods=["GET"])
+def api_request_commitments(request_id):
+    """Retrieve anonymized list of committed donors for requesters and admins.
+    REQ-F-011, REQ-F-012, REQ-F-013, REQ-F-016.
+    """
+    target_demand = next((d for d in demands if d["id"] == request_id), None)
+    if not target_demand:
+        return jsonify({"status": "error", "message": "Request not found"}), 404
+
+    # Fetch commitments
+    commits = [c for c in donor_commitments if c["request_id"] == request_id]
+
+    # SQLite fallback
+    conn = get_db_connection()
+    if conn and not commits:
+        try:
+            rows = conn.execute(
+                "SELECT anonymized_id, eta, status, created_at FROM donor_commitments WHERE request_id = ?",
+                (request_id,)
+            ).fetchall()
+            commits = [dict(r) for r in rows]
+            conn.close()
+        except Exception:
+            pass
+
+    # Strictly anonymized (REQ-F-013)
+    anonymized_list = [
+        {
+            "anonymized_id": c["anonymized_id"],
+            "eta": c["eta"],
+            "status": c.get("status", "Committed"),
+            "created_at": c.get("created_at", "")
+        }
+        for c in commits
+    ]
+
+    return jsonify({
+        "status": "success",
+        "request_id": request_id,
+        "total_committed": len(anonymized_list),
+        "commitments": anonymized_list
+    }), 200
+
+
+@app.route("/api/v1/requests/urgent", methods=["GET"])
+def api_urgent_requests():
+    """List urgent requests with live committed counts (REQ-F-010)."""
+    results = []
+    # Support in-memory demands and SQLite persistence
+    source_demands = list(demands)
+    conn = get_db_connection()
+    if conn and not source_demands:
+        try:
+            db_demands = conn.execute("SELECT * FROM demands").fetchall()
+            source_demands = [dict(r) for r in db_demands]
+            conn.close()
+        except Exception:
+            pass
+
+    for d in source_demands:
+        if isinstance(d, dict):
+            req_id = d.get("id")
+            hospital = d.get("hospital")
+            blood_type = d.get("blood_type")
+            units = d.get("units")
+            urgency = d.get("urgency", "Emergency")
+            status = d.get("status", "Pending")
+            district = d.get("district", "Downtown")
+            notes = d.get("notes", "")
+        else:
+            req_id = getattr(d, "id", None)
+            hospital = getattr(d, "hospital", None)
+            blood_type = getattr(d, "blood_type", None)
+            units = getattr(d, "units", None)
+            urgency = getattr(d, "urgency", "Emergency")
+            status = getattr(d, "status", "Pending")
+            district = getattr(d, "district", "Downtown")
+            notes = getattr(d, "notes", "")
+
+        commit_count = 0
+        for c in donor_commitments:
+            c_req_id = c.get("request_id") if isinstance(c, dict) else getattr(c, "request_id", None)
+            if c_req_id == req_id:
+                commit_count += 1
+
+        results.append({
+            "id": req_id,
+            "hospital": hospital,
+            "blood_type": blood_type,
+            "units": units,
+            "urgency": urgency,
+            "status": status,
+            "district": district,
+            "committed_count": commit_count,
+            "notes": notes
+        })
+    return jsonify({
+        "status": "success",
+        "requests": results
+    }), 200
+
 
 
 if __name__ == "__main__":
