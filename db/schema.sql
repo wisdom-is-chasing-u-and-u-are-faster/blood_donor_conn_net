@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS donors (
     last_donation DATE,
     donation_count INTEGER DEFAULT 0,
     district VARCHAR(100) DEFAULT 'Downtown',
+    availability_status VARCHAR(50) DEFAULT 'Available',
+    cooldown_until DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -50,4 +52,16 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     details TEXT NOT NULL,
     user_name VARCHAR(100) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS donor_commitments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id INTEGER NOT NULL,
+    donor_id INTEGER NOT NULL,
+    donor_username VARCHAR(100) NOT NULL,
+    anonymized_id VARCHAR(50) NOT NULL,
+    eta VARCHAR(100) DEFAULT 'Within 1 hour',
+    status VARCHAR(50) DEFAULT 'Committed',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(request_id, donor_id)
 );

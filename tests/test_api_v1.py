@@ -23,7 +23,7 @@ def test_health_check(client):
 
 def test_static_page_serving(client):
     """Test static Variant-A HTML pages are accessible under /pages/."""
-    for page in ["admin-dashboard.html", "create-request.html", "dashboard.html", "login.html", "profile.html", "request-feed.html"]:
+    for page in ["admin-dashboard.html", "create-request.html", "dashboard.html", "login.html", "profile.html", "request-feed.html", "donor_dashboard.html", "urgent_request_details_donor.html", "urgent_request_details_requester.html", "admin_requester_dashboard.html"]:
         res = client.get(f"/pages/{page}")
         assert res.status_code == 200
         assert b"BDCN" in res.data or b"Blood" in res.data
