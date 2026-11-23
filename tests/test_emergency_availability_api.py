@@ -200,3 +200,39 @@ def test_urgent_requests_live_committed_count(client):
     req1 = next((r for r in data["requests"] if r["id"] == 1), None)
     assert req1 is not None
     assert req1["committed_count"] >= 1
+
+def test_api_donor_availability_validation_and_not_found(client):
+    """Test invalid status and query param fallback."""
+    res = client.post("/api/v1/donors/availability", json={"status": "InvalidStatus"})
+    assert res.status_code == 400
+
+    # Query param for donor
+    res = client.get("/api/v1/donors/availability?username=johndoe")
+    assert res.status_code == 200
+    assert res.get_json()["donor_username"] == "johndoe"
+
+
+def test_api_commit_request_edge_cases(client):
+    """Test non-existent request, invalid status demand, and unknown donor auto-create."""
+    # Non existent request
+    res = client.post("/api/v1/requests/99999/commit", json={"username": "johndoe"})
+    assert res.status_code == 404
+
+    # Demand with rejected status
+    demands.append({
+        "id": 999,
+        "hospital": "Test Hosp",
+        "blood_type": "B+",
+        "units": 2,
+        "status": "Rejected"
+    })
+    res = client.post("/api/v1/requests/999/commit", json={"username": "johndoe"})
+    assert res.status_code == 400
+
+    # Unknown donor commit
+    res = client.post("/api/v1/requests/1/commit", json={"username": "brandnewdonor", "eta": "Within 2 hours"})
+    assert res.status_code == 201
+
+    # Request commitments for non existent request
+    res = client.get("/api/v1/requests/99999/commitments")
+    assert res.status_code == 404

@@ -507,8 +507,9 @@ def create_demand():
         audit_logs.append({
             "action": "BLOOD DEMAND CREATED",
             "details": (
-                f"Demand #{new_id} ({blood_type}, {units} units) created for {district} "
-                f"with urgency {urgency}. File: {filename}. Notes: {notes}"
+                "Demand #{} ({}, {} units) created for {} with urgency {}. File: {}. Notes: {}".format(
+                    new_id, blood_type, units, district, urgency, filename, notes
+                )
             ),
             "user": session.get("username"),
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -581,8 +582,9 @@ def verify_demand(demand_id):
             audit_logs.append({
                 "action": "EMERGENCY DEMAND APPROVED",
                 "details": (
-                    f"Approved demand #{demand_id} ({target_demand['blood_type']}) "
-                    f"for {target_demand.get('district', 'Downtown')}. Emitted event."
+                    "Approved demand #{} ({}) for {}. Emitted event.".format(
+                        demand_id, target_demand['blood_type'], target_demand.get('district', 'Downtown')
+                    )
                 ),
                 "user": session.get("username"),
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
